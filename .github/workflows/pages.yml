@@ -1,0 +1,52 @@
+name: Deploy Hanyutun to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Assemble static app
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s web-package.zip
+          test -s lapka-android.apk
+          mkdir -p _site/downloads
+          unzip -q web-package.zip -d _site
+          cp lapka-android.apk _site/downloads/lapka-android.apk
+          cp README.md _site/README.md
+          test -f _site/index.html
+          test -f _site/.nojekyll
+          test -f _site/manifest.webmanifest
+          test -s _site/downloads/lapka-android.apk
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
