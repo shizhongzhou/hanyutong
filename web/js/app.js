@@ -105,7 +105,7 @@ const topbar = (title, back = "#/home") => `<div class="topbar"><a class="round"
 const row = (href, icon, title, small) => `<a href="${href}"><span class="ic">${ic(icon)}</span><span class="t"><b>${title}</b>${small ? `<small>${small}</small>` : ""}</span>${ic("go", "i go")}</a>`;
 const starBtn = w => `<button class="star" data-star="${esc(w.hz)}" data-lv="${w.lv}" aria-pressed="${!!S.book[w.hz]}" aria-label="В мой словарик">${ic("star")}</button>`;
 document.addEventListener("click", e => { const b = e.target.closest("[data-star]"); if (!b) return; const hz = b.dataset.star; if (S.book[hz]) delete S.book[hz]; else S.book[hz] = { lv: +b.dataset.lv, t: Date.now(), why: "добавлено" }; b.setAttribute("aria-pressed", String(!!S.book[hz])); save(); toast(S.book[hz] ? "Добавлено в мой словарик" : "Убрано из словарика"); });
-const wordRow = w => `<div class="word"><span class="h zh">${esc(w.hz)}</span><div class="m"><div class="py">${esc(w.py)}${w.pos ? `<span class="tag">${esc(w.pos)}</span>` : ""}</div><div>${esc(w.ru)}</div></div>${starBtn(w)}${sayBtn(w.hz)}</div>`;
+const wordRow = w => `<div class="word"><a class="h zh" href="#/word/${encodeURIComponent(w.hz)}">${esc(w.hz)}</a><a class="m" href="#/word/${encodeURIComponent(w.hz)}"><div class="py">${esc(w.py)}${w.pos ? `<span class="tag">${esc(w.pos)}</span>` : ""}</div><div>${esc(w.ru)}</div></a>${starBtn(w)}${sayBtn(w.hz)}</div>`;
 const greeting = () => { const hr = new Date().getHours(); return hr < 5 ? "Доброй ночи" : hr < 12 ? "Доброе утро" : hr < 18 ? "Добрый день" : "Добрый вечер"; };
 const lvName = lv => `HSK ${lv} · ${LEVELS[lv].title}`;
 let leaveFns = [];
@@ -161,6 +161,8 @@ function pageLearn() {
       <a href="#/listen/${lv}"><span class="ic">${ic("ear")}</span><b>Аудирование</b><small>Сначала слушать, потом смотреть</small></a>
       <a href="#/shadow"><span class="ic">${ic("mic")}</span><b>Повторение вслух</b><small>Слушайте и повторяйте фразу</small></a>
       <a href="#/write/${lv}"><span class="ic">${ic("read")}</span><b>Письмо</b><small>Наберите слово пиньинем или иероглифами</small></a>
+      <a href="#/hanzi/${lv}"><span class="ic">${ic("pen")}</span><b>Иероглифы</b><small>Пишите по порядку черт</small></a>
+      <a href="#/cloud/${lv}"><span class="ic">${ic("layers")}</span><b>Облако слов</b><small>Слова уровня по частоте</small></a>
       <a href="#/tones"><span class="ic">${ic("wave")}</span><b>Тренажёр тонов</b><small>Угадайте тон на слух</small></a>
       <a href="#/exam/${lv}"><span class="ic">${ic("trophy")}</span><b>Подготовка к HSK</b><small>Пробный тест с таймером</small></a></div>
     <div class="list mt">${row("#/levels", "layers", "Уровни курса", "HSK 1 – HSK 6 и ваш прогресс")}</div></section>`;
@@ -174,6 +176,9 @@ function pageReview() {
       <a class="btn" href="${due.length ? "#/study/review" : `#/study/${lv}`}">${due.length ? "Начать повторение" : "Учить новые слова"} ${ic("go")}</a></div>
     <div class="section"><h2>С чего начать?</h2></div>
     <div class="list">${row(`#/study/${lv}`, "cards", "Карточки", "Новые и знакомые слова · «помню / не помню»")}
+      ${row(`#/pairs/${lv}`, "layers", "Игра «Найди пару»", "Иероглиф ↔ перевод на скорость")}
+      ${row(`#/cloud/${lv}`, "wave", "Облако слов", "Крупнее — чаще встречается")}
+      ${row(`#/hanzi/${lv}`, "pen", "Пишем иероглифы", "Знакомые слова по порядку черт")}
       ${row("#/book", "bookmark", "Мой словарик", bk ? `${bk} ${plural(bk, "слово", "слова", "слов")} · ошибки и отмеченные` : "Отмечайте слова звёздочкой")}
       ${row("#/study/book", "review", "Повторить словарик", "Карточки только из моего словаря")}
       ${row("#/grammar", "pen", "Повторить грамматику", "Примеры к каждой конструкции")}</div>
@@ -406,7 +411,7 @@ function pageDict() {
     <p class="hint">Поиск по иероглифам, пиньиню (без тонов) и русскому переводу среди 5000 слов HSK 1–6.</p><div id="res">${recent.length ? `<div class="section"><h2>Недавние</h2><button class="muted" id="clr">Очистить</button></div><div class="chips">${recent.map(r => `<button class="chip" data-q="${esc(r)}"><b class="zh" style="font-size:15px">${esc(r)}</b></button>`).join("")}</div>` : ""}</div>`;
   const q = $("#q"); let t = 0;
   const run = async () => { const v = q.value; const r = await searchWords(v); if (q.value !== v) return;
-    $("#res").innerHTML = v.trim() ? (r.length ? r.map(w => wordRow(w).replace('<span class="h zh">', `<span class="h zh" title="HSK ${w.lv}">`).replace("</div><div>", `<span class="tag">HSK ${w.lv}</span></div><div>`)).join("") : `<div class="empty"><b>Ничего не найдено</b>Словарь охватывает лексику HSK 1–6.</div>`) : "";
+    $("#res").innerHTML = v.trim() ? (r.length ? r.map(w => wordRow(w).replace("</div><div>", `<span class="tag">HSK ${w.lv}</span></div><div>`)).join("") : `<div class="empty"><b>Ничего не найдено</b>Словарь охватывает лексику HSK 1–6.</div>`) : "";
     if (r[0] && v.trim()) { S.recent = [r[0].hz, ...(S.recent || []).filter(x => x !== r[0].hz)].slice(0, 12); save(); } };
   q.oninput = () => { clearTimeout(t); t = setTimeout(run, 220); };
   $$("[data-q]").forEach(b => b.onclick = () => { q.value = b.dataset.q; run(); });
@@ -471,6 +476,7 @@ function sheetCode(exp) {
 function pageAbout() {
   app.innerHTML = `${topbar("О приложении", "#/me")}<div style="width:96px;margin:0 auto">${PANDA}</div><h2 class="center" style="margin:6px 0 0">汉语熊猫 · ХаньюйТун</h2><p class="center muted">Китайский для русскоговорящих · версия 1.0</p>
     <div class="box"><h3>Словарь</h3><p class="hint" style="margin:0">Список слов HSK 1–6, пиньинь и части речи — <a href="https://github.com/drkameleon/complete-hsk-vocabulary" style="text-decoration:underline">complete-hsk-vocabulary</a> (MIT), основан на данных CC-CEDICT (CC BY-SA 4.0). Русские переводы, диалоги, тексты и объяснения грамматики написаны для этого приложения; переводы краткие и не проверены носителем — сообщайте о неточностях.</p></div>
+    <div class="box"><h3>Порядок черт</h3><p class="hint" style="margin:0">Анимация и проверка черт — <a href="https://github.com/chanind/hanzi-writer" style="text-decoration:underline">Hanzi Writer</a> (MIT); данные черт — Make Me a Hanzi, Arphic Public License (текст лицензии: strokes/ARPHICPL.TXT).</p></div>
     <div class="box"><h3>Озвучивание</h3><p class="hint" style="margin:0">Используется встроенный китайский голос вашего устройства (zh-CN). Если звука нет, установите китайский голос в системных настройках речи.</p></div>
     <div class="box"><h3>Данные</h3><p class="hint" style="margin:0">Аккаунт не нужен. Весь прогресс хранится в браузере на этом устройстве; для переноса используйте код в настройках. После первого открытия приложение работает без интернета.</p></div>`;
 }
@@ -486,25 +492,118 @@ function pandaSheet() {
     const m = $("#more", sh); if (m) m.onclick = () => { sessionStorage.setItem("dictQ", q.value); close(); }; }, 200); };
 }
 
+/* ---------- иероглифы: порядок черт (Hanzi Writer, данные Make Me a Hanzi / Arphic PL) ---------- */
+let hwP = null;
+const loadHW = () => hwP || (hwP = new Promise((res, rej) => { if (window.HanziWriter) return res(); const s = document.createElement("script"); s.src = "vendor/hanzi-writer.min.js"; s.onload = res; s.onerror = () => { hwP = null; rej(Error("hw")); }; document.head.append(s); }));
+const charLoader = (c, onLoad, onErr) => fetch(`strokes/${encodeURIComponent(c)}.json`).then(r => { if (!r.ok) throw Error(r.status); return r.json(); }).then(onLoad).catch(onErr);
+const HW_OPTS = { padding: 6, strokeColor: "#18191a", radicalColor: "#536e94", outlineColor: "#e1e8f1", drawingColor: "#536e94", highlightColor: "#9ab6dd", strokeAnimationSpeed: 1.2, delayBetweenStrokes: 160, showCharacter: false, charDataLoader: charLoader };
+const isHan = c => /[一-鿿]/.test(c);
+const gridSVG = size => `<svg width="${size}" height="${size}" style="position:absolute;inset:0" aria-hidden="true"><g stroke="#e8eef6" stroke-dasharray="4 4"><line x1="0" y1="0" x2="${size}" y2="${size}"/><line x1="${size}" y1="0" x2="0" y2="${size}"/><line x1="${size / 2}" y1="0" x2="${size / 2}" y2="${size}"/><line x1="0" y1="${size / 2}" x2="${size}" y2="${size / 2}"/></g></svg>`;
+const charBox = (id, size) => `<div style="position:relative;width:${size}px;height:${size}px;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden">${gridSVG(size)}<div id="${id}" style="position:relative"></div></div>`;
+
+async function findWord(hz) { const all = await allWords(); return all.find(w => w.hz === hz); }
+async function pageWord(hz) {
+  hz = decodeURIComponent(hz || ""); let w = await findWord(hz);
+  if (!w && hz && [...hz].every(isHan)) { w = { hz, py: "", ru: "Нет в списке HSK 1–6", pos: "", lv: 0 }; }
+  if (!w) { app.innerHTML = `${topbar("Слово", "#/dict")}<div class="empty"><b>Слово не найдено</b>Его нет в словаре HSK 1–6.</div>`; return; }
+  const chars = [...w.hz].filter(isHan); const ex = SENTENCES.filter(s => s.zh.includes(w.hz)).slice(0, 4);
+  const parts = chars.length > 1 ? (await allWords()).filter(x => x.hz.length === 1 && chars.includes(x.hz)) : [];
+  const srs = S.srs[w.hz]; const size = chars.length > 2 ? 92 : chars.length === 2 ? 130 : 170;
+  app.innerHTML = `${topbar("Слово", history.length > 1 ? "javascript:history.back()" : "#/dict")}
+    <div class="center"><div style="display:flex;gap:10px;justify-content:center">${chars.map((c, i) => charBox(`hw${i}`, size)).join("")}</div>
+      <div class="py" style="font-size:22px;margin-top:14px">${esc(w.py)}</div><div style="font-size:17px;font-weight:600;margin-top:6px">${esc(w.ru)}</div>
+      <div class="muted" style="margin-top:6px">${w.lv ? "HSK " + w.lv : "вне HSK"}${w.pos ? " · " + esc(w.pos) : ""}${srs ? ` · ${srs.b >= 3 ? "хорошо знаю" : srs.b >= 1 ? "изучаю" : "трудное"}` : " · ещё не изучено"}</div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:12px">${sayBtn(w.hz)}${w.lv ? starBtn(w) : ""}<button class="say" id="anim" aria-label="Показать порядок черт">${ic("pen")}</button></div></div>
+    <a class="btn" href="#/hanzi/w/${encodeURIComponent(w.hz)}">Написать иероглиф${chars.length > 1 ? "ы" : ""} ${ic("pen")}</a>
+    ${parts.length ? `<div class="section"><h2>Иероглифы в слове</h2></div>${parts.map(wordRow).join("")}` : ""}
+    <div class="section"><h2>Примеры</h2></div>${ex.length ? `<div class="dlg">${ex.map(s => `<div class="line" data-say="${esc(s.zh)}"><div><div class="zh">${esc(s.zh)}</div><div class="py">${esc(s.py)}</div><div class="ru">${esc(s.ru)}</div></div></div>`).join("")}</div>` : `<p class="hint">В учебных текстах пока нет примеров с этим словом.</p>`}`;
+  try { await loadHW(); } catch (_) { return; }
+  const ws = chars.map((c, i) => HanziWriter.create(`hw${i}`, c, { ...HW_OPTS, width: size - 2, height: size - 2, showCharacter: true }));
+  const play = async () => { for (const x of ws) { x.hideCharacter(); } for (const x of ws) await x.animateCharacter(); };
+  $("#anim").onclick = play; setTimeout(play, 300);
+}
+
+/* тренировка письма иероглифов */
+async function pageHanzi(arg, hzArg) {
+  let list;
+  if (arg === "w") { const hz = decodeURIComponent(hzArg || ""); const w = await findWord(hz) || ([...hz].every(isHan) && hz ? { hz, py: "", ru: hz, lv: 0 } : null); list = w ? [w] : []; }
+  else { const lv = +arg || S.settings.level; const words = await level(lv); const learned = words.filter(w => S.srs[w.hz]);
+    list = shuffle(learned.length >= 6 ? learned : words.slice(0, 40)).slice(0, 6); }
+  const back = arg === "w" ? `#/word/${encodeURIComponent(hzArg)}` : "#/learn";
+  if (!list.length) { app.innerHTML = `${topbar("Иероглифы", back)}<div class="empty"><b>Нечего писать</b></div>`; return; }
+  try { await loadHW(); } catch (_) { app.innerHTML = `${topbar("Иероглифы", back)}<div class="empty"><b>Не удалось загрузить</b>Проверьте подключение.</div>`; return; }
+  let k = 0, ci = 0, total = 0, mistakes = 0, hint = false, writer = null;
+  const size = Math.min(300, window.innerWidth - 60);
+  function draw() {
+    const w = list[k]; if (!w) return finish(); const chars = [...w.hz].filter(isHan); const c = chars[ci];
+    app.innerHTML = `${topbar("Пишем иероглифы", back)}<div class="qhead"><div class="bar"><i style="width:${k / list.length * 100}%"></i></div><span class="muted">${k + 1}/${list.length}</span></div>
+      <div class="center"><div style="font-size:16px;font-weight:600">${esc(short(w.ru))}</div><div class="py" style="font-size:18px">${esc(w.py)}</div>
+        <div style="display:flex;justify-content:center;gap:6px;margin:8px 0 12px">${chars.map((x, i) => `<span class="zh" style="font-size:26px;${i < ci ? "" : "color:#c9d3df"}">${i < ci ? x : "□"}</span>`).join("")}</div>
+        <div style="display:flex;justify-content:center">${charBox("hwq", size)}</div><p class="muted" id="st">Пишите пальцем или мышью по порядку черт</p></div>
+      <div class="two"><button class="btn ghost" id="hint">${hint ? "Скрыть контур" : "Показать контур"}</button><button class="btn ghost" id="demo">Как писать ${ic("pen")}</button></div>`;
+    writer = HanziWriter.create("hwq", c, { ...HW_OPTS, width: size - 2, height: size - 2, showOutline: hint, showHintAfterMisses: 2 });
+    const start = () => writer.quiz({ leniency: 1.2,
+      onMistake: () => { mistakes++; $("#st").textContent = "Не та черта — попробуйте ещё раз"; },
+      onCorrectStroke: d => { $("#st").textContent = `Черта ${d.strokeNum + 1} из ${d.strokeNum + 1 + d.strokesRemaining}`; },
+      onComplete: d => { total++; $("#st").textContent = d.totalMistakes ? `Готово, ошибок: ${d.totalMistakes}` : "Отлично, без ошибок!"; speak(c); markStudy(); save();
+        setTimeout(() => { ci++; if (ci >= chars.length) { ci = 0; k++; record(true); } draw(); }, 900); } });
+    start();
+    $("#hint").onclick = () => { hint = !hint; hint ? writer.showOutline() : writer.hideOutline(); $("#hint").textContent = hint ? "Скрыть контур" : "Показать контур"; };
+    $("#demo").onclick = async () => { writer.cancelQuiz(); await writer.animateCharacter(); writer.hideCharacter(); start(); };
+  }
+  function finish() { app.innerHTML = `${topbar("Пишем иероглифы", back)}<div class="result"><div style="width:110px;margin:0 auto">${PANDA}</div><div class="score">${total}</div><p>${plural(total, "иероглиф написан", "иероглифа написано", "иероглифов написано")} · ошибок в чертах: ${mistakes}</p>
+      ${arg === "w" ? `<a class="btn" href="${back}">К слову</a>` : `<button class="btn" id="again">Ещё 6 слов</button>`}<a class="btn ghost" href="#/learn">Готово</a></div>`; const a = $("#again"); if (a) a.onclick = () => pageHanzi(arg); }
+  onLeave(() => { try { writer && writer.cancelQuiz(); } catch (_) {} });
+  draw();
+}
+
+/* ---------- игры: «Найди пару» и облако слов ---------- */
+async function pagePairs(lv) {
+  lv = +lv || S.settings.level; const words = await level(lv); const pool = words.filter(w => S.srs[w.hz]); const src = shuffle(pool.length >= 6 ? pool : words.slice(0, 60)).slice(0, 6);
+  let sel = null, left = src.length, miss = 0; const t0 = Date.now();
+  const cards = shuffle([...src.map(w => ({ k: w.hz, t: w.hz, zh: true })), ...src.map(w => ({ k: w.hz, t: short(w.ru) }))]);
+  app.innerHTML = `${topbar(`Найди пару · HSK ${lv}`, "#/review")}<p class="sub" style="margin-top:-6px">Соедините иероглиф с переводом.</p>
+    <div class="grid2" id="pg" style="grid-template-columns:1fr 1fr 1fr;gap:8px">${cards.map((c, i) => `<button class="opt ${c.zh ? "zhopt" : ""}" data-i="${i}" style="min-height:78px;padding:8px;text-align:center;font-size:${c.zh ? 22 : 13}px">${esc(c.t)}</button>`).join("")}</div><div id="fb"></div>`;
+  $$("#pg .opt").forEach(b => b.onclick = () => {
+    const c = cards[+b.dataset.i]; if (b.disabled) return;
+    if (c.zh) speak(c.t);
+    if (!sel) { sel = b; b.style.borderColor = "var(--ink)"; return; }
+    if (sel === b) { sel.style.borderColor = ""; sel = null; return; }
+    const a = cards[+sel.dataset.i];
+    if (a.k === c.k && a.zh !== c.zh) { [sel, b].forEach(x => { x.classList.add("right"); x.disabled = true; x.style.opacity = ".55"; x.style.borderColor = ""; }); left--; record(true);
+      if (!left) $("#fb").innerHTML = `<div class="result" style="padding:20px 0"><div class="score">${Math.round((Date.now() - t0) / 1000)} c</div><p>Все пары найдены${miss ? `, промахов: ${miss}` : " без промахов"}!</p><button class="btn" id="again">Ещё раз</button></div>`, $("#again").onclick = () => pagePairs(lv); }
+    else { miss++; record(false, c.zh ? c.k : a.k, lv); [sel, b].forEach(x => { x.classList.add("wrong"); setTimeout(() => { x.classList.remove("wrong"); x.style.borderColor = ""; }, 500); }); }
+    sel = null;
+  });
+}
+async function pageCloud(lv) {
+  lv = +lv || S.settings.level; const words = (await level(lv)).slice(0, 60);
+  app.innerHTML = `${topbar(`Облако слов · HSK ${lv}`, "#/review")}<p class="sub" style="margin-top:-6px">Чем чаще слово встречается, тем оно крупнее. Нажмите — услышите и увидите перевод. Выученные слова светлее.</p>
+    <div id="cl" style="display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;align-items:center;padding:18px 4px;border:1px solid var(--line);border-radius:24px;margin-top:14px;background:var(--glaze2)">${shuffle(words.map((w, i) => ({ w, i }))).map(({ w, i }) => `<button class="zh" data-hz="${esc(w.hz)}" style="font-size:${Math.round(34 - i * 0.33)}px;line-height:1.3;color:${S.srs[w.hz]?.b >= 2 ? "#9ab6dd" : "#18191a"};transform:rotate(${(Math.random() * 10 - 5).toFixed(1)}deg)">${esc(w.hz)}</button>`).join("")}</div>
+    <div id="cw" class="mt"></div>`;
+  const m = new Map(words.map(w => [w.hz, w]));
+  $$("#cl button").forEach(b => b.onclick = () => { const w = m.get(b.dataset.hz); speak(w.hz); $("#cw").innerHTML = wordRow(w); });
+}
+
 /* ========== маршрутизация ========== */
 const ROUTES = {
   welcome: pageWelcome, home: pageHome, learn: pageLearn, review: pageReview, me: pageMe,
   study: pageStudy, quiz: lv => pageQuiz(lv), listen: lv => pageQuiz(lv, "listen"), exam: lv => pageQuiz(lv, "exam"), write: pageWrite,
   pinyin: pagePinyin, tones: pageTones, grammar: pageGrammar, dialogues: () => pageDialogues(), dialogue: pageDialogues, reading: pageReading, shadow: pageShadow,
-  level: pageLevel, levels: pageLevels, dict: pageDict, book: pageBook, stats: pageStats, plan: pagePlan, settings: pageSettings, about: pageAbout,
+  level: pageLevel, levels: pageLevels, word: pageWord, hanzi: pageHanzi, pairs: pagePairs, cloud: pageCloud, dict: pageDict, book: pageBook, stats: pageStats, plan: pagePlan, settings: pageSettings, about: pageAbout,
 };
-const TAB = { home: "home", learn: "learn", review: "review", me: "me", study: "review", book: "review", quiz: "home", dict: "home", stats: "me", plan: "home", settings: "me", about: "me" };
+const TAB = { pairs: "review", cloud: "review", word: "home", home: "home", learn: "learn", review: "review", me: "me", study: "review", book: "review", quiz: "home", dict: "home", stats: "me", plan: "home", settings: "me", about: "me" };
 async function route() {
   leaveFns.forEach(f => { try { f(); } catch (_) {} }); leaveFns = []; if ("speechSynthesis" in window) speechSynthesis.cancel();
   $$(".sheet").forEach(s => s.remove());
-  let [name, arg] = (location.hash.replace(/^#\/?/, "") || "home").split("/");
+  let [name, arg, arg2] = (location.hash.replace(/^#\/?/, "") || "home").split("/");
   if (!S.profile && name !== "welcome") { location.replace("#/welcome"); return; }
   if (S.profile && name === "welcome") name = "home";
   const fn = ROUTES[name] || pageHome; const bare = name === "welcome";
-  $("#appbar").hidden = bare; $("#tabbar").hidden = bare; $("#fab").hidden = bare || ["study", "quiz", "listen", "exam", "write", "tones", "shadow"].includes(name);
+  $("#appbar").hidden = bare; $("#tabbar").hidden = bare; $("#fab").hidden = bare || ["study", "quiz", "listen", "exam", "write", "tones", "shadow", "hanzi", "pairs"].includes(name);
   const tab = TAB[name] || "learn"; $$("#tabbar a").forEach(a => a.toggleAttribute("aria-current", a.dataset.tab === tab));
   window.scrollTo(0, 0);
-  try { await fn(arg); } catch (e) { console.error(e); app.innerHTML = `${topbar("Ошибка")}<div class="empty"><b>Не удалось загрузить</b>Проверьте подключение к интернету и попробуйте снова.<br><button class="btn small" onclick="location.reload()">Обновить</button></div>`; }
+  try { await fn(arg, arg2); } catch (e) { console.error(e); app.innerHTML = `${topbar("Ошибка")}<div class="empty"><b>Не удалось загрузить</b>Проверьте подключение к интернету и попробуйте снова.<br><button class="btn small" onclick="location.reload()">Обновить</button></div>`; }
   document.title = name === "home" ? "汉语熊猫 · Китайский каждый день" : `${$("h1")?.textContent || "汉语熊猫"} · 汉语熊猫`;
 }
 window.addEventListener("hashchange", route);
