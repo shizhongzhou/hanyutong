@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>汉语熊猫 · Китайский каждый день</title>
+<meta name="description" content="Китайский для русскоговорящих: слова HSK 1–6, тоны, грамматика, диалоги, аудирование, повторение вслух и интервальное повторение.">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="汉语熊猫">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/panda-192.png">
+<link rel="apple-touch-icon" href="icons/panda-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css?v=3">
+</head>
+<body>
+<header class="appbar" id="appbar" hidden>
+  <a class="brand" href="#/home" aria-label="汉语熊猫 — главная"><span class="mark" id="brand-mark"></span><span>汉语熊猫</span></a>
+  <a class="round" href="#/dict" aria-label="Словарь"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.7"/><path d="m15.5 15.5 5 5"/></svg></a>
+</header>
+<main id="app" tabindex="-1"></main>
+<button class="panda-fab" id="fab" hidden aria-label="Спросить панду"><span class="face"></span>Спросить панду</button>
+<nav class="tabbar" id="tabbar" aria-label="Основная навигация" hidden>
+  <a href="#/home" data-tab="home"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5M5.3 9v11h5v-6h3.4v6h5V9"/></svg><span>Сегодня</span></a>
+  <a href="#/learn" data-tab="learn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4.8c4-1.4 6.7-1.1 9 1.4 2.3-2.5 5-2.8 9-1.4V20c-4-1.4-6.7-1.1-9 1-2.3-2.1-5-2.4-9-1V4.8ZM12 6.2V21"/></svg><span>Учёба</span></a>
+  <a href="#/review" data-tab="review"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.2 7A8 8 0 1 1 4 14M5.2 3v4H1.4M8.7 11.6l2.2 2.2 4.4-4.6"/></svg><span>Повторение</span></a>
+  <a href="#/me" data-tab="me"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.5" r="3.6"/><path d="M4.5 21v-1.5a7.5 7.5 0 0 1 15 0V21"/></svg><span>Профиль</span></a>
+</nav>
+<script src="js/content.js?v=3"></script>
+<script src="js/app.js?v=3"></script>
+</body>
+</html>

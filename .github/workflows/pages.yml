@@ -1,4 +1,4 @@
-name: Deploy Hanyutun to GitHub Pages
+name: Deploy Hanyutong to GitHub Pages
 
 on:
   push:
@@ -24,20 +24,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Assemble static app
+      - name: Check static app
         shell: bash
         run: |
           set -euo pipefail
-          test -s web-package.zip
-          test -s lapka-android.apk
-          mkdir -p _site/downloads
-          unzip -q web-package.zip -d _site
-          cp lapka-android.apk _site/downloads/lapka-android.apk
-          cp README.md _site/README.md
-          test -f _site/index.html
-          test -f _site/.nojekyll
-          test -f _site/manifest.webmanifest
-          test -s _site/downloads/lapka-android.apk
+          for f in index.html .nojekyll manifest.webmanifest sw.js js/app.js js/content.js css/app.css; do test -s "web/$f" || test -f "web/$f"; done
+          for n in 1 2 3 4 5 6; do python3 -c "import json,sys; d=json.load(open('web/data/hsk$n.json')); assert len(d)>100" ; done
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -45,7 +37,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: web
 
       - name: Deploy Pages
         id: deployment
