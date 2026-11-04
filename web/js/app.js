@@ -161,11 +161,12 @@ function pageLearn() {
       <a href="#/listen/${lv}"><span class="ic">${ic("ear")}</span><b>Аудирование</b><small>Сначала слушать, потом смотреть</small></a>
       <a href="#/shadow"><span class="ic">${ic("mic")}</span><b>Повторение вслух</b><small>Слушайте и повторяйте фразу</small></a>
       <a href="#/write/${lv}"><span class="ic">${ic("read")}</span><b>Письмо</b><small>Наберите слово пиньинем или иероглифами</small></a>
+      <a href="#/shelf"><span class="ic">${ic("book")}</span><b>Мои учебники</b><small>PDF и аудио к урокам</small></a>
       <a href="#/hanzi/${lv}"><span class="ic">${ic("pen")}</span><b>Иероглифы</b><small>Пишите по порядку черт</small></a>
       <a href="#/cloud/${lv}"><span class="ic">${ic("layers")}</span><b>Облако слов</b><small>Слова уровня по частоте</small></a>
       <a href="#/tones"><span class="ic">${ic("wave")}</span><b>Тренажёр тонов</b><small>Угадайте тон на слух</small></a>
       <a href="#/exam/${lv}"><span class="ic">${ic("trophy")}</span><b>Подготовка к HSK</b><small>Пробный тест с таймером</small></a></div>
-    <div class="list mt">${row("#/levels", "layers", "Уровни курса", "HSK 1 – HSK 6 и ваш прогресс")}</div></section>`;
+    <div class="list mt">${row("#/shelf", "book", "Мои учебники", "Road to Success и другие книги · PDF и аудио")}${row("#/levels", "layers", "Уровни курса", "HSK 1 – HSK 6 и ваш прогресс")}</div></section>`;
 }
 
 function pageReview() {
@@ -190,7 +191,7 @@ function pageMe() {
   app.innerHTML = `<section class="page"><div style="display:flex;align-items:center;gap:16px;margin:4px 0 8px"><span style="width:84px;height:84px;border-radius:50%;background:var(--glaze);display:flex;align-items:center;justify-content:center">${PANDA.replace("<svg", '<svg style="width:64px;height:64px"')}</span>
       <div style="flex:1"><div style="font-size:23px;font-weight:750">${esc(S.profile.nick)}</div><div class="muted">${lvName(S.settings.level)}</div><a class="muted" href="#/settings">Настройки ›</a></div></div>
     <div class="box"><h3>Мои данные</h3><div class="stats"><div><b>${days}</b><small>дней учёбы</small></div><div><b>${accuracy()}%</b><small>точность</small></div><div><b>${streak()}</b><small>дней подряд</small></div></div></div>
-    <div class="box list" style="padding:4px 20px">${row("#/stats", "clock", "История занятий", "Последние 14 дней")}${row("#/book", "bookmark", "Мой словарик", `${bk} ${plural(bk, "слово", "слова", "слов")}`)}${row("#/plan", "target", "Учебный план", `Цель: ${S.settings.goal} ответов в день`)}${row("#/levels", "layers", "Уровни", "Переключить уровень HSK")}</div>
+    <div class="box list" style="padding:4px 20px">${row("#/stats", "clock", "История занятий", "Последние 14 дней")}${row("#/book", "bookmark", "Мой словарик", `${bk} ${plural(bk, "слово", "слова", "слов")}`)}${row("#/plan", "target", "Учебный план", `Цель: ${S.settings.goal} ответов в день`)}${row("#/levels", "layers", "Уровни", "Переключить уровень HSK")}${row("#/shelf", "book", "Мои учебники", "Книги и аудио на устройстве")}</div>
     <div class="box list" style="padding:4px 20px">${row("#/settings", "gear", "Настройки", "Голос, пиньинь, резервная копия")}${row("#/about", "info", "О приложении и данных", "Источники словаря и лицензии")}</div></section>`;
 }
 
@@ -585,14 +586,120 @@ async function pageCloud(lv) {
   $$("#cl button").forEach(b => b.onclick = () => { const w = m.get(b.dataset.hz); speak(w.hz); $("#cw").innerHTML = wordRow(w); });
 }
 
+/* ---------- «Мои учебники»: локальная полка (IndexedDB, файлы не покидают устройство) ---------- */
+const Shelf = (() => {
+  let dbP = null;
+  const db = () => dbP || (dbP = new Promise((res, rej) => { const r = indexedDB.open("hanyu-shelf", 1); r.onupgradeneeded = () => { const d = r.result; d.createObjectStore("files", { keyPath: "id" }); d.createObjectStore("blobs"); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }));
+  const tx = async (stores, mode, fn) => { const d = await db(); return new Promise((res, rej) => { const t = d.transaction(stores, mode); let out; Promise.resolve(fn(t)).then(v => out = v); t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error); }); };
+  const req = r => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+  return {
+    list: () => tx(["files"], "readonly", t => req(t.objectStore("files").getAll())),
+    get: id => tx(["files"], "readonly", t => req(t.objectStore("files").get(id))),
+    blob: id => tx(["blobs"], "readonly", t => req(t.objectStore("blobs").get(id))),
+    put: (meta, blob) => tx(["files", "blobs"], "readwrite", t => { t.objectStore("files").put(meta); if (blob) t.objectStore("blobs").put(blob, meta.id); }),
+    update: meta => tx(["files"], "readwrite", t => { t.objectStore("files").put(meta); }),
+    remove: ids => tx(["files", "blobs"], "readwrite", t => { ids.forEach(id => { t.objectStore("files").delete(id); t.objectStore("blobs").delete(id); }); }),
+  };
+})();
+const KIND = f => /\.pdf$/i.test(f.name) || f.type === "application/pdf" ? "pdf" : /^audio\//.test(f.type) || /\.(mp3|m4a|wav|ogg|aac|flac|wma)$/i.test(f.name) ? "audio" : /^image\//.test(f.type) || /\.(jpe?g|png|webp|gif)$/i.test(f.name) ? "image" : /^video\//.test(f.type) || /\.(mp4|mov|m4v|webm)$/i.test(f.name) ? "video" : /\.(txt|md)$/i.test(f.name) ? "text" : null;
+const fmtSize = b => b > 1e9 ? (b / 1e9).toFixed(1) + " ГБ" : b > 1e6 ? (b / 1e6).toFixed(1) + " МБ" : Math.max(1, Math.round(b / 1e3)) + " КБ";
+const natCmp = (a, b) => a.localeCompare(b, "ru", { numeric: true, sensitivity: "base" });
+const KIND_IC = { pdf: "book", audio: "speaker", image: "layers", video: "wave", text: "read" };
+const KIND_RU = { pdf: "PDF", audio: "аудио", image: "изображение", video: "видео", text: "текст" };
+
+async function importFiles(fileList, onProgress) {
+  const files = [...fileList].filter(f => KIND(f) && !f.name.startsWith(".")); let done = 0, bytes = 0;
+  try { await navigator.storage?.persist?.(); } catch (_) {}
+  for (const f of files) {
+    const path = (f.webkitRelativePath || f.name).split("/"); const name = path.pop();
+    // книга = первая папка внутри выбранной (или сама выбранная папка)
+    const book = path.length >= 2 ? path[1] : path[0] || "Без папки"; const sub = path.slice(2).join(" / ");
+    const id = `${path.join("/")}/${name}|${f.size}`;
+    await Shelf.put({ id, name, book, sub, kind: KIND(f), size: f.size, type: f.type, added: Date.now(), pos: 0, done: false }, f);
+    done++; bytes += f.size; onProgress && onProgress(done, files.length, bytes);
+  }
+  return { count: files.length, bytes };
+}
+
+async function pageShelf(bookArg) {
+  const book = bookArg ? decodeURIComponent(bookArg) : null;
+  app.innerHTML = `${topbar(book || "Мои учебники", book ? "#/shelf" : "#/learn")}<p class="empty">Загрузка…</p>`;
+  let items = []; try { items = await Shelf.list(); } catch (_) { app.innerHTML = `${topbar("Мои учебники", "#/learn")}<div class="empty"><b>Хранилище недоступно</b>Браузер запретил локальное хранение (например, приватный режим).</div>`; return; }
+  if (book) {
+    const files = items.filter(x => x.book === book).sort((a, b) => natCmp(a.sub + "/" + a.name, b.sub + "/" + b.name));
+    const groups = {}; files.forEach(f => (groups[f.sub || ""] ||= []).push(f));
+    app.innerHTML = `${topbar(esc(book), "#/shelf")}<p class="sub" style="margin-top:-6px">${files.length} ${plural(files.length, "файл", "файла", "файлов")} · ${fmtSize(files.reduce((s, f) => s + f.size, 0))}</p>
+      ${Object.keys(groups).sort(natCmp).map(g => `${g ? `<div class="section"><h2 style="font-size:14px">${esc(g)}</h2></div>` : ""}<div class="list">${groups[g].map(f => `<a href="#/file/${encodeURIComponent(f.id)}"><span class="ic">${ic(KIND_IC[f.kind])}</span><span class="t"><b style="word-break:break-word">${esc(f.name.replace(/\.[^.]+$/, ""))}</b><small>${KIND_RU[f.kind]} · ${fmtSize(f.size)}${f.pos ? f.kind === "audio" ? ` · остановились на ${Math.floor(f.pos / 60)}:${String(Math.floor(f.pos % 60)).padStart(2, "0")}` : " · открывали" : ""}${f.done ? " · ✓" : ""}</small></span>${ic("go", "i go")}</a>`).join("")}</div>`).join("")}
+      <button class="btn ghost" id="del" style="color:var(--bad)">Удалить эту книгу с устройства</button>`;
+    $("#del").onclick = async () => { if (!confirm(`Удалить «${book}» с этого устройства?`)) return; await Shelf.remove(files.map(f => f.id)); toast("Книга удалена"); location.hash = "#/shelf"; };
+    return;
+  }
+  const books = {}; items.forEach(f => { const b = books[f.book] ||= { n: 0, size: 0, pdf: 0, audio: 0, last: 0 }; b.n++; b.size += f.size; b[f.kind] = (b[f.kind] || 0) + 1; b.last = Math.max(b.last, f.opened || 0); });
+  const names = Object.keys(books).sort(natCmp); const total = items.reduce((s, f) => s + f.size, 0);
+  let est = ""; try { const e = await navigator.storage?.estimate?.(); if (e?.quota) est = ` · доступно ещё ≈ ${fmtSize(Math.max(0, e.quota - e.usage))}`; } catch (_) {}
+  const recent = items.filter(f => f.opened).sort((a, b) => b.opened - a.opened)[0];
+  app.innerHTML = `${topbar("Мои учебники", "#/learn")}<p class="sub" style="margin-top:-6px">Добавьте свои учебники — PDF, аудио, картинки. Файлы хранятся только на этом устройстве и никуда не загружаются.</p>
+    ${recent ? `<a class="card-blue" href="#/file/${encodeURIComponent(recent.id)}" style="display:block;margin-top:16px"><p class="kicker">Продолжить</p><b style="font-size:17px;word-break:break-word">${esc(recent.name.replace(/\.[^.]+$/, ""))}</b><p class="sub" style="max-width:none">${esc(recent.book)}</p></a>` : ""}
+    <div class="two"><label class="btn" style="cursor:pointer">${ic("download")} Папку<input type="file" id="fdir" webkitdirectory directory multiple hidden></label><label class="btn ghost" style="cursor:pointer">Файлы<input type="file" id="ffiles" multiple accept=".pdf,audio/*,image/*,video/*,.txt,.md,.mp3,.m4a,.wav" hidden></label></div>
+    <p class="hint">Совет: распакуйте скачанный архив и выберите общую папку (например, «Road to Success») — каждая вложенная папка станет отдельной книгой. На iPhone выбирайте файлы через «Файлы».</p><div id="imp"></div>
+    ${names.length ? `<div class="section"><h2>Книги</h2><span class="muted">${names.length} · ${fmtSize(total)}${est}</span></div><div class="list">${names.map(n => { const b = books[n]; return `<a href="#/shelf/${encodeURIComponent(n)}"><span class="ic">${ic("book")}</span><span class="t"><b style="word-break:break-word">${esc(n)}</b><small>${[b.pdf ? `PDF: ${b.pdf}` : "", b.audio ? `аудио: ${b.audio}` : "", b.image ? `картинок: ${b.image}` : "", b.video ? `видео: ${b.video}` : ""].filter(Boolean).join(" · ")} · ${fmtSize(b.size)}</small></span>${ic("go", "i go")}</a>`; }).join("")}</div>`
+      : `<div class="empty"><b>Полка пока пуста</b>Нажмите «Папку», чтобы добавить учебники.</div>`}`;
+  const onPick = async e => {
+    const fl = e.target.files; if (!fl || !fl.length) return; const box = $("#imp");
+    box.innerHTML = `<div class="box"><b>Добавляю…</b><div class="bar mt"><i id="ib" style="width:0"></i></div><p class="hint" id="it"></p></div>`;
+    try { const r = await importFiles(fl, (d, n, b) => { $("#ib").style.width = d / n * 100 + "%"; $("#it").textContent = `${d} из ${n} · ${fmtSize(b)}`; });
+      toast(r.count ? `Добавлено ${r.count} ${plural(r.count, "файл", "файла", "файлов")}` : "Подходящих файлов не найдено (PDF, аудио, изображения, видео)"); pageShelf(); }
+    catch (err) { box.innerHTML = `<div class="notice">Не хватило места на устройстве или браузер остановил запись. Добавьте книги по частям. (${esc(err?.name || err)})</div>`; }
+  };
+  $("#fdir").onchange = onPick; $("#ffiles").onchange = onPick;
+}
+
+async function pageFile(idArg) {
+  const id = decodeURIComponent(idArg || ""); const meta = await Shelf.get(id); const blob = meta && await Shelf.blob(id);
+  if (!meta || !blob) { app.innerHTML = `${topbar("Файл", "#/shelf")}<div class="empty"><b>Файл не найден</b>Возможно, он был удалён с устройства.</div>`; return; }
+  meta.opened = Date.now(); Shelf.update(meta);
+  const back = `#/shelf/${encodeURIComponent(meta.book)}`; const url = URL.createObjectURL(blob); onLeave(() => setTimeout(() => URL.revokeObjectURL(url), 60e3));
+  const siblings = (await Shelf.list()).filter(f => f.book === meta.book && f.kind === meta.kind).sort((a, b) => natCmp(a.sub + "/" + a.name, b.sub + "/" + b.name));
+  const i = siblings.findIndex(f => f.id === id), prev = siblings[i - 1], next = siblings[i + 1];
+  const nav = `<div class="two">${prev ? `<a class="btn ghost" href="#/file/${encodeURIComponent(prev.id)}">‹ Назад</a>` : "<span></span>"}${next ? `<a class="btn ghost" href="#/file/${encodeURIComponent(next.id)}">Дальше ›</a>` : "<span></span>"}</div>`;
+  const title = esc(meta.name.replace(/\.[^.]+$/, ""));
+  if (meta.kind === "pdf") {
+    app.innerHTML = `${topbar(title, back)}<p class="muted" style="margin-top:-8px">${esc(meta.book)}${meta.sub ? " · " + esc(meta.sub) : ""}</p>
+      <iframe src="${url}#page=${meta.page || 1}" title="${title}" style="width:100%;height:68vh;border:1px solid var(--line);border-radius:18px;background:#f5f6f8"></iframe>
+      <a class="btn" href="${url}" target="_blank" rel="noopener">Открыть на весь экран</a>
+      <label class="field"><span>Запомнить страницу</span><input id="pg" type="number" min="1" inputmode="numeric" value="${meta.page || ""}" placeholder="номер страницы"></label>${nav}`;
+    $("#pg").onchange = e => { meta.page = +e.target.value || 1; meta.pos = meta.page; Shelf.update(meta); toast("Страница сохранена"); };
+  } else if (meta.kind === "audio" || meta.kind === "video") {
+    const tag = meta.kind === "audio" ? "audio" : "video";
+    app.innerHTML = `${topbar(title, back)}<p class="muted" style="margin-top:-8px">${esc(meta.book)}${meta.sub ? " · " + esc(meta.sub) : ""}</p>
+      ${tag === "audio" ? `<div class="card-blue center" style="padding:26px 18px"><div style="width:96px;margin:0 auto 10px">${PANDA}</div><b style="word-break:break-word">${title}</b></div>` : ""}
+      <${tag} id="pl" src="${url}" controls preload="metadata" style="width:100%;margin-top:16px;${tag === "video" ? "border-radius:18px;background:#000" : ""}"></${tag}>
+      <div class="seg mt">${[0.75, 1, 1.25].map(r => `<button data-r="${r}" aria-pressed="${r === 1}">${r}×</button>`).join("")}<button id="rw">−5 с</button><button id="loop" aria-pressed="false">Повтор</button></div>
+      <label class="setrow"><span>Автоматически следующий трек</span><button class="toggle" id="auto" aria-pressed="${S.settings.autoNext !== false}"></button></label>${nav}`;
+    const pl = $("#pl"); pl.addEventListener("loadedmetadata", () => { if (meta.pos && meta.pos < pl.duration - 3) pl.currentTime = meta.pos; }, { once: true });
+    let t = 0; pl.ontimeupdate = () => { if (Date.now() - t > 4000) { t = Date.now(); meta.pos = pl.currentTime; Shelf.update(meta); } };
+    pl.onended = () => { meta.pos = 0; meta.done = true; Shelf.update(meta); markStudy(); save(); if (S.settings.autoNext !== false && next && !pl.loop) location.hash = `#/file/${encodeURIComponent(next.id)}`; };
+    $$("[data-r]").forEach(b => b.onclick = () => { pl.playbackRate = +b.dataset.r; $$("[data-r]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
+    $("#rw").onclick = () => { pl.currentTime = Math.max(0, pl.currentTime - 5); };
+    $("#loop").onclick = e => { pl.loop = !pl.loop; e.currentTarget.setAttribute("aria-pressed", String(pl.loop)); };
+    $("#auto").onclick = e => { S.settings.autoNext = S.settings.autoNext === false; e.currentTarget.setAttribute("aria-pressed", String(S.settings.autoNext)); save(); };
+    onLeave(() => { meta.pos = pl.currentTime; Shelf.update(meta); pl.pause(); });
+    pl.play().catch(() => {});
+  } else if (meta.kind === "image") {
+    app.innerHTML = `${topbar(title, back)}<img src="${url}" alt="${title}" style="width:100%;border-radius:18px;border:1px solid var(--line)">${nav}`;
+  } else {
+    const txt = await blob.text(); app.innerHTML = `${topbar(title, back)}<div class="box zh" style="white-space:pre-wrap;line-height:1.9;font-size:17px">${esc(txt)}</div>${nav}`;
+  }
+}
+
 /* ========== маршрутизация ========== */
 const ROUTES = {
   welcome: pageWelcome, home: pageHome, learn: pageLearn, review: pageReview, me: pageMe,
   study: pageStudy, quiz: lv => pageQuiz(lv), listen: lv => pageQuiz(lv, "listen"), exam: lv => pageQuiz(lv, "exam"), write: pageWrite,
   pinyin: pagePinyin, tones: pageTones, grammar: pageGrammar, dialogues: () => pageDialogues(), dialogue: pageDialogues, reading: pageReading, shadow: pageShadow,
-  level: pageLevel, levels: pageLevels, word: pageWord, hanzi: pageHanzi, pairs: pagePairs, cloud: pageCloud, dict: pageDict, book: pageBook, stats: pageStats, plan: pagePlan, settings: pageSettings, about: pageAbout,
+  level: pageLevel, levels: pageLevels, word: pageWord, hanzi: pageHanzi, pairs: pagePairs, cloud: pageCloud, shelf: pageShelf, file: pageFile, dict: pageDict, book: pageBook, stats: pageStats, plan: pagePlan, settings: pageSettings, about: pageAbout,
 };
-const TAB = { pairs: "review", cloud: "review", word: "home", home: "home", learn: "learn", review: "review", me: "me", study: "review", book: "review", quiz: "home", dict: "home", stats: "me", plan: "home", settings: "me", about: "me" };
+const TAB = { shelf: "learn", file: "learn", pairs: "review", cloud: "review", word: "home", home: "home", learn: "learn", review: "review", me: "me", study: "review", book: "review", quiz: "home", dict: "home", stats: "me", plan: "home", settings: "me", about: "me" };
 async function route() {
   leaveFns.forEach(f => { try { f(); } catch (_) {} }); leaveFns = []; if ("speechSynthesis" in window) speechSynthesis.cancel();
   $$(".sheet").forEach(s => s.remove());
@@ -600,7 +707,7 @@ async function route() {
   if (!S.profile && name !== "welcome") { location.replace("#/welcome"); return; }
   if (S.profile && name === "welcome") name = "home";
   const fn = ROUTES[name] || pageHome; const bare = name === "welcome";
-  $("#appbar").hidden = bare; $("#tabbar").hidden = bare; $("#fab").hidden = bare || ["study", "quiz", "listen", "exam", "write", "tones", "shadow", "hanzi", "pairs"].includes(name);
+  $("#appbar").hidden = bare; $("#tabbar").hidden = bare; $("#fab").hidden = bare || ["study", "quiz", "listen", "exam", "write", "tones", "shadow", "hanzi", "pairs", "file"].includes(name);
   const tab = TAB[name] || "learn"; $$("#tabbar a").forEach(a => a.toggleAttribute("aria-current", a.dataset.tab === tab));
   window.scrollTo(0, 0);
   try { await fn(arg, arg2); } catch (e) { console.error(e); app.innerHTML = `${topbar("Ошибка")}<div class="empty"><b>Не удалось загрузить</b>Проверьте подключение к интернету и попробуйте снова.<br><button class="btn small" onclick="location.reload()">Обновить</button></div>`; }
