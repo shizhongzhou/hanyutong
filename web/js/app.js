@@ -59,10 +59,10 @@ const accuracy = () => S.stats.answered ? Math.round(S.stats.correct / S.stats.a
 const cache = {};
 function level(lv) {
   if (!cache[lv]) cache[lv] = fetch(`data/hsk${lv}.json`).then(r => { if (!r.ok) throw Error(r.status); return r.json(); })
-    .then(a => a.map(([hz, py, ru, pos]) => ({ hz, py, ru, pos, lv: +lv }))).catch(e => { delete cache[lv]; throw e; });
+    .then(a => a.map(([hz, py, ru, pos]) => { if (S.srs[hz] && S.srs[hz].lv !== +lv) { S.srs[hz].lv = +lv; save(); } if (S.book[hz] && S.book[hz].lv !== +lv) S.book[hz].lv = +lv; return { hz, py, ru, pos, lv: +lv }; })).catch(e => { delete cache[lv]; throw e; });
   return cache[lv];
 }
-const allWords = () => Promise.all([1, 2, 3, 4, 5, 6].map(level)).then(a => a.flat());
+const allWords = () => Promise.all(LEVEL_IDS.map(level)).then(a => a.flat());
 const short = ru => ru.split(";")[0].trim();
 const plain = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ü/g, "v").toLowerCase().replace(/[^a-zа-яё0-9]/g, "");
 
@@ -107,7 +107,7 @@ const starBtn = w => `<button class="star" data-star="${esc(w.hz)}" data-lv="${w
 document.addEventListener("click", e => { const b = e.target.closest("[data-star]"); if (!b) return; const hz = b.dataset.star; if (S.book[hz]) delete S.book[hz]; else S.book[hz] = { lv: +b.dataset.lv, t: Date.now(), why: "добавлено" }; b.setAttribute("aria-pressed", String(!!S.book[hz])); save(); toast(S.book[hz] ? "Добавлено в мой словарик" : "Убрано из словарика"); });
 const wordRow = w => `<div class="word"><a class="h zh" href="#/word/${encodeURIComponent(w.hz)}">${esc(w.hz)}</a><a class="m" href="#/word/${encodeURIComponent(w.hz)}"><div class="py">${esc(w.py)}${w.pos ? `<span class="tag">${esc(w.pos)}</span>` : ""}</div><div>${esc(w.ru)}</div></a>${starBtn(w)}${sayBtn(w.hz)}</div>`;
 const greeting = () => { const hr = new Date().getHours(); return hr < 5 ? "Доброй ночи" : hr < 12 ? "Доброе утро" : hr < 18 ? "Добрый день" : "Добрый вечер"; };
-const lvName = lv => `HSK ${lv} · ${LEVELS[lv].title}`;
+const lvName = lv => `${lvLabel(lv)} · ${LEVELS[lv].title}`;
 let leaveFns = [];
 const onLeave = fn => leaveFns.push(fn);
 
@@ -117,9 +117,9 @@ function pageWelcome() {
   app.innerHTML = `<section class="welcome"><div class="top"><span class="wordmark">ZH<span>·</span></span><span class="ed">Русский · 中文</span></div>
     <div class="art">${ART_WELCOME}</div><p class="kicker" style="margin-top:14px">每天说一点中文</p>
     <h1>Каждый день —<br><u>немного китайского.</u></h1><p class="sub">Услышать фразу, запомнить слово, сказать в ответ.<br>От первого «你好» до свободного разговора — без спешки.</p>
-    <div class="lvnote">HSK 1 — HSK 6 · шаг за шагом</div>
+    <div class="lvnote">HSK 1 — HSK 9 · шаг за шагом</div>
     <label class="field" style="text-align:left"><span>Как к вам обращаться?</span><input id="nick" maxlength="20" placeholder="Например, Анна" autocomplete="given-name"></label>
-    <div class="field" style="text-align:left"><span>С какого уровня начать?</span><div class="lvpick">${[1, 2, 3, 4, 5, 6].map(n => `<button data-lv="${n}" aria-pressed="${n === lv}"><b>HSK ${n}</b>${LEVELS[n].title}</button>`).join("")}</div></div>
+    <div class="field" style="text-align:left"><span>С какого уровня начать?</span><div class="lvpick">${LEVEL_IDS.slice(0, 7).map(n => `<button data-lv="${n}" aria-pressed="${n === lv}"><b>${lvLabel(n)}</b>${LEVELS[n].title}</button>`).join("")}</div></div>
     <button class="btn" id="go">Начать ${ic("go")}</button><p class="hint mt">Прогресс хранится на этом устройстве. В профиле можно сделать резервную копию.</p></section>`;
   $$(".lvpick button").forEach(b => b.onclick = () => { lv = +b.dataset.lv; $$(".lvpick button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
   $("#go").onclick = () => { S.profile = { nick: $("#nick").value.trim() || "друг", created: Date.now() }; S.settings.level = lv; save(); location.hash = "#/home"; };
@@ -129,14 +129,14 @@ async function pageHome() {
   const lv = S.settings.level, d = D(), due = dueList().length, goal = S.settings.goal, pct = Math.min(100, d.correct / goal * 100);
   const wk = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"], now = new Date(), mon = new Date(now); mon.setDate(now.getDate() - (now.getDay() + 6) % 7);
   const week = wk.map((n, i) => { const x = new Date(mon); x.setDate(mon.getDate() + i); const t = today(x.getTime()); return `<span class="${t === today() ? "today" : ""} ${S.stats.days[t] ? "done" : ""}">${n}<b>${x.getDate()}</b></span>`; }).join("");
-  app.innerHTML = `<section class="page"><div class="greet intro"><div><p class="kicker">${greeting()}</p><h1>${esc(S.profile.nick)},<br>сегодня тоже немного <span class="zh">中文</span>.</h1></div><a class="pill" href="#/levels">HSK ${lv} ${ic("go")}</a></div>
+  app.innerHTML = `<section class="page"><div class="greet intro"><div><p class="kicker">${greeting()}</p><h1>${esc(S.profile.nick)},<br>сегодня тоже немного <span class="zh">中文</span>.</h1></div><a class="pill" href="#/levels">${lvLabel(lv)} ${ic("go")}</a></div>
     <div class="week">${week}</div>
     <div class="card-blue"><p class="kicker">每天一点</p><h2>Понемногу каждый день.</h2><p class="sub">${lvName(lv)}</p><div class="art">${ART_READ}</div>
       <div class="prog"><div class="row"><span>Цель на сегодня — верных ответов</span><b>${d.correct} / ${goal}</b></div><div class="bar"><i style="width:${pct}%"></i></div></div>
       <a class="btn" href="#/study/${lv}">${d.correct >= goal ? "Цель выполнена — ещё немного" : "Продолжить"} ${ic("go")}</a></div>
     <div class="section"><h2>План на сегодня</h2><a href="#/plan">Настроить ›</a></div>
     <div class="list">${row("#/review", "review", "Повторить знакомое", due ? `${due} ${plural(due, "слово ждёт", "слова ждут", "слов ждут")} повторения` : "Повторение и мой словарик")}
-    ${row(`#/study/${lv}`, "book", "Выучить новое", `HSK ${lv} · новые слова карточками`)}
+    ${row(`#/study/${lv}`, "book", "Выучить новое", `${lvLabel(lv)} · новые слова карточками`)}
     ${row(`#/quiz/${lv}`, "check", "Ежедневный тест", `Сегодня верных ответов: ${d.correct}`)}</div>
     <div class="tiles"><a href="#/dict">${ic("search")}Словарь</a><a href="#/book">${ic("bookmark")}Мой словарик</a><a href="#/stats">${ic("chart")}Статистика</a></div>
     <div class="section"><h2>Понемногу, но регулярно.</h2></div>
@@ -149,11 +149,11 @@ async function pageHome() {
 function pageLearn() {
   const lv = S.settings.level, total = LEVELS[lv].words, k = known(lv);
   app.innerHTML = `<section class="page"><div class="intro"><p class="kicker">Ваш учебный маршрут</p><h1>Шаг за шагом —<br>говорить больше.</h1><p class="sub">От тонов и звуков — к собственным фразам.</p></div>
-    <a class="card-blue" href="#/level/${lv}" style="display:block"><div style="display:flex;justify-content:space-between"><b style="font-size:19px">HSK ${lv} · ${LEVELS[lv].title}</b>${ic("go")}</div><p class="sub" style="max-width:none">${LEVELS[lv].desc}</p>
+    <a class="card-blue" href="#/level/${lv}" style="display:block"><div style="display:flex;justify-content:space-between"><b style="font-size:19px">${lvLabel(lv)} · ${LEVELS[lv].title}</b>${ic("go")}</div><p class="sub" style="max-width:none">${LEVELS[lv].desc}</p>
       <div class="prog"><div class="row"><span>Выучено слов уровня</span><span>${k} / ${total}</span></div><div class="bar"><i style="width:${k / total * 100}%"></i></div></div></a>
     <div class="section"><h2>С чего начать?</h2><a href="#/levels">Выбрать уровень ›</a></div>
     <div class="steps"><a href="#/pinyin" class="${k < 10 ? "cur" : ""}"><span class="n">01</span><span class="t"><b>Услышать звуки китайского</b><small>Пиньинь · четыре тона · инициали и финали</small></span>${ic("go", "i go")}</a>
-      <a href="#/study/${lv}" class="${k >= 10 && k < 60 ? "cur" : ""}"><span class="n">02</span><span class="t"><b>Узнать слова во фразе</b><small>Лексика HSK ${lv} · карточки · части речи</small></span>${ic("go", "i go")}</a>
+      <a href="#/study/${lv}" class="${k >= 10 && k < 60 ? "cur" : ""}"><span class="n">02</span><span class="t"><b>Узнать слова во фразе</b><small>Лексика ${lvLabel(lv)} · карточки · части речи</small></span>${ic("go", "i go")}</a>
       <a href="#/dialogues"><span class="n">03</span><span class="t"><b>Понять на слух и ответить</b><small>Диалоги · аудирование · повторение вслух</small></span>${ic("go", "i go")}</a>
       <a href="#/reading"><span class="n">04</span><span class="t"><b>Прочитать текст, написать фразу</b><small>Чтение · письмо</small></span>${ic("go", "i go")}</a></div>
     <div class="section"><h2>Отдельные тренировки</h2></div>
@@ -166,7 +166,7 @@ function pageLearn() {
       <a href="#/cloud/${lv}"><span class="ic">${ic("layers")}</span><b>Облако слов</b><small>Слова уровня по частоте</small></a>
       <a href="#/tones"><span class="ic">${ic("wave")}</span><b>Тренажёр тонов</b><small>Угадайте тон на слух</small></a>
       <a href="#/exam/${lv}"><span class="ic">${ic("trophy")}</span><b>Подготовка к HSK</b><small>Пробный тест с таймером</small></a></div>
-    <div class="list mt">${row("#/shelf", "book", "Мои учебники", "Road to Success и другие книги · PDF и аудио")}${row("#/levels", "layers", "Уровни курса", "HSK 1 – HSK 6 и ваш прогресс")}</div></section>`;
+    <div class="list mt">${row("#/shelf", "book", "Мои учебники", "Road to Success и другие книги · PDF и аудио")}${row("#/levels", "layers", "Уровни курса", "HSK 1 – HSK 9 и ваш прогресс")}</div></section>`;
 }
 
 function pageReview() {
@@ -203,14 +203,14 @@ async function pageStudy(arg) {
   else if (arg === "book") { const words = await allWords(); const m = new Map(words.map(w => [w.hz, w])); queue = shuffle(Object.keys(S.book).map(k => m.get(k)).filter(Boolean)).slice(0, 30); title = "Мой словарик"; }
   else { const lv = +arg || S.settings.level; const words = await level(lv); const now = Date.now();
     const due = words.filter(w => S.srs[w.hz] && S.srs[w.hz].d <= now); const fresh = words.filter(w => !S.srs[w.hz]).slice(0, Math.max(0, S.settings.newPerDay - D().learned));
-    queue = shuffle(due).slice(0, 20).concat(fresh); title = `HSK ${lv} · карточки`; }
+    queue = shuffle(due).slice(0, 20).concat(fresh); title = `${lvLabel(lv)} · карточки`; }
   if (!queue.length) { app.innerHTML = `${topbar(title, "#/review")}<div class="empty"><b>${arg === "book" ? "Словарик пуст" : "На сегодня всё!"}</b>${arg === "book" ? "Сюда попадают ошибки из тестов и слова со звёздочкой." : "Новых слов на сегодня больше нет, повторять пока нечего. Загляните завтра или пройдите тест."}<br><a class="btn small" href="#/quiz/${S.settings.level}">Пройти тест</a></div>`; return; }
   const total = queue.length; let done = 0, shown = false;
   function draw() {
     const w = queue[0]; if (!w) return finish();
     const isNew = !S.srs[w.hz]; shown = false;
     app.innerHTML = `${topbar(title, "#/review")}<div class="qhead"><div class="bar"><i style="width:${done / total * 100}%"></i></div><span class="muted">${done}/${total}</span></div>
-      <div class="stack"><div class="flash" id="card"><span class="meta">HSK ${w.lv}${isNew ? " · новое" : ""}</span><div style="position:absolute;top:10px;right:10px;display:flex">${starBtn(w)}</div>
+      <div class="stack"><div class="flash" id="card"><span class="meta">${lvLabel(w.lv)}${isNew ? " · новое" : ""}</span><div style="position:absolute;top:10px;right:10px;display:flex">${starBtn(w)}</div>
         <div class="big zh">${esc(w.hz)}</div><div class="py ${S.settings.pinyin || shown ? "" : "hid"}" id="py">${esc(w.py)}</div><div class="ru hid" id="ru">${esc(w.ru)}</div>${sayBtn(w.hz)}</div></div>
       <div id="act"><button class="btn" id="show">Показать перевод</button></div>`;
     speak(w.hz, $("#card .say"));
@@ -240,7 +240,7 @@ async function pageQuiz(lv, mode = "mix") {
   });
   let k = 0, right = 0, t0 = Date.now(), timer = 0; const wrongs = [];
   const back = exam ? "#/learn" : mode === "listen" ? "#/learn" : "#/home";
-  const ttl = exam ? `Пробный HSK ${lv}` : mode === "listen" ? `Аудирование · HSK ${lv}` : `Тест · HSK ${lv}`;
+  const ttl = exam ? `Пробный ${lvLabel(lv)}` : mode === "listen" ? `Аудирование · ${lvLabel(lv)}` : `Тест · ${lvLabel(lv)}`;
   if (exam) { timer = setInterval(() => { const s = Math.max(0, 600 - (Date.now() - t0) / 1e3 | 0); const el = $("#tm"); if (el) el.textContent = `${s / 60 | 0}:${String(s % 60).padStart(2, "0")}`; if (!s) { clearInterval(timer); finish(); } }, 500); onLeave(() => clearInterval(timer)); }
   function draw() {
     const q = qs[k]; if (!q) return finish(); const w = q.w;
@@ -276,7 +276,7 @@ async function pageWrite(lv) {
   lv = +lv || S.settings.level; const words = shuffle(await level(lv)).slice(0, 10); let k = 0, right = 0;
   function draw() {
     const w = words[k]; if (!w) { app.innerHTML = `${topbar("Письмо", "#/learn")}<div class="result"><div class="score">${right}/${words.length}</div><p>Отличная практика!</p><button class="btn" id="again">Ещё раз</button></div>`; $("#again").onclick = () => pageWrite(lv); return; }
-    app.innerHTML = `${topbar(`Письмо · HSK ${lv}`, "#/learn")}<div class="qhead"><div class="bar"><i style="width:${k / words.length * 100}%"></i></div><span class="muted">${k + 1}/${words.length}</span></div>
+    app.innerHTML = `${topbar(`Письмо · ${lvLabel(lv)}`, "#/learn")}<div class="qhead"><div class="bar"><i style="width:${k / words.length * 100}%"></i></div><span class="muted">${k + 1}/${words.length}</span></div>
       <div class="qcard"><div class="q">Напишите по-китайски (иероглифами или пиньинем, тоны можно цифрами)</div><div class="mid">${esc(w.ru)}</div>${sayBtn(w.hz)}</div>
       <label class="field"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="например: nihao, ni3hao или 你好"></label><button class="btn" id="chk">Проверить</button><div id="fb"></div>`;
     const inp = $("#ans"); inp.focus(); inp.onkeydown = e => { if (e.key === "Enter") $("#chk").click(); };
@@ -320,11 +320,11 @@ function pageTones() {
 /* ---------- грамматика, диалоги, чтение ---------- */
 function pageGrammar(id) {
   if (id) { const g = GRAMMAR.find(x => x.id === id); if (!g) return pageGrammar();
-    app.innerHTML = `${topbar(g.title, "#/grammar")}<span class="pill">HSK ${g.lv}</span><p style="font-size:15px;line-height:1.75">${esc(g.rule)}</p>
+    app.innerHTML = `${topbar(g.title, "#/grammar")}<span class="pill">${lvLabel(g.lv)}</span><p style="font-size:15px;line-height:1.75">${esc(g.rule)}</p>
       <div class="section"><h2>Примеры</h2><button class="muted" id="all">${ic("speaker")}</button></div><div class="dlg">${g.ex.map(e => `<div class="line" data-say="${esc(e[0])}"><div><div class="zh">${esc(e[0])}</div><div class="py">${esc(e[1])}</div><div class="ru">${esc(e[2])}</div></div></div>`).join("")}</div>`;
     $("#all").onclick = () => speakAll($$(".dlg .line").map(el => ({ el, text: el.dataset.say }))); return; }
   app.innerHTML = `${topbar("Грамматика", "#/learn")}<p class="sub" style="margin-top:-6px">Главные конструкции HSK 1–4 с примерами и озвучкой.</p>
-    ${[1, 2, 3, 4].map(lv => `<div class="section"><h2>HSK ${lv}</h2></div><div class="list">${GRAMMAR.filter(g => g.lv === lv).map(g => row(`#/grammar/${g.id}`, "pen", g.title, esc(g.ex[0][0]))).join("")}</div>`).join("")}`;
+    ${[1, 2, 3, 4].map(lv => `<div class="section"><h2>${lvLabel(lv)}</h2></div><div class="list">${GRAMMAR.filter(g => g.lv === lv).map(g => row(`#/grammar/${g.id}`, "pen", g.title, esc(g.ex[0][0]))).join("")}</div>`).join("")}`;
 }
 function linesView(lines, kind) {
   const hp = !S.settings.pinyin;
@@ -342,7 +342,7 @@ function pageDialogues(id) {
     app.innerHTML = `${topbar(g.title, "#/dialogues")}${linesView(g.lines.map(([who, zh, py, ru]) => ({ who, zh, py, ru })), "dlg")}<p class="hint">Нажмите на реплику, чтобы услышать её. Скройте перевод и попробуйте понять на слух.</p><a class="btn" href="#/shadow/${g.id}">Повторить вслух ${ic("mic")}</a>`;
     bindLines(); return; }
   app.innerHTML = `${topbar("Диалоги", "#/learn")}<p class="sub" style="margin-top:-6px">Короткие сценки из жизни: знакомство, кафе, магазин, дорога.</p>
-    ${[1, 2, 3].map(lv => `<div class="section"><h2>HSK ${lv}</h2></div><div class="list">${DIALOGUES.filter(g => g.lv === lv).map(g => row(`#/dialogue/${g.id}`, "chat", g.title, esc(g.lines[0][1]))).join("")}</div>`).join("")}`;
+    ${[1, 2, 3].map(lv => `<div class="section"><h2>${lvLabel(lv)}</h2></div><div class="list">${DIALOGUES.filter(g => g.lv === lv).map(g => row(`#/dialogue/${g.id}`, "chat", g.title, esc(g.lines[0][1]))).join("")}</div>`).join("")}`;
 }
 function pageReading(id) {
   if (id) { const g = READINGS.find(x => x.id === id); if (!g) return pageReading();
@@ -350,7 +350,7 @@ function pageReading(id) {
     bindLines();
     $$(".box .opt").forEach(b => b.onclick = () => { if ($(".box .right")) return; const ok = +b.dataset.i === g.q[2]; record(ok); $(`.box .opt[data-i="${g.q[2]}"]`).classList.add("right"); if (!ok) b.classList.add("wrong"); toast(ok ? "Верно!" : "Перечитайте текст ещё раз"); });
     return; }
-  app.innerHTML = `${topbar("Чтение", "#/learn")}<p class="sub" style="margin-top:-6px">Небольшие тексты с пиньинем, переводом и вопросом на понимание.</p><div class="list">${READINGS.map(g => row(`#/reading/${g.id}`, "read", `${g.title} · HSK ${g.lv}`, esc(g.text[0][0]))).join("")}</div>
+  app.innerHTML = `${topbar("Чтение", "#/learn")}<p class="sub" style="margin-top:-6px">Небольшие тексты с пиньинем, переводом и вопросом на понимание.</p><div class="list">${READINGS.map(g => row(`#/reading/${g.id}`, "read", `${g.title} · ${lvLabel(g.lv)}`, esc(g.text[0][0]))).join("")}</div>
     <div class="list mt">${row(`#/write/${S.settings.level}`, "pen", "Письмо", "Напишите слово по переводу")}</div>`;
 }
 
@@ -389,9 +389,9 @@ function pageShadow(id) {
 
 /* ---------- списки, словарь, словарик ---------- */
 async function pageLevel(lv) {
-  lv = +lv || 1; app.innerHTML = `${topbar(`HSK ${lv} · слова`, "#/learn")}<p class="empty">Загрузка…</p>`;
+  lv = +lv || 1; app.innerHTML = `${topbar(`${lvLabel(lv)} · слова`, "#/learn")}<p class="empty">Загрузка…</p>`;
   const words = await level(lv); let f = "all";
-  app.innerHTML = `${topbar(`HSK ${lv} · ${LEVELS[lv].title}`, "#/learn")}<p class="sub" style="margin-top:-6px">${words.length} слов · выучено ${known(lv)} · порядок по частотности</p>
+  app.innerHTML = `${topbar(`${lvLabel(lv)} · ${LEVELS[lv].title}`, "#/learn")}<p class="sub" style="margin-top:-6px">${words.length} слов · выучено ${known(lv)} · порядок по частотности</p>
     <div class="seg mt"><button aria-pressed="true" data-f="all">Все</button><button data-f="new">Новые</button><button data-f="known">Изученные</button></div><div id="wl"></div>
     <a class="btn" href="#/study/${lv}" style="position:sticky;bottom:96px">Учить карточками ${ic("go")}</a>`;
   const draw = () => { const list = words.filter(w => f === "all" || (f === "new" ? !S.srs[w.hz] : S.srs[w.hz])); $("#wl").innerHTML = list.length ? list.map(wordRow).join("") : `<div class="empty">Здесь пока пусто</div>`; };
@@ -409,10 +409,10 @@ async function searchWords(q) {
 function pageDict() {
   const recent = (S.recent || []);
   app.innerHTML = `${topbar("Словарь", "#/home")}<label class="search">${ic("search")}<input id="q" placeholder="你好 · nihao · привет" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-    <p class="hint">Поиск по иероглифам, пиньиню (без тонов) и русскому переводу среди 5000 слов HSK 1–6.</p><div id="res">${recent.length ? `<div class="section"><h2>Недавние</h2><button class="muted" id="clr">Очистить</button></div><div class="chips">${recent.map(r => `<button class="chip" data-q="${esc(r)}"><b class="zh" style="font-size:15px">${esc(r)}</b></button>`).join("")}</div>` : ""}</div>`;
+    <p class="hint">Поиск по иероглифам, пиньиню (без тонов) и русскому переводу среди 11 470 слов HSK 1–9.</p><div id="res">${recent.length ? `<div class="section"><h2>Недавние</h2><button class="muted" id="clr">Очистить</button></div><div class="chips">${recent.map(r => `<button class="chip" data-q="${esc(r)}"><b class="zh" style="font-size:15px">${esc(r)}</b></button>`).join("")}</div>` : ""}</div>`;
   const q = $("#q"); let t = 0;
   const run = async () => { const v = q.value; const r = await searchWords(v); if (q.value !== v) return;
-    $("#res").innerHTML = v.trim() ? (r.length ? r.map(w => wordRow(w).replace("</div><div>", `<span class="tag">HSK ${w.lv}</span></div><div>`)).join("") : `<div class="empty"><b>Ничего не найдено</b>Словарь охватывает лексику HSK 1–6.</div>`) : "";
+    $("#res").innerHTML = v.trim() ? (r.length ? r.map(w => wordRow(w).replace("</div><div>", `<span class="tag">${lvLabel(w.lv)}</span></div><div>`)).join("") : `<div class="empty"><b>Ничего не найдено</b>Словарь охватывает лексику HSK 1–9.</div>`) : "";
     if (r[0] && v.trim()) { S.recent = [r[0].hz, ...(S.recent || []).filter(x => x !== r[0].hz)].slice(0, 12); save(); } };
   q.oninput = () => { clearTimeout(t); t = setTimeout(run, 220); };
   $$("[data-q]").forEach(b => b.onclick = () => { q.value = b.dataset.q; run(); });
@@ -421,7 +421,7 @@ function pageDict() {
 }
 async function pageBook() {
   const keys = Object.keys(S.book);
-  app.innerHTML = `${topbar("Мой словарик", "#/review")}${keys.length ? "" : `<div class="empty"><b>Словарик пуст</b>Сюда попадают слова, в которых вы ошиблись, и слова со звёздочкой.<br><a class="btn small" href="#/level/${S.settings.level}">Открыть слова HSK ${S.settings.level}</a></div>`}<div id="wl"></div>`;
+  app.innerHTML = `${topbar("Мой словарик", "#/review")}${keys.length ? "" : `<div class="empty"><b>Словарик пуст</b>Сюда попадают слова, в которых вы ошиблись, и слова со звёздочкой.<br><a class="btn small" href="#/level/${S.settings.level}">Открыть слова ${lvLabel(S.settings.level)}</a></div>`}<div id="wl"></div>`;
   if (!keys.length) return; const words = await allWords(); const m = new Map(words.map(w => [w.hz, w]));
   const list = keys.map(k => m.get(k)).filter(Boolean).sort((a, b) => S.book[b.hz].t - S.book[a.hz].t);
   $("#wl").innerHTML = `<p class="sub" style="margin-top:-6px">${list.length} ${plural(list.length, "слово", "слова", "слов")}</p>${list.map(wordRow).join("")}<a class="btn" href="#/study/book">Повторить карточками ${ic("go")}</a>`;
@@ -429,13 +429,13 @@ async function pageBook() {
 
 /* ---------- уровни, статистика, план, настройки ---------- */
 function pageLevels() {
-  app.innerHTML = `${topbar("Уровни курса", "#/learn")}<p class="sub" style="margin-top:-6px">Лексика по стандарту HSK 2.0 — около 5000 слов. Выберите текущий уровень.</p>
-    <div class="list">${[1, 2, 3, 4, 5, 6].map(lv => `<button class="row" data-lv="${lv}"><span class="ic" style="${lv === S.settings.level ? "background:var(--ink);color:#fff" : ""}"><b style="font-size:13px">${lv}</b></span><span class="t"><b>HSK ${lv} · ${LEVELS[lv].title}</b><small>${LEVELS[lv].desc} · выучено ${known(lv)}/${LEVELS[lv].words}</small></span>${lv === S.settings.level ? ic("check", "i go") : ic("go", "i go")}</button>`).join("")}</div>`;
-  $$("[data-lv]").forEach(b => b.onclick = () => { S.settings.level = +b.dataset.lv; save(); toast(`Текущий уровень: HSK ${b.dataset.lv}`); pageLevels(); });
+  app.innerHTML = `${topbar("Уровни курса", "#/learn")}<p class="sub" style="margin-top:-6px">Лексика по новому стандарту HSK 3.0 — 11 470 слов, уровни 1–9. Выберите текущий уровень.</p>
+    <div class="list">${LEVEL_IDS.map(lv => `<button class="row" data-lv="${lv}"><span class="ic" style="${lv === S.settings.level ? "background:var(--ink);color:#fff" : ""}"><b style="font-size:13px">${lv}</b></span><span class="t"><b>${lvLabel(lv)} · ${LEVELS[lv].title}</b><small>${LEVELS[lv].desc} · выучено ${known(lv)}/${LEVELS[lv].words}</small></span>${lv === S.settings.level ? ic("check", "i go") : ic("go", "i go")}</button>`).join("")}</div>`;
+  $$("[data-lv]").forEach(b => b.onclick = () => { S.settings.level = +b.dataset.lv; save(); toast(`Текущий уровень: ${lvLabel(b.dataset.lv)}`); pageLevels(); });
 }
 function pageStats() {
   const days = [...Array(14)].map((_, i) => { const t = today(Date.now() - (13 - i) * DAY); return [t, S.stats.days[t] || 0]; }); const mx = Math.max(1, ...days.map(d => d[1]));
-  const lvRows = [1, 2, 3, 4, 5, 6].map(lv => `<div class="setrow"><span>HSK ${lv}</span><span class="muted">${known(lv)} / ${LEVELS[lv].words}</span></div>`).join("");
+  const lvRows = LEVEL_IDS.map(lv => `<div class="setrow"><span>${lvLabel(lv)}</span><span class="muted">${known(lv)} / ${LEVELS[lv].words}</span></div>`).join("");
   app.innerHTML = `${topbar("Статистика", "#/me")}<div class="box"><h3>Последние 14 дней</h3><div class="chart">${days.map(([t, n]) => `<div class="${n ? "on" : ""}" style="height:${n / mx * 100}%" title="${t}: ${n}"><span>${+t.slice(8)}</span></div>`).join("")}</div><p class="hint" style="margin-top:26px">Сегодня: ${D().answered} ответов, ${D().correct} верных · новых слов ${D().learned}</p></div>
     <div class="box"><h3>Всего</h3><div class="stats"><div><b>${S.stats.answered}</b><small>ответов</small></div><div><b>${accuracy()}%</b><small>точность</small></div><div><b>${Object.keys(S.srs).length}</b><small>слов в работе</small></div></div></div>
     <div class="box"><h3>Слова по уровням</h3>${lvRows}</div>
@@ -476,7 +476,7 @@ function sheetCode(exp) {
 }
 function pageAbout() {
   app.innerHTML = `${topbar("О приложении", "#/me")}<div style="width:96px;margin:0 auto">${PANDA}</div><h2 class="center" style="margin:6px 0 0">汉语熊猫 · ХаньюйТун</h2><p class="center muted">Китайский для русскоговорящих · версия 1.0</p>
-    <div class="box"><h3>Словарь</h3><p class="hint" style="margin:0">Список слов HSK 1–6, пиньинь и части речи — <a href="https://github.com/drkameleon/complete-hsk-vocabulary" style="text-decoration:underline">complete-hsk-vocabulary</a> (MIT), основан на данных CC-CEDICT (CC BY-SA 4.0). Русские переводы, диалоги, тексты и объяснения грамматики написаны для этого приложения; переводы краткие и не проверены носителем — сообщайте о неточностях.</p></div>
+    <div class="box"><h3>Словарь</h3><p class="hint" style="margin:0">Списки слов HSK 3.0 (1–9) и HSK 2.0, пиньинь и части речи — <a href="https://github.com/drkameleon/complete-hsk-vocabulary" style="text-decoration:underline">complete-hsk-vocabulary</a> (MIT), основан на данных CC-CEDICT (CC BY-SA 4.0). Русские переводы, диалоги, тексты и объяснения грамматики написаны для этого приложения; переводы краткие и не проверены носителем — сообщайте о неточностях.</p></div>
     <div class="box"><h3>Порядок черт</h3><p class="hint" style="margin:0">Анимация и проверка черт — <a href="https://github.com/chanind/hanzi-writer" style="text-decoration:underline">Hanzi Writer</a> (MIT); данные черт — Make Me a Hanzi, Arphic Public License (текст лицензии: strokes/ARPHICPL.TXT).</p></div>
     <div class="box"><h3>Озвучивание</h3><p class="hint" style="margin:0">Используется встроенный китайский голос вашего устройства (zh-CN). Если звука нет, установите китайский голос в системных настройках речи.</p></div>
     <div class="box"><h3>Данные</h3><p class="hint" style="margin:0">Аккаунт не нужен. Весь прогресс хранится в браузере на этом устройстве; для переноса используйте код в настройках. После первого открытия приложение работает без интернета.</p></div>`;
@@ -505,8 +505,8 @@ const charBox = (id, size) => `<div style="position:relative;width:${size}px;hei
 async function findWord(hz) { const all = await allWords(); return all.find(w => w.hz === hz); }
 async function pageWord(hz) {
   hz = decodeURIComponent(hz || ""); let w = await findWord(hz);
-  if (!w && hz && [...hz].every(isHan)) { w = { hz, py: "", ru: "Нет в списке HSK 1–6", pos: "", lv: 0 }; }
-  if (!w) { app.innerHTML = `${topbar("Слово", "#/dict")}<div class="empty"><b>Слово не найдено</b>Его нет в словаре HSK 1–6.</div>`; return; }
+  if (!w && hz && [...hz].every(isHan)) { w = { hz, py: "", ru: "Нет в списке HSK 1–9", pos: "", lv: 0 }; }
+  if (!w) { app.innerHTML = `${topbar("Слово", "#/dict")}<div class="empty"><b>Слово не найдено</b>Его нет в словаре HSK 1–9.</div>`; return; }
   const chars = [...w.hz].filter(isHan); const ex = SENTENCES.filter(s => s.zh.includes(w.hz)).slice(0, 4);
   const parts = chars.length > 1 ? (await allWords()).filter(x => x.hz.length === 1 && chars.includes(x.hz)) : [];
   const srs = S.srs[w.hz]; const size = chars.length > 2 ? 92 : chars.length === 2 ? 130 : 170;
@@ -563,7 +563,7 @@ async function pagePairs(lv) {
   lv = +lv || S.settings.level; const words = await level(lv); const pool = words.filter(w => S.srs[w.hz]); const src = shuffle(pool.length >= 6 ? pool : words.slice(0, 60)).slice(0, 6);
   let sel = null, left = src.length, miss = 0; const t0 = Date.now();
   const cards = shuffle([...src.map(w => ({ k: w.hz, t: w.hz, zh: true })), ...src.map(w => ({ k: w.hz, t: short(w.ru) }))]);
-  app.innerHTML = `${topbar(`Найди пару · HSK ${lv}`, "#/review")}<p class="sub" style="margin-top:-6px">Соедините иероглиф с переводом.</p>
+  app.innerHTML = `${topbar(`Найди пару · ${lvLabel(lv)}`, "#/review")}<p class="sub" style="margin-top:-6px">Соедините иероглиф с переводом.</p>
     <div class="grid2" id="pg" style="grid-template-columns:1fr 1fr 1fr;gap:8px">${cards.map((c, i) => `<button class="opt ${c.zh ? "zhopt" : ""}" data-i="${i}" style="min-height:78px;padding:8px;text-align:center;font-size:${c.zh ? 22 : 13}px">${esc(c.t)}</button>`).join("")}</div><div id="fb"></div>`;
   $$("#pg .opt").forEach(b => b.onclick = () => {
     const c = cards[+b.dataset.i]; if (b.disabled) return;
@@ -579,7 +579,7 @@ async function pagePairs(lv) {
 }
 async function pageCloud(lv) {
   lv = +lv || S.settings.level; const words = (await level(lv)).slice(0, 60);
-  app.innerHTML = `${topbar(`Облако слов · HSK ${lv}`, "#/review")}<p class="sub" style="margin-top:-6px">Чем чаще слово встречается, тем оно крупнее. Нажмите — услышите и увидите перевод. Выученные слова светлее.</p>
+  app.innerHTML = `${topbar(`Облако слов · ${lvLabel(lv)}`, "#/review")}<p class="sub" style="margin-top:-6px">Чем чаще слово встречается, тем оно крупнее. Нажмите — услышите и увидите перевод. Выученные слова светлее.</p>
     <div id="cl" style="display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;align-items:center;padding:18px 4px;border:1px solid var(--line);border-radius:24px;margin-top:14px;background:var(--glaze2)">${shuffle(words.map((w, i) => ({ w, i }))).map(({ w, i }) => `<button class="zh" data-hz="${esc(w.hz)}" style="font-size:${Math.round(34 - i * 0.33)}px;line-height:1.3;color:${S.srs[w.hz]?.b >= 2 ? "#9ab6dd" : "#18191a"};transform:rotate(${(Math.random() * 10 - 5).toFixed(1)}deg)">${esc(w.hz)}</button>`).join("")}</div>
     <div id="cw" class="mt"></div>`;
   const m = new Map(words.map(w => [w.hz, w]));

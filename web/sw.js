@@ -1,9 +1,9 @@
 /* 汉语熊猫 offline cache — only this app's scope and its own cache prefix. */
 const PREFIX = "hanyu-panda-";
-const CACHE = PREFIX + "v3";
-const CORE = ["./", "index.html", "css/app.css?v=3", "js/content.js?v=3", "js/app.js?v=3", "manifest.webmanifest", "vendor/hanzi-writer.min.js",
+const CACHE = PREFIX + "v4";
+const CORE = ["./", "index.html", "css/app.css?v=4", "js/content.js?v=4", "js/app.js?v=4", "manifest.webmanifest", "vendor/hanzi-writer.min.js",
   "icons/panda-180.png", "icons/panda-192.png", "icons/panda-512.png",
-  "data/hsk1.json", "data/hsk2.json", "data/hsk3.json", "data/hsk4.json", "data/hsk5.json", "data/hsk6.json"];
+  "data/hsk1.json", "data/hsk2.json", "data/hsk3.json", "data/hsk4.json", "data/hsk5.json", "data/hsk6.json", "data/hsk7.json", "data/hsk8.json"];
 
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => {

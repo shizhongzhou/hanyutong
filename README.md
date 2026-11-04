@@ -17,7 +17,8 @@
 - 汉字书写：按笔顺在屏幕上描写，可显示轮廓和演示（Hanzi Writer）
 - 趣味背词：「Найди пару」配对游戏、按词频大小排列的词云
 - 「Мои учебники」教材书架：一次导入整个文件夹（如《成功之路》Road to Success 全套），每个子文件夹成为一册书；PDF 阅读并记页码，音频播放记进度、可变速、单句重复、自动下一轨。文件保存在本机 IndexedDB，不上传服务器
-- 查词：按汉字、无声调拼音或俄语释义搜索 HSK 1–6 全部 4991 词
+- 词库：新版 HSK 3.0 全部 10,969 词（1–6 级 + 7–9 级），另含旧版 HSK 2.0 独有的 501 词，共 11,470 词，每词都有俄语释义
+- 查词：按汉字、无声调拼音或俄语释义搜索全部 11,470 词
 - 「Спросить панду」浮动按钮：在 HSK 词库中快速查词（本地查询，不是 AI）
 - 计划、设置、进度码备份与恢复；首次打开后可离线使用
 
@@ -35,9 +36,9 @@ web/                    GitHub Pages 发布目录
   css/app.css           样式
   js/content.js         课程内容：等级说明、声调、声母韵母、语法 25 条、对话 10 篇、阅读 4 篇
   js/app.js             路由、页面、复习算法、测验、语音
-  data/hsk1..6.json     词库：[汉字, 拼音, 俄语释义, 词性]，按词频排序
+  data/hsk1..8.json     词库：[汉字, 拼音, 俄语释义, 词性]，按词频排序；1–6 为 HSK 3.0 一至六级，7 为 7–9 级，8 为旧版补充词
   icons/                熊猫图标
-  strokes/              2632 个 HSK 汉字的笔顺数据（Make Me a Hanzi，Arphic Public License，许可证见 ARPHICPL.TXT）
+  strokes/              3035 个 HSK 汉字的笔顺数据（Make Me a Hanzi，Arphic Public License，许可证见 ARPHICPL.TXT）
   vendor/               hanzi-writer.min.js（MIT）
   sw.js                 离线缓存（缓存名前缀 hanyu-panda-）
 ```
@@ -46,7 +47,7 @@ web/                    GitHub Pages 发布目录
 
 ## 数据来源与许可
 
-- HSK 1–6 词表、拼音和词性来自 [complete-hsk-vocabulary](https://github.com/drkameleon/complete-hsk-vocabulary)（MIT），其释义数据源于 CC-CEDICT（CC BY-SA 4.0）。
+- HSK 3.0（1–9 级）与 HSK 2.0（1–6 级）词表、拼音和词性来自 [complete-hsk-vocabulary](https://github.com/drkameleon/complete-hsk-vocabulary)（MIT），其释义数据源于 CC-CEDICT（CC BY-SA 4.0）。
 - 俄语释义、对话、阅读和语法讲解为本应用原创编写。俄语释义为简短释义，**未经母语者人工校对**，发现不准确的地方欢迎修正 `web/data/hsk*.json`。
 - 多音字按常用读音选取，少数词的拼音可能需要人工核对。
 
