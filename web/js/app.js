@@ -175,12 +175,12 @@ function pageLearn() {
       <a href="#/listen/${lv}"><span class="ic">${ic("ear")}</span><b>Аудирование</b><small>Сначала слушать, потом смотреть</small></a>
       <a href="#/shadow"><span class="ic">${ic("mic")}</span><b>Повторение вслух</b><small>Слушайте и повторяйте фразу</small></a>
       <a href="#/write/${lv}"><span class="ic">${ic("read")}</span><b>Письмо</b><small>Наберите слово пиньинем или иероглифами</small></a>
-      <a href="#/shelf"><span class="ic">${ic("book")}</span><b>Мои учебники</b><small>PDF и аудио к урокам</small></a>
+      <a href="#/library"><span class="ic">${ic("book")}</span><b>Путь к успеху</b><small>21 раздел · PDF и аудио</small></a>
       <a href="#/hanzi/${lv}"><span class="ic">${ic("pen")}</span><b>Иероглифы</b><small>Пишите по порядку черт</small></a>
       <a href="#/cloud/${lv}"><span class="ic">${ic("layers")}</span><b>Облако слов</b><small>Слова уровня по частоте</small></a>
       <a href="#/tones"><span class="ic">${ic("wave")}</span><b>Тренажёр тонов</b><small>Угадайте тон на слух</small></a>
       <a href="#/exam/${lv}"><span class="ic">${ic("trophy")}</span><b>Подготовка к HSK</b><small>Пробный тест с таймером</small></a></div>
-    <div class="list mt">${row("#/shelf", "book", "Мои учебники", "Road to Success и другие книги · PDF и аудио")}${row("#/levels", "layers", "Уровни курса", "HSK 1 – HSK 6 и ваш прогресс")}</div></section>`;
+    <div class="list mt">${row("#/library", "book", "Библиотека «Путь к успеху»", "Учебники PDF · аудио · материалы к урокам")}${row("#/shelf", "download", "Мои файлы", "Добавить другие учебники с устройства")}${row("#/levels", "layers", "Уровни курса", "HSK 1 – HSK 6 и ваш прогресс")}</div></section>`;
 }
 
 function pageReview() {
@@ -717,7 +717,7 @@ async function pageShelf(bookArg) {
   const names = Object.keys(books).sort(natCmp); const total = items.reduce((s, f) => s + f.size, 0);
   let est = ""; try { const e = await navigator.storage?.estimate?.(); if (e?.quota) est = ` · доступно ещё ≈ ${fmtSize(Math.max(0, e.quota - e.usage))}`; } catch (_) {}
   const recent = items.filter(f => f.opened).sort((a, b) => b.opened - a.opened)[0];
-  app.innerHTML = `${topbar("Мои учебники", "#/learn")}<p class="sub" style="margin-top:-6px">Добавьте свои учебники — PDF, аудио, картинки. Файлы хранятся только на этом устройстве и никуда не загружаются.</p>
+  app.innerHTML = `${topbar("Мои учебники", "#/learn")}<div class="list">${row("#/library", "book", "Путь к успеху · 成功之路", "Готовая библиотека: учебники и аудио")}</div><p class="sub">Добавьте свои учебники — PDF, аудио, картинки. Добавленные здесь файлы хранятся только на этом устройстве и никуда не загружаются.</p>
     ${recent ? `<a class="card-blue" href="#/file/${encodeURIComponent(recent.id)}" style="display:block;margin-top:16px"><p class="kicker">Продолжить</p><b style="font-size:17px;word-break:break-word">${esc(recent.name.replace(/\.[^.]+$/, ""))}</b><p class="sub" style="max-width:none">${esc(recent.book)}</p></a>` : ""}
     <div class="two"><label class="btn" style="cursor:pointer">${ic("download")} Папку<input type="file" id="fdir" webkitdirectory directory multiple hidden></label><label class="btn ghost" style="cursor:pointer">Файлы<input type="file" id="ffiles" multiple accept=".pdf,audio/*,image/*,video/*,.txt,.md,.mp3,.m4a,.wav" hidden></label></div>
     <p class="hint">Совет: распакуйте скачанный архив и выберите общую папку (например, «Road to Success») — каждая вложенная папка станет отдельной книгой. На iPhone выбирайте файлы через «Файлы».</p><div id="imp"></div>
@@ -743,19 +743,15 @@ async function pageFile(idArg) {
   const nav = `<div class="two">${prev ? `<a class="btn ghost" href="#/file/${encodeURIComponent(prev.id)}">‹ Назад</a>` : "<span></span>"}${next ? `<a class="btn ghost" href="#/file/${encodeURIComponent(next.id)}">Дальше ›</a>` : "<span></span>"}</div>`;
   const title = esc(meta.name.replace(/\.[^.]+$/, ""));
   if (meta.kind === "pdf") {
-    app.innerHTML = `${topbar(title, back)}<p class="muted" style="margin-top:-8px">${esc(meta.book)}${meta.sub ? " · " + esc(meta.sub) : ""}</p>
-      <iframe src="${url}#page=${meta.page || 1}" title="${title}" style="width:100%;height:68vh;border:1px solid var(--line);border-radius:18px;background:#f5f6f8"></iframe>
-      <a class="btn" href="${url}" target="_blank" rel="noopener">Открыть на весь экран</a>
-      <label class="field"><span>Запомнить страницу</span><input id="pg" type="number" min="1" inputmode="numeric" value="${meta.page || ""}" placeholder="номер страницы"></label>${nav}`;
-    $("#pg").onchange = e => { meta.page = +e.target.value || 1; meta.pos = meta.page; Shelf.update(meta); toast("Страница сохранена"); };
+    await renderLocalPdf(blob, meta, nav, back, title);
   } else if (meta.kind === "audio" || meta.kind === "video") {
     const tag = meta.kind === "audio" ? "audio" : "video";
     app.innerHTML = `${topbar(title, back)}<p class="muted" style="margin-top:-8px">${esc(meta.book)}${meta.sub ? " · " + esc(meta.sub) : ""}</p>
       ${tag === "audio" ? `<div class="card-blue center" style="padding:26px 18px"><div style="width:96px;margin:0 auto 10px">${PANDA}</div><b style="word-break:break-word">${title}</b></div>` : ""}
-      <${tag} id="pl" src="${url}" controls preload="metadata" style="width:100%;margin-top:16px;${tag === "video" ? "border-radius:18px;background:#000" : ""}"></${tag}>
+      <${tag} id="pl" src="${url}" controls controlsList="nodownload noremoteplayback" disableRemotePlayback preload="metadata" style="width:100%;margin-top:16px;${tag === "video" ? "border-radius:18px;background:#000" : ""}"></${tag}>
       <div class="seg mt">${[0.75, 1, 1.25].map(r => `<button data-r="${r}" aria-pressed="${r === 1}">${r}×</button>`).join("")}<button id="rw">−5 с</button><button id="loop" aria-pressed="false">Повтор</button></div>
       <label class="setrow"><span>Автоматически следующий трек</span><button class="toggle" id="auto" aria-pressed="${S.settings.autoNext !== false}"></button></label>${nav}`;
-    const pl = $("#pl"); pl.addEventListener("loadedmetadata", () => { if (meta.pos && meta.pos < pl.duration - 3) pl.currentTime = meta.pos; }, { once: true });
+    const pl = $("#pl"); pl.oncontextmenu = e => e.preventDefault(); pl.addEventListener("loadedmetadata", () => { if (meta.pos && meta.pos < pl.duration - 3) pl.currentTime = meta.pos; }, { once: true });
     let t = 0; pl.ontimeupdate = () => { if (Date.now() - t > 4000) { t = Date.now(); meta.pos = pl.currentTime; Shelf.update(meta); } };
     pl.onended = () => { meta.pos = 0; meta.done = true; Shelf.update(meta); markStudy(); save(); if (S.settings.autoNext !== false && next && !pl.loop) location.hash = `#/file/${encodeURIComponent(next.id)}`; };
     $$("[data-r]").forEach(b => b.onclick = () => { pl.playbackRate = +b.dataset.r; $$("[data-r]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
@@ -765,7 +761,8 @@ async function pageFile(idArg) {
     onLeave(() => { meta.pos = pl.currentTime; Shelf.update(meta); pl.pause(); });
     pl.play().catch(() => {});
   } else if (meta.kind === "image") {
-    app.innerHTML = `${topbar(title, back)}<img src="${url}" alt="${title}" style="width:100%;border-radius:18px;border:1px solid var(--line)">${nav}`;
+    app.innerHTML = `${topbar(title, back)}<img src="${url}" alt="${title}" style="width:100%;border-radius:18px;border:1px solid var(--line)" draggable="false">${nav}`;
+    $("#app img").oncontextmenu = e => e.preventDefault();
   } else {
     const txt = await blob.text(); app.innerHTML = `${topbar(title, back)}<div class="box zh" style="white-space:pre-wrap;line-height:1.9;font-size:17px">${esc(txt)}</div>${nav}`;
   }
@@ -773,6 +770,7 @@ async function pageFile(idArg) {
 
 /* ========== маршрутизация ========== */
 const ROUTES = {
+  library: id => pageLibrary(id), libfile: id => pageLibraryFile(id),
   welcome: pageWelcome, home: pageHome, learn: pageLearn, review: pageReview, me: pageMe,
   study: pageStudy, quiz: lv => pageQuiz(lv), listen: lv => pageQuiz(lv, "listen"), exam: lv => pageQuiz(lv, "exam"), write: pageWrite,
   pinyin: pagePinyin, tones: pageTones, grammar: pageGrammar, dialogues: () => pageDialogues(), dialogue: pageDialogues, reading: pageReading, shadow: pageShadow,
@@ -786,7 +784,7 @@ async function route() {
   if (!S.profile && name !== "welcome") { location.replace("#/welcome"); return; }
   if (S.profile && name === "welcome") name = "home";
   const fn = ROUTES[name] || pageHome; const bare = name === "welcome";
-  $("#appbar").hidden = bare; $("#tabbar").hidden = bare; $("#fab").hidden = bare || ["study", "quiz", "listen", "exam", "write", "tones", "shadow", "hanzi", "pairs", "file"].includes(name);
+  $("#appbar").hidden = bare; $("#tabbar").hidden = bare; $("#fab").hidden = bare || ["study", "quiz", "listen", "exam", "write", "tones", "shadow", "hanzi", "pairs", "file", "libfile"].includes(name);
   const tab = TAB[name] || "learn"; $$("#tabbar a").forEach(a => a.toggleAttribute("aria-current", a.dataset.tab === tab));
   window.scrollTo(0, 0);
   try { await fn(arg, arg2); } catch (e) { console.error(e); app.innerHTML = `${topbar("Ошибка")}<div class="empty"><b>Не удалось загрузить</b>Проверьте подключение к интернету и попробуйте снова.<br><button class="btn small" onclick="location.reload()">Обновить</button></div>`; }

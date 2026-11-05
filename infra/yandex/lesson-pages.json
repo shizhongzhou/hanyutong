@@ -1,0 +1,741 @@
+{
+  "rts-06": {
+    "readerSha256": "732d19b57a32171c54356d906f04379cabb0b38951dcff25396df78229fc1175",
+    "units": [
+      {
+        "unit": "lesson-1",
+        "lesson": 1,
+        "section": "Урок 1",
+        "lessonTitle": "安妮的日记",
+        "page": 22,
+        "readerId": "rts-2407892ab4e247ff47f2d254"
+      },
+      {
+        "unit": "lesson-2",
+        "lesson": 2,
+        "section": "Урок 2",
+        "lessonTitle": "马丁看中医",
+        "page": 36,
+        "readerId": "rts-2407892ab4e247ff47f2d254"
+      },
+      {
+        "unit": "lesson-3",
+        "lesson": 3,
+        "section": "Урок 3",
+        "lessonTitle": "给父母的一封信",
+        "page": 49,
+        "readerId": "rts-2407892ab4e247ff47f2d254"
+      },
+      {
+        "unit": "lesson-4",
+        "lesson": 4,
+        "section": "Урок 4",
+        "lessonTitle": "我的太极拳老师",
+        "page": 62,
+        "readerId": "rts-2407892ab4e247ff47f2d254"
+      },
+      {
+        "unit": "lesson-5",
+        "lesson": 5,
+        "section": "Урок 5",
+        "lessonTitle": "曹冲称象",
+        "page": 76,
+        "readerId": "rts-2407892ab4e247ff47f2d254"
+      },
+      {
+        "unit": "lesson-6",
+        "lesson": 6,
+        "section": "Урок 6",
+        "lessonTitle": "左手握右手",
+        "page": 89,
+        "readerId": "rts-2407892ab4e247ff47f2d254"
+      },
+      {
+        "unit": "lesson-7",
+        "lesson": 7,
+        "section": "Урок 7",
+        "lessonTitle": "镇静是一种智慧",
+        "page": 101,
+        "readerId": "rts-2407892ab4e247ff47f2d254"
+      },
+      {
+        "unit": "lesson-8",
+        "lesson": 8,
+        "section": "Урок 8",
+        "lessonTitle": "香蕉和香蕉皮",
+        "page": 113,
+        "readerId": "rts-2407892ab4e247ff47f2d254"
+      },
+      {
+        "unit": "lesson-9",
+        "lesson": 9,
+        "section": "Урок 9",
+        "lessonTitle": "凤凰的传说",
+        "page": 128,
+        "readerId": "rts-2407892ab4e247ff47f2d254"
+      },
+      {
+        "unit": "lesson-10",
+        "lesson": 10,
+        "section": "Урок 10",
+        "lessonTitle": "熟能生巧",
+        "page": 141,
+        "readerId": "rts-2407892ab4e247ff47f2d254"
+      },
+      {
+        "unit": "lesson-11",
+        "lesson": 11,
+        "section": "Урок 11",
+        "lessonTitle": "谁发明了筷子",
+        "page": 155,
+        "readerId": "rts-2407892ab4e247ff47f2d254"
+      },
+      {
+        "unit": "lesson-12",
+        "lesson": 12,
+        "section": "Урок 12",
+        "lessonTitle": "孔子和渔夫",
+        "page": 169,
+        "readerId": "rts-2407892ab4e247ff47f2d254"
+      }
+    ]
+  },
+  "rts-09": {
+    "readerSha256": "382f97b20623e516cf27cdf3d132ae330604150fe3f2d774df2f2e7c3257ac6c",
+    "units": [
+      {
+        "unit": "lesson-1",
+        "lesson": 1,
+        "section": "Урок 1",
+        "lessonTitle": "她忘了自己是外国人",
+        "page": 25,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-2",
+        "lesson": 2,
+        "section": "Урок 2",
+        "lessonTitle": "我们为学习汉语而来",
+        "page": 34,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-3",
+        "lesson": 3,
+        "section": "Урок 3",
+        "lessonTitle": "我想换个房间",
+        "page": 41,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-4",
+        "lesson": 4,
+        "section": "Урок 4",
+        "lessonTitle": "在哪儿住好",
+        "page": 50,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-5",
+        "lesson": 5,
+        "section": "Урок 5",
+        "lessonTitle": "房租可以再商量",
+        "page": 59,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-6",
+        "lesson": 6,
+        "section": "Урок 6",
+        "lessonTitle": "我喜欢北京的四合院",
+        "page": 67,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-7",
+        "lesson": 7,
+        "section": "Урок 7",
+        "lessonTitle": "我该买哪种火车票",
+        "page": 75,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-8",
+        "lesson": 8,
+        "section": "Урок 8",
+        "lessonTitle": "假期你打算怎么过",
+        "page": 86,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-9",
+        "lesson": 9,
+        "section": "Урок 9",
+        "lessonTitle": "我要订一张机票",
+        "page": 96,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-10",
+        "lesson": 10,
+        "section": "Урок 10",
+        "lessonTitle": "还是自助旅游好",
+        "page": 109,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-11",
+        "lesson": 11,
+        "section": "Урок 11",
+        "lessonTitle": "你会看中国的菜单吗",
+        "page": 118,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-12",
+        "lesson": 12,
+        "section": "Урок 12",
+        "lessonTitle": "好吃不过饺子",
+        "page": 133,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-13",
+        "lesson": 13,
+        "section": "Урок 13",
+        "lessonTitle": "这个菜味道怎么样",
+        "page": 142,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-14",
+        "lesson": 14,
+        "section": "Урок 14",
+        "lessonTitle": "饭桌上的礼节",
+        "page": 150,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-15",
+        "lesson": 15,
+        "section": "Урок 15",
+        "lessonTitle": "对不起，您坐错方向了",
+        "page": 158,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-16",
+        "lesson": 16,
+        "section": "Урок 16",
+        "lessonTitle": "我的包忘在出租车上了",
+        "page": 170,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-17",
+        "lesson": 17,
+        "section": "Урок 17",
+        "lessonTitle": "自行车王国的变化",
+        "page": 178,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-18",
+        "lesson": 18,
+        "section": "Урок 18",
+        "lessonTitle": "你哪儿不舒服",
+        "page": 188,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-19",
+        "lesson": 19,
+        "section": "Урок 19",
+        "lessonTitle": "中医真有意思",
+        "page": 200,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-20",
+        "lesson": 20,
+        "section": "Урок 20",
+        "lessonTitle": "您的手艺真不错",
+        "page": 209,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-21",
+        "lesson": 21,
+        "section": "Урок 21",
+        "lessonTitle": "这件衣服做得太合适了",
+        "page": 218,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-22",
+        "lesson": 22,
+        "section": "Урок 22",
+        "lessonTitle": "我想办一张银行卡",
+        "page": 231,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-23",
+        "lesson": 23,
+        "section": "Урок 23",
+        "lessonTitle": "你要空运还是海运",
+        "page": 242,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      },
+      {
+        "unit": "lesson-24",
+        "lesson": 24,
+        "section": "Урок 24",
+        "lessonTitle": "你喜欢用哪种电话卡",
+        "page": 254,
+        "readerId": "rts-91bd9ad641d37493fb2be49a"
+      }
+    ]
+  },
+  "rts-10": {
+    "readerSha256": "ea03d3f9e0e2f70f741ce669d93dce0a810441cca3ac33b49f9c56baf5bb001f",
+    "units": [
+      {
+        "unit": "lesson-1",
+        "lesson": 1,
+        "section": "Урок 1",
+        "lessonTitle": "去哪儿买东西",
+        "page": 15,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-2",
+        "lesson": 2,
+        "section": "Урок 2",
+        "lessonTitle": "购物计划",
+        "page": 26,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-3",
+        "lesson": 3,
+        "section": "Урок 3",
+        "lessonTitle": "我爱我家",
+        "page": 33,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-4",
+        "lesson": 4,
+        "section": "Урок 4",
+        "lessonTitle": "家庭问题",
+        "page": 40,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-5",
+        "lesson": 5,
+        "section": "Урок 5",
+        "lessonTitle": "理想的工作",
+        "page": 45,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-6",
+        "lesson": 6,
+        "section": "Урок 6",
+        "lessonTitle": "找工作",
+        "page": 51,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-7",
+        "lesson": 7,
+        "section": "Урок 7",
+        "lessonTitle": "天气与气候",
+        "page": 58,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-8",
+        "lesson": 8,
+        "section": "Урок 8",
+        "lessonTitle": "天气越来越坏了",
+        "page": 66,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-9",
+        "lesson": 9,
+        "section": "Урок 9",
+        "lessonTitle": "休闲生活",
+        "page": 73,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-10",
+        "lesson": 10,
+        "section": "Урок 10",
+        "lessonTitle": "运动与休闲",
+        "page": 82,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-11",
+        "lesson": 11,
+        "section": "Урок 11",
+        "lessonTitle": "缘分的天空",
+        "page": 92,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-12",
+        "lesson": 12,
+        "section": "Урок 12",
+        "lessonTitle": "今天我要嫁给你",
+        "page": 98,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-13",
+        "lesson": 13,
+        "section": "Урок 13",
+        "lessonTitle": "有趣的中国文化（1）",
+        "page": 104,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-14",
+        "lesson": 14,
+        "section": "Урок 14",
+        "lessonTitle": "有趣的中国文化（2）",
+        "page": 115,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-15",
+        "lesson": 15,
+        "section": "Урок 15",
+        "lessonTitle": "剪纸艺术",
+        "page": 123,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-16",
+        "lesson": 16,
+        "section": "Урок 16",
+        "lessonTitle": "重要的节日",
+        "page": 129,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-17",
+        "lesson": 17,
+        "section": "Урок 17",
+        "lessonTitle": "节日的传说",
+        "page": 135,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-18",
+        "lesson": 18,
+        "section": "Урок 18",
+        "lessonTitle": "古人的智慧",
+        "page": 140,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-19",
+        "lesson": 19,
+        "section": "Урок 19",
+        "lessonTitle": "你学到了什么",
+        "page": 146,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-20",
+        "lesson": 20,
+        "section": "Урок 20",
+        "lessonTitle": "他们不仅仅是明星",
+        "page": 152,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-21",
+        "lesson": 21,
+        "section": "Урок 21",
+        "lessonTitle": "你相信哪一个",
+        "page": 158,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-22",
+        "lesson": 22,
+        "section": "Урок 22",
+        "lessonTitle": "一半是快乐一半是痛苦",
+        "page": 165,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-23",
+        "lesson": 23,
+        "section": "Урок 23",
+        "lessonTitle": "节日礼物",
+        "page": 171,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      },
+      {
+        "unit": "lesson-24",
+        "lesson": 24,
+        "section": "Урок 24",
+        "lessonTitle": "节假日的喜与忧",
+        "page": 176,
+        "readerId": "rts-0f430d60f5e5474084d16e6d"
+      }
+    ]
+  },
+  "rts-14": {
+    "readerSha256": "367ef38352a3ccc09dea993a6bb52c8ed95e8a16804705784f3c745ac0fa0c0e",
+    "units": [
+      {
+        "unit": "lesson-1",
+        "lesson": 1,
+        "section": "Урок 1",
+        "lessonTitle": "吃喝玩乐",
+        "page": 15,
+        "readerId": "rts-90acbc05e0c4628b64b4c79c"
+      },
+      {
+        "unit": "lesson-2",
+        "lesson": 2,
+        "section": "Урок 2",
+        "lessonTitle": "求医问药",
+        "page": 24,
+        "readerId": "rts-90acbc05e0c4628b64b4c79c"
+      },
+      {
+        "unit": "lesson-3",
+        "lesson": 3,
+        "section": "Урок 3",
+        "lessonTitle": "走南闯北",
+        "page": 32,
+        "readerId": "rts-90acbc05e0c4628b64b4c79c"
+      },
+      {
+        "unit": "lesson-4",
+        "lesson": 4,
+        "section": "Урок 4",
+        "lessonTitle": "人生百态",
+        "page": 41,
+        "readerId": "rts-90acbc05e0c4628b64b4c79c"
+      },
+      {
+        "unit": "review-1",
+        "lesson": null,
+        "section": "Повторение · 1–4",
+        "page": 51,
+        "readerId": "rts-90acbc05e0c4628b64b4c79c"
+      },
+      {
+        "unit": "lesson-5",
+        "lesson": 5,
+        "section": "Урок 5",
+        "lessonTitle": "喜怒哀乐",
+        "page": 57,
+        "readerId": "rts-90acbc05e0c4628b64b4c79c"
+      },
+      {
+        "unit": "lesson-6",
+        "lesson": 6,
+        "section": "Урок 6",
+        "lessonTitle": "手机生活",
+        "page": 67,
+        "readerId": "rts-90acbc05e0c4628b64b4c79c"
+      },
+      {
+        "unit": "lesson-7",
+        "lesson": 7,
+        "section": "Урок 7",
+        "lessonTitle": "城市生活",
+        "page": 77,
+        "readerId": "rts-90acbc05e0c4628b64b4c79c"
+      },
+      {
+        "unit": "lesson-8",
+        "lesson": 8,
+        "section": "Урок 8",
+        "lessonTitle": "涉世之初",
+        "page": 87,
+        "readerId": "rts-90acbc05e0c4628b64b4c79c"
+      },
+      {
+        "unit": "review-2",
+        "lesson": null,
+        "section": "Повторение · 5–8",
+        "page": 96,
+        "readerId": "rts-90acbc05e0c4628b64b4c79c"
+      },
+      {
+        "unit": "lesson-9",
+        "lesson": 9,
+        "section": "Урок 9",
+        "lessonTitle": "剩男剩女",
+        "page": 102,
+        "readerId": "rts-90acbc05e0c4628b64b4c79c"
+      },
+      {
+        "unit": "lesson-10",
+        "lesson": 10,
+        "section": "Урок 10",
+        "lessonTitle": "婚姻家庭",
+        "page": 111,
+        "readerId": "rts-90acbc05e0c4628b64b4c79c"
+      },
+      {
+        "unit": "lesson-11",
+        "lesson": 11,
+        "section": "Урок 11",
+        "lessonTitle": "家庭琐事",
+        "page": 120,
+        "readerId": "rts-90acbc05e0c4628b64b4c79c"
+      },
+      {
+        "unit": "lesson-12",
+        "lesson": 12,
+        "section": "Урок 12",
+        "lessonTitle": "未来生活",
+        "page": 128,
+        "readerId": "rts-90acbc05e0c4628b64b4c79c"
+      },
+      {
+        "unit": "review-3",
+        "lesson": null,
+        "section": "Повторение · 9–12",
+        "page": 139,
+        "readerId": "rts-90acbc05e0c4628b64b4c79c"
+      }
+    ]
+  },
+  "rts-17": {
+    "readerSha256": "adcc3a29ec4db6a19eb0c7ab29c70cd80d400867dc4d65168d914d1086c6a620",
+    "units": [
+      {
+        "unit": "lesson-1",
+        "lesson": 1,
+        "section": "Урок 1",
+        "lessonTitle": "青春一“族”",
+        "page": 17,
+        "readerId": "rts-a856cce6064ad75a480c21db"
+      },
+      {
+        "unit": "lesson-2",
+        "lesson": 2,
+        "section": "Урок 2",
+        "lessonTitle": "时尚先锋",
+        "page": 28,
+        "readerId": "rts-a856cce6064ad75a480c21db"
+      },
+      {
+        "unit": "lesson-3",
+        "lesson": 3,
+        "section": "Урок 3",
+        "lessonTitle": "艺术人生",
+        "page": 38,
+        "readerId": "rts-a856cce6064ad75a480c21db"
+      },
+      {
+        "unit": "lesson-4",
+        "lesson": 4,
+        "section": "Урок 4",
+        "lessonTitle": "网络时代",
+        "page": 48,
+        "readerId": "rts-a856cce6064ad75a480c21db"
+      },
+      {
+        "unit": "review-1",
+        "lesson": null,
+        "section": "Повторение · 1–4",
+        "page": 58,
+        "readerId": "rts-a856cce6064ad75a480c21db"
+      },
+      {
+        "unit": "lesson-5",
+        "lesson": 5,
+        "section": "Урок 5",
+        "lessonTitle": "青春偶像",
+        "page": 63,
+        "readerId": "rts-a856cce6064ad75a480c21db"
+      },
+      {
+        "unit": "lesson-6",
+        "lesson": 6,
+        "section": "Урок 6",
+        "lessonTitle": "亲子关系",
+        "page": 74,
+        "readerId": "rts-a856cce6064ad75a480c21db"
+      },
+      {
+        "unit": "lesson-7",
+        "lesson": 7,
+        "section": "Урок 7",
+        "lessonTitle": "学校教育",
+        "page": 84,
+        "readerId": "rts-a856cce6064ad75a480c21db"
+      },
+      {
+        "unit": "lesson-8",
+        "lesson": 8,
+        "section": "Урок 8",
+        "lessonTitle": "人际交往",
+        "page": 94,
+        "readerId": "rts-a856cce6064ad75a480c21db"
+      },
+      {
+        "unit": "review-2",
+        "lesson": null,
+        "section": "Повторение · 5–8",
+        "page": 106,
+        "readerId": "rts-a856cce6064ad75a480c21db"
+      },
+      {
+        "unit": "lesson-9",
+        "lesson": 9,
+        "section": "Урок 9",
+        "lessonTitle": "文化道德",
+        "page": 111,
+        "readerId": "rts-a856cce6064ad75a480c21db"
+      },
+      {
+        "unit": "lesson-10",
+        "lesson": 10,
+        "section": "Урок 10",
+        "lessonTitle": "社会聚焦",
+        "page": 121,
+        "readerId": "rts-a856cce6064ad75a480c21db"
+      },
+      {
+        "unit": "lesson-11",
+        "lesson": 11,
+        "section": "Урок 11",
+        "lessonTitle": "投资理财",
+        "page": 132,
+        "readerId": "rts-a856cce6064ad75a480c21db"
+      },
+      {
+        "unit": "lesson-12",
+        "lesson": 12,
+        "section": "Урок 12",
+        "lessonTitle": "风土人情",
+        "page": 143,
+        "readerId": "rts-a856cce6064ad75a480c21db"
+      },
+      {
+        "unit": "review-3",
+        "lesson": null,
+        "section": "Повторение · 9–12",
+        "page": 152,
+        "readerId": "rts-a856cce6064ad75a480c21db"
+      }
+    ]
+  }
+}

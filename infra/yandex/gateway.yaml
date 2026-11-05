@@ -1,0 +1,111 @@
+openapi: 3.0.0
+info:
+  title: Hanyutong development API
+  version: 2.0.0
+paths:
+  /health:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: Service health
+  /library/catalog:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: Teaching materials catalog
+    head:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: Catalog metadata
+    options:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '204':
+          description: Read-only cross-origin access
+  /library/access/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: In-app reading and playback
+    options:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: In-app reading and playback
+  /library/media/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: In-app reading and playback
+    head:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: In-app reading and playback
+    options:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: In-app reading and playback

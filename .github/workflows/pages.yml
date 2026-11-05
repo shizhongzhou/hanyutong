@@ -42,6 +42,11 @@ jobs:
           python3 scripts/fetch_dictionary.py
           python3 scripts/build_dictionary.py --bkrs .dictionary-cache/dabkrs_261105.gz --unihan .dictionary-cache/Unihan-17.0.0.zip --scratch .dictionary-cache/build.sqlite
 
+      - name: Build teaching library and verified PDF reader
+        run: |
+          python3 scripts/build_library_catalog.py
+          python3 scripts/fetch_pdfjs.py
+
       - name: Test dictionary and app
         run: |
           python3 -m unittest discover -s tests -p 'test_*.py'
@@ -49,12 +54,14 @@ jobs:
           node --check web/js/app.js
           node --check web/js/dictionary.js
           node --check web/js/scenarios.js
+          node --check web/js/library.js
+          node --check infra/yandex/function/index.js
 
       - name: Check static app
         shell: bash
         run: |
           set -euo pipefail
-          for f in index.html .nojekyll manifest.webmanifest sw.js js/app.js js/content.js js/dictionary.js js/scenarios.js vendor/fflate.min.js data/dictionary/manifest.json css/app.css; do test -s "web/$f" || test -f "web/$f"; done
+          for f in index.html .nojekyll manifest.webmanifest sw.js js/app.js js/content.js js/dictionary.js js/scenarios.js js/library.js data/library-catalog.json vendor/pdfjs/legacy/build/pdf.min.mjs vendor/pdfjs/legacy/build/pdf.worker.min.mjs vendor/fflate.min.js data/dictionary/manifest.json css/app.css; do test -s "web/$f" || test -f "web/$f"; done
           for n in 1 2 3 4 5 6; do python3 -c "import json,sys; d=json.load(open('web/data/hsk$n.json')); assert len(d)>100" ; done
 
       - name: Configure Pages
