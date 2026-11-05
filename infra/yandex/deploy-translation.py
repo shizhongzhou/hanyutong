@@ -120,8 +120,7 @@ def grant_usage_bucket_access(token, base):
     tag = lambda name: namespace + name
     owner = acl.find(tag('Owner'))
     grants = acl.find(tag('AccessControlList'))
-    if (acl.tag != tag('AccessControlPolicy') or owner is None
-            or not owner.findtext(tag('ID')) or grants is None):
+    if acl.tag != tag('AccessControlPolicy') or owner is None or grants is None:
         raise RuntimeError('Usage bucket ACL has no verifiable owner or grants')
     existing = set()
     for grant in grants.findall(tag('Grant')):
