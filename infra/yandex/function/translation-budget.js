@@ -111,7 +111,9 @@ function createBudgetGuard({
         const timestamp = now(), p = period(timestamp);
         const url = `https://storage.yandexcloud.net/${bucket}/${PREFIX}${p.month}.json`;
         const auth = { Authorization: `Bearer ${accessToken}` };
-        const loaded = await fetcher(url, { headers: auth, redirect: 'error', signal: AbortSignal.timeout(Math.min(3500, remaining())) });
+        // Compressed S3 responses can expose a weak ETag. Request the stored
+        // representation so its strong validator can be used safely for CAS.
+        const loaded = await fetcher(url, { headers: { ...auth, 'Accept-Encoding': 'identity' }, redirect: 'error', signal: AbortSignal.timeout(Math.min(3500, remaining())) });
         let state, etag;
         if (loaded.status === 404) {
           await loaded.body?.cancel?.();

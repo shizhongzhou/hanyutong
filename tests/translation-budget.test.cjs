@@ -53,6 +53,30 @@ test('usage reservations persist across handlers and contain only salted identit
   assert.notEqual(JSON.parse(writes[0].body).revision, JSON.parse(writes[1].body).revision);
 });
 
+test('S3 reads request identity encoding for strong CAS validators and still reject weak ETags', async () => {
+  const { store, reserve } = fixture();
+  let forceWeak = false;
+  store.intercept((url, options) => {
+    if (options.method === 'PUT') return;
+    const current = store.entries.get(url);
+    // Yandex's compressed representation returns W/"..." instead of the
+    // stored object's strong ETag. Model that negotiation, then a bad server.
+    if (current && (forceWeak || options.headers['Accept-Encoding'] !== 'identity')) {
+      return new Response(current.body, { headers: { ETag: 'W/' + current.etag } });
+    }
+  });
+  assert.equal((await reserve({ chars: 10, identity: 'a' })).allowed, true);
+  assert.equal((await reserve({ chars: 5, identity: 'a' })).allowed, true);
+  assert.equal(store.state().total.chars, 15);
+  for (const call of store.calls.filter(call => call.method !== 'PUT')) {
+    assert.equal(call.headers['Accept-Encoding'], 'identity');
+  }
+  forceWeak = true;
+  await assert.rejects(reserve({ chars: 1, identity: 'a' }), usageUnavailable);
+  assert.equal(store.calls.filter(call => call.method === 'PUT').length, 2);
+  assert.equal(store.state().total.chars, 15);
+});
+
 test('monthly, day and identity ceilings reject before any additional reservation is stored', async () => {
   for (const [limits, request, expected] of [
     [{ monthlyChars: 2000 }, { chars: 2000 }, 'monthly_limit'],
