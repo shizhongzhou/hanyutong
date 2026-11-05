@@ -5,6 +5,7 @@ import secrets
 import subprocess
 import urllib.error
 import urllib.request
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parent
 FOLDER = 'b1gsi4nj9mgt8alatjf9'
@@ -29,6 +30,64 @@ def request(token, url, method='GET', body=None, headers=None):
         headers={'Authorization': 'Bearer ' + token, **(headers or {})}), timeout=30)
 
 
+def iam_token(service_account=None):
+    args = ['yc', 'iam', 'create-token']
+    if service_account:
+        args.extend(['--impersonate-service-account-id', service_account])
+    result = subprocess.run(args, capture_output=True, text=True)
+    if result.returncode or not result.stdout.strip():
+        raise RuntimeError('Cannot obtain the required short-lived IAM token')
+    return result.stdout.strip()
+
+
+def grant_usage_bucket_access(token, base):
+    # S3 ACL updates replace the full document. Keep the existing Owner and all
+    # grants intact; this grant applies only to the dedicated usage bucket.
+    with request(token, base + '?acl') as response:
+        data = response.read(131073)
+    if len(data) > 131072:
+        raise RuntimeError('Usage bucket ACL is unexpectedly large')
+    try:
+        acl = ET.fromstring(data)
+    except ET.ParseError:
+        raise RuntimeError('Cannot inspect usage bucket ACL') from None
+    namespace = acl.tag.partition('}')[0] + '}' if acl.tag.startswith('{') else ''
+    tag = lambda name: namespace + name
+    owner = acl.find(tag('Owner'))
+    grants = acl.find(tag('AccessControlList'))
+    if (acl.tag != tag('AccessControlPolicy') or owner is None
+            or not owner.findtext(tag('ID')) or grants is None):
+        raise RuntimeError('Usage bucket ACL has no verifiable owner or grants')
+    existing = set()
+    for grant in grants.findall(tag('Grant')):
+        grantee = grant.find(tag('Grantee'))
+        if grantee is None:
+            raise RuntimeError('Usage bucket ACL has an invalid grant')
+        if grantee.findtext(tag('URI')) in (
+                'http://acs.amazonaws.com/groups/global/AllUsers',
+                'http://acs.amazonaws.com/groups/global/AuthenticatedUsers'):
+            raise RuntimeError('Usage bucket ACL grants public access')
+        if grantee.findtext(tag('ID')) == SERVICE_ACCOUNT:
+            existing.add(grant.findtext(tag('Permission')))
+    missing = set() if 'FULL_CONTROL' in existing else {'READ', 'WRITE'} - existing
+    if not missing:
+        return
+    if len(grants.findall(tag('Grant'))) + len(missing) > 100:
+        raise RuntimeError('Usage bucket ACL has too many grants')
+    ET.register_namespace('xsi', 'http://www.w3.org/2001/XMLSchema-instance')
+    if namespace:
+        ET.register_namespace('', namespace[1:-1])
+    for permission in sorted(missing):
+        grant = ET.SubElement(grants, tag('Grant'))
+        grantee = ET.SubElement(grant, tag('Grantee'), {
+            '{http://www.w3.org/2001/XMLSchema-instance}type': 'CanonicalUser'})
+        ET.SubElement(grantee, tag('ID')).text = SERVICE_ACCOUNT
+        ET.SubElement(grant, tag('Permission')).text = permission
+    with request(token, base + '?acl', 'PUT', ET.tostring(acl, encoding='utf-8'),
+                 {'Content-Type': 'application/xml'}):
+        pass
+
+
 def main():
     versions = yc('serverless', 'function', 'version', 'list', '--function-id', FUNCTION, '--limit', '1')
     previous = yc('serverless', 'function', 'version', 'get', '--id', versions[0]['id'])
@@ -44,8 +103,9 @@ def main():
     if bucket.get('folder_id') != FOLDER or any(bucket.get('anonymous_access_flags', {}).values()):
         raise RuntimeError('Usage bucket is not private in the expected folder')
 
-    token = subprocess.check_output(['yc', 'iam', 'create-token'], text=True).strip()
+    token = iam_token()
     base = 'https://storage.yandexcloud.net/' + BUCKET
+    grant_usage_bucket_access(token, base)
     try:
         with request(token, base + '?policy') as response:
             policy = json.load(response)
@@ -64,18 +124,31 @@ def main():
         pass
 
     # Verify storage really enforces both preconditions before enabling paid calls.
+    # Probe as the function's actual service account, not the deploying user.
+    usage_token = iam_token(SERVICE_ACCOUNT)
     probe = base + '/app-private/translation-budget/cas-probe-' + secrets.token_hex(8) + '.txt'
-    with request(token, probe, 'PUT', b'first', {'If-None-Match': '*'}) as response:
-        etag = response.headers['ETag']
+    try:
+        with request(usage_token, probe):
+            raise RuntimeError('Usage probe unexpectedly exists')
+    except urllib.error.HTTPError as error:
+        if error.code != 404:
+            raise RuntimeError('Service account cannot read missing usage objects') from None
+    with request(usage_token, probe, 'PUT', b'first', {'If-None-Match': '*'}) as response:
+        etag = response.headers.get('ETag')
+    if not etag:
+        raise RuntimeError('Usage storage did not provide an object ETag')
     for condition in ({'If-None-Match': '*'}, {'If-Match': '"00000000000000000000000000000000"'}):
         try:
-            with request(token, probe, 'PUT', b'must-not-write', condition):
+            with request(usage_token, probe, 'PUT', b'must-not-write', condition):
                 raise RuntimeError('Object storage ignored a budget precondition')
         except urllib.error.HTTPError as error:
             if error.code != 412:
                 raise RuntimeError('Cannot verify budget preconditions') from None
-    with request(token, probe, 'PUT', b'verified', {'If-Match': etag}):
+    with request(usage_token, probe, 'PUT', b'verified', {'If-Match': etag}):
         pass
+    with request(usage_token, probe) as response:
+        if response.read(9) != b'verified':
+            raise RuntimeError('Service account cannot verify its usage writes')
     print('Private usage storage and atomic reservations verified', flush=True)
 
     for role in ('ai.translate.user', 'ai.vision.user'):
