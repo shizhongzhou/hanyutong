@@ -1,0 +1,3048 @@
+{
+  "schemaVersion": 1,
+  "edition": "HSK 3.0 · программа 2025–2026",
+  "verifiedOn": "2026-11-05",
+  "language": "ru",
+  "practiceNoticeRu": "Это авторские учебные примеры по опубликованным форматам HSK 3.0, а не официальные экзаменационные задания и не полный пробный экзамен. Для знакомства с форматом тексты и наборы вопросов сокращены. Правильность выбора и точных ответов проверяется; сочинения, пересказы, перевод и устные ответы предназначены для самостоятельной проверки.",
+  "audioNoticeRu": "Кнопка прослушивания использует китайский голос устройства. Это синтезированное озвучивание учебного примера, а не официальная запись экзамена. Если китайский голос отсутствует, воспользуйтесь текстом после первой попытки.",
+  "visualNoticeRu": "В учебных примерах используются условные иллюстрации из значков. В официальных заданиях могут быть фотографии, рисунки и диаграммы.",
+  "scoringNoticeRu": "Процент верных учебных ответов не переводится в официальный балл или уровень HSK. Открытые задания не оцениваются автоматически.",
+  "sources": [
+    {
+      "id": "cti-structure-2025-12",
+      "title": "新版HSK（1–6级）考试结构与样题示例",
+      "publisher": "汉考国际 / Chinese Testing International",
+      "published": "2025-12",
+      "printedImplementation": "2026-07",
+      "url": "https://s3.eu-central-1.amazonaws.com/konfuzius-institut-heidelberg.de/wp-content/uploads/2026/02/19110129/新版HSK（1-6级）考试结构与样题示例.pdf",
+      "hostingNoteRu": "Документ CTI; копия размещена Институтом Конфуция в Гейдельберге.",
+      "pages": 44
+    },
+    {
+      "id": "cti-samples-2026",
+      "title": "HSK 3.0 官方样卷 / официальные образцы",
+      "publisher": "中外语言交流合作中心 / 汉考国际",
+      "url": "https://hsk-sample-1409982902.cos.ap-beijing.myqcloud.com/HSK3.0.zip",
+      "landingUrl": "https://www.chinesetest.cn/HSK",
+      "verifiedOn": "2026-11-05",
+      "files": [
+        {
+          "archivePath": "HSK口语/HSK（三级）口语样卷.pdf",
+          "bytes": 397562,
+          "sha256": "68d0dbb4597bf3283a979a8922dbec7eb27a0e6ee205125ab4526142851d1913",
+          "pages": 2
+        },
+        {
+          "archivePath": "HSK口语/HSK（五级）口语样卷.pdf",
+          "bytes": 417748,
+          "sha256": "dd403b319ff89719742bdf6923ce7ca9805b2ed12bd728844fafd9c9e342da66",
+          "pages": 2
+        },
+        {
+          "archivePath": "HSK口语/HSK（六级）口语样卷.pdf",
+          "bytes": 510510,
+          "sha256": "f18f88da232fad5b465f043ff910cf7e9a5782a749e7e7d7e9ad891605dc4e89",
+          "pages": 2
+        },
+        {
+          "archivePath": "HSK口语/HSK（四级）口语样卷.pdf",
+          "bytes": 407285,
+          "sha256": "60242fe82742e384136d5e8b338a0000774ddc9e6fa42b14cdda7eccb407ed4d",
+          "pages": 2
+        },
+        {
+          "archivePath": "HSK/HSK（七—九级）样卷.pdf",
+          "bytes": 591313,
+          "sha256": "76478008501879211712af9172ebe26f73a8a59102685a32c85c7e6a25f0b850",
+          "pages": 34
+        }
+      ],
+      "verificationRu": "Обложки и задания актуальных PDF из официального архива проверены: устная часть уровней 3–6 и единый экзамен 7–9. Контрольные суммы относятся к извлечённым PDF."
+    },
+    {
+      "id": "cti-pilot-2026-09",
+      "title": "HSK3.0第二轮全球试行考试通知",
+      "publisher": "汉考国际",
+      "url": "https://admin.chinesetest.cn/gonewcontent.do?id=51236758",
+      "noteRu": "Официальное уведомление подтверждает отдельную обязательную регистрацию на соответствующую устную часть для уровней 3–6 и длительность частей."
+    },
+    {
+      "id": "cti-advanced-current",
+      "title": "HSK（七—九级）考试结构与成绩",
+      "publisher": "汉考国际",
+      "url": "https://www.chinesetest.cn/HSK/7-9"
+    }
+  ],
+  "levels": [
+    {
+      "id": "1",
+      "titleRu": "HSK 1",
+      "writtenQuestionCount": 40,
+      "writtenDurationMinutes": 40,
+      "speakingQuestionCount": 0,
+      "speakingDurationMinutes": 0,
+      "questionCount": 40,
+      "durationMinutes": 40,
+      "speakingRequired": false,
+      "speakingIntegrated": false,
+      "timingRu": "Общее время приблизительное и включает заполнение личных данных и бланка ответов. На уровнях 1–2 отдельной устной части нет.",
+      "scoringRu": "В проверенных новых образцах не указаны шкала баллов и проходной балл. Старые пороги HSK 2.0 здесь не применяются. Результат тренировки — только проверка конкретных ответов, не официальный балл HSK.",
+      "sources": [
+        "cti-structure-2025-12",
+        "cti-samples-2026",
+        "cti-pilot-2026-09"
+      ],
+      "sections": [
+        {
+          "id": "listening",
+          "titleZh": "听力",
+          "titleRu": "Аудирование",
+          "questionCount": 20,
+          "durationMinutes": 12,
+          "types": [
+            {
+              "id": "1-l1",
+              "part": 1,
+              "titleZh": "听词语选图片",
+              "titleRu": "Фраза → картинка",
+              "questionCount": 5,
+              "descriptionRu": "Прослушайте слово или короткую фразу и выберите одну из трёх картинок.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "请选择图片。",
+                  "promptRu": "Прослушайте фразу и выберите картинку.",
+                  "options": [
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🐈",
+                        "altRu": "Одна кошка"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🐈 🐈",
+                        "altRu": "Две кошки"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🐈 🐈 🐈",
+                        "altRu": "Три кошки"
+                      }
+                    }
+                  ],
+                  "answerIndex": 1,
+                  "explanationRu": "两 означает «два», 只 — счётное слово для животных. На второй картинке две кошки.",
+                  "audioTextZh": "两只猫",
+                  "id": "1-l1-example-1",
+                  "origin": "original",
+                  "promptPinyin": "Qǐng xuǎnzé túpiàn."
+                }
+              ]
+            },
+            {
+              "id": "1-l2",
+              "part": 2,
+              "titleZh": "听问句选答语",
+              "titleRu": "Вопрос → ответ",
+              "questionCount": 5,
+              "descriptionRu": "Прослушайте вопрос и выберите подходящую реплику из трёх вариантов.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "请选择回答。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "二十岁。",
+                      "pinyin": "èrshí suì"
+                    },
+                    {
+                      "zh": "星期一。",
+                      "pinyin": "xīngqī yī"
+                    },
+                    {
+                      "zh": "在学校。",
+                      "pinyin": "zài xuéxiào"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Вопрос 多大 спрашивает возраст; 二十岁 — двадцать лет.",
+                  "audioTextZh": "你今年多大？",
+                  "id": "1-l2-example-1",
+                  "origin": "original",
+                  "promptPinyin": "Qǐng xuǎnzé huídá."
+                }
+              ]
+            },
+            {
+              "id": "1-l3",
+              "part": 3,
+              "titleZh": "听对话匹配图片",
+              "titleRu": "Диалог → картинка",
+              "questionCount": 5,
+              "descriptionRu": "Соотнесите короткий диалог с картинкой из общего набора.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "请选择图片。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "☕",
+                        "altRu": "Кофе"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "📖",
+                        "altRu": "Книга"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🍚",
+                        "altRu": "Рис"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🚕",
+                        "altRu": "Такси"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🐕",
+                        "altRu": "Собака"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🍎",
+                        "altRu": "Яблоко"
+                      }
+                    }
+                  ],
+                  "answerIndex": 1,
+                  "explanationRu": "Собеседница читает книгу: 看书.",
+                  "audioTextZh": "男：你在做什么？女：我在看书。",
+                  "id": "1-l3-example-1",
+                  "origin": "original",
+                  "promptPinyin": "Qǐng xuǎnzé túpiàn."
+                }
+              ]
+            },
+            {
+              "id": "1-l4",
+              "part": 4,
+              "titleZh": "听短句选择答案",
+              "titleRu": "Короткое сообщение",
+              "questionCount": 5,
+              "descriptionRu": "Прослушайте сообщение и вопрос; выберите ответ.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "她什么时候去学校？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "今天",
+                      "pinyin": "jīntiān"
+                    },
+                    {
+                      "zh": "明天",
+                      "pinyin": "míngtiān"
+                    },
+                    {
+                      "zh": "昨天",
+                      "pinyin": "zuótiān"
+                    }
+                  ],
+                  "answerIndex": 1,
+                  "explanationRu": "明天 утром она идёт в школу; 今天 относится к пребыванию дома.",
+                  "audioTextZh": "我今天在家。明天上午我去学校。问：她什么时候去学校？",
+                  "id": "1-l4-example-1",
+                  "origin": "original",
+                  "promptPinyin": "Tā shénme shíhou qù xuéxiào?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "reading",
+          "titleZh": "阅读",
+          "titleRu": "Чтение",
+          "questionCount": 20,
+          "durationMinutes": 20,
+          "types": [
+            {
+              "id": "1-r1",
+              "part": 1,
+              "titleZh": "读句子匹配图片",
+              "titleRu": "Предложение → картинка",
+              "questionCount": 5,
+              "descriptionRu": "Прочитайте предложение и найдите соответствующую картинку.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "我想喝水。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "💧",
+                        "altRu": "Вода"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🍎",
+                        "altRu": "Яблоко"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "📖",
+                        "altRu": "Книга"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🐈",
+                        "altRu": "Кошка"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🚲",
+                        "altRu": "Велосипед"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🏠",
+                        "altRu": "Дом"
+                      }
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "喝水 — пить воду; 想 здесь выражает желание.",
+                  "id": "1-r1-example-1",
+                  "origin": "original",
+                  "promptPinyin": "Wǒ xiǎng hē shuǐ."
+                }
+              ]
+            },
+            {
+              "id": "1-r2",
+              "part": 2,
+              "titleZh": "对话匹配",
+              "titleRu": "Соедините реплики",
+              "questionCount": 5,
+              "descriptionRu": "Подберите реплику, которая логично продолжает диалог.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "你叫什么名字？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "我叫安娜。",
+                      "pinyin": "Wǒ jiào Ānnà."
+                    },
+                    {
+                      "zh": "我喝水。",
+                      "pinyin": "Wǒ hē shuǐ."
+                    },
+                    {
+                      "zh": "今天星期二。",
+                      "pinyin": "Jīntiān xīngqī èr."
+                    },
+                    {
+                      "zh": "这是我的书。",
+                      "pinyin": "Zhè shì wǒ de shū."
+                    },
+                    {
+                      "zh": "我在家。",
+                      "pinyin": "Wǒ zài jiā."
+                    },
+                    {
+                      "zh": "五块钱。",
+                      "pinyin": "Wǔ kuài qián."
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "叫什么名字 — «как зовут». Ответ строится: 我叫 + имя.",
+                  "id": "1-r2-example-1",
+                  "origin": "original",
+                  "promptPinyin": "Nǐ jiào shénme míngzi?"
+                }
+              ]
+            },
+            {
+              "id": "1-r3",
+              "part": 3,
+              "titleZh": "选词填空",
+              "titleRu": "Слово в пропуск",
+              "questionCount": 5,
+              "descriptionRu": "Выберите слово из набора и заполните пропуск в предложении.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "我（　）俄罗斯人。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "是",
+                      "pinyin": "shì"
+                    },
+                    {
+                      "zh": "喝",
+                      "pinyin": "hē"
+                    },
+                    {
+                      "zh": "看",
+                      "pinyin": "kàn"
+                    },
+                    {
+                      "zh": "去",
+                      "pinyin": "qù"
+                    },
+                    {
+                      "zh": "吃",
+                      "pinyin": "chī"
+                    },
+                    {
+                      "zh": "买",
+                      "pinyin": "mǎi"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "是 связывает подлежащее с национальностью: 我是俄罗斯人 — я из России.",
+                  "id": "1-r3-example-1",
+                  "origin": "original",
+                  "promptPinyin": "Wǒ (　) Éluósī rén."
+                }
+              ]
+            },
+            {
+              "id": "1-r4",
+              "part": 4,
+              "titleZh": "阅读句子选择答案",
+              "titleRu": "Поймите предложение",
+              "questionCount": 5,
+              "descriptionRu": "Прочитайте короткое предложение и ответьте на вопрос.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "这本书是我的。\n这是谁的书？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "我的",
+                      "pinyin": "wǒ de"
+                    },
+                    {
+                      "zh": "老师的",
+                      "pinyin": "lǎoshī de"
+                    },
+                    {
+                      "zh": "妈妈的",
+                      "pinyin": "māma de"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "我的 значит «мой/моя/моё». В предложении прямо указан владелец книги.",
+                  "id": "1-r4-example-1",
+                  "origin": "original",
+                  "promptPinyin": "Zhè běn shū shì wǒ de. Zhè shì shéi de shū?"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "titleRu": "HSK 2",
+      "writtenQuestionCount": 60,
+      "writtenDurationMinutes": 60,
+      "speakingQuestionCount": 0,
+      "speakingDurationMinutes": 0,
+      "questionCount": 60,
+      "durationMinutes": 60,
+      "speakingRequired": false,
+      "speakingIntegrated": false,
+      "timingRu": "Общее время приблизительное и включает заполнение личных данных и бланка ответов. На уровнях 1–2 отдельной устной части нет.",
+      "scoringRu": "В проверенных новых образцах не указаны шкала баллов и проходной балл. Старые пороги HSK 2.0 здесь не применяются. Результат тренировки — только проверка конкретных ответов, не официальный балл HSK.",
+      "sources": [
+        "cti-structure-2025-12",
+        "cti-samples-2026",
+        "cti-pilot-2026-09"
+      ],
+      "sections": [
+        {
+          "id": "listening",
+          "titleZh": "听力",
+          "titleRu": "Аудирование",
+          "questionCount": 25,
+          "durationMinutes": 17,
+          "types": [
+            {
+              "id": "2-l1",
+              "part": 1,
+              "titleZh": "听句子选图片",
+              "titleRu": "Предложение → картинка",
+              "questionCount": 5,
+              "descriptionRu": "Прослушайте предложение и выберите одну из трёх картинок.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "请选择图片。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🚲",
+                        "altRu": "Велосипед"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🚆",
+                        "altRu": "Поезд"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "✈️",
+                        "altRu": "Самолёт"
+                      }
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "骑自行车 — ехать на велосипеде.",
+                  "audioTextZh": "我每天骑自行车去学校。",
+                  "id": "2-l1-example-1",
+                  "origin": "original",
+                  "promptPinyin": "Qǐng xuǎnzé túpiàn."
+                }
+              ]
+            },
+            {
+              "id": "2-l2",
+              "part": 2,
+              "titleZh": "听对话匹配图片",
+              "titleRu": "Диалог → картинка",
+              "questionCount": 10,
+              "descriptionRu": "Прослушайте короткий диалог и сопоставьте его с картинкой из общего набора.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "请选择图片。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🎤",
+                        "altRu": "Пение"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🏊",
+                        "altRu": "Плавание"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "📚",
+                        "altRu": "Книги"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🏀",
+                        "altRu": "Баскетбол"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🍳",
+                        "altRu": "Приготовление еды"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🚶",
+                        "altRu": "Ходьба"
+                      }
+                    }
+                  ],
+                  "answerIndex": 1,
+                  "explanationRu": "游泳 — плавать. Девушка выбирает бассейн.",
+                  "audioTextZh": "男：周末你想做什么？女：我想去游泳。",
+                  "id": "2-l2-example-1",
+                  "origin": "original",
+                  "promptPinyin": "Qǐng xuǎnzé túpiàn."
+                }
+              ]
+            },
+            {
+              "id": "2-l3",
+              "part": 3,
+              "titleZh": "听对话选择答案",
+              "titleRu": "Вопросы по диалогу",
+              "questionCount": 10,
+              "descriptionRu": "Первые пять заданий — короткий обмен репликами, следующие пять — диалог из двух обменов; выберите ответ.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "他们几点见面？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "八点",
+                      "pinyin": "bā diǎn"
+                    },
+                    {
+                      "zh": "九点",
+                      "pinyin": "jiǔ diǎn"
+                    },
+                    {
+                      "zh": "十点",
+                      "pinyin": "shí diǎn"
+                    }
+                  ],
+                  "answerIndex": 1,
+                  "explanationRu": "Договорились встретиться в девять; время восемь было предложено, но отклонено.",
+                  "audioTextZh": "男：我们明天八点见，好吗？女：八点太早了，九点吧。男：好，在学校门口见。女：好的。问：他们几点见面？",
+                  "id": "2-l3-example-1",
+                  "origin": "original",
+                  "promptPinyin": "Tāmen jǐ diǎn jiànmiàn?"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "reading",
+          "titleZh": "阅读",
+          "titleRu": "Чтение",
+          "questionCount": 25,
+          "durationMinutes": 25,
+          "types": [
+            {
+              "id": "2-r1",
+              "part": 1,
+              "titleZh": "读句子匹配图片",
+              "titleRu": "Предложение → картинка",
+              "questionCount": 5,
+              "descriptionRu": "Соотнесите прочитанное предложение с картинкой.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "弟弟正在打篮球。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🏀",
+                        "altRu": "Баскетбол"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "⚽",
+                        "altRu": "Футбол"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🏊",
+                        "altRu": "Плавание"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "📖",
+                        "altRu": "Чтение"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🎤",
+                        "altRu": "Пение"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🍳",
+                        "altRu": "Готовка"
+                      }
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "打篮球 — играть в баскетбол. 正在 показывает, что действие происходит сейчас.",
+                  "id": "2-r1-example-1",
+                  "origin": "original",
+                  "promptPinyin": "Dìdi zhèngzài dǎ lánqiú."
+                }
+              ]
+            },
+            {
+              "id": "2-r2",
+              "part": 2,
+              "titleZh": "选词填空",
+              "titleRu": "Выберите слово",
+              "questionCount": 5,
+              "descriptionRu": "Вставьте подходящее слово из общего набора.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "今天比昨天（　）。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "热",
+                      "pinyin": "rè"
+                    },
+                    {
+                      "zh": "去",
+                      "pinyin": "qù"
+                    },
+                    {
+                      "zh": "茶",
+                      "pinyin": "chá"
+                    },
+                    {
+                      "zh": "谁",
+                      "pinyin": "shéi"
+                    },
+                    {
+                      "zh": "书",
+                      "pinyin": "shū"
+                    },
+                    {
+                      "zh": "这里",
+                      "pinyin": "zhèlǐ"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "比 оформляет сравнение: 今天比昨天热 — сегодня жарче, чем вчера.",
+                  "id": "2-r2-example-1",
+                  "origin": "original",
+                  "promptPinyin": "Jīntiān bǐ zuótiān (　)."
+                }
+              ]
+            },
+            {
+              "id": "2-r3",
+              "part": 3,
+              "titleZh": "句子匹配",
+              "titleRu": "Соедините предложения",
+              "questionCount": 10,
+              "descriptionRu": "Найдите связанное по смыслу предложение или ответную реплику.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "你为什么没去看电影？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "因为我昨天很忙。",
+                      "pinyin": "Yīnwèi wǒ zuótiān hěn máng."
+                    },
+                    {
+                      "zh": "一杯咖啡。",
+                      "pinyin": "Yì bēi kāfēi."
+                    },
+                    {
+                      "zh": "她二十岁。",
+                      "pinyin": "Tā èrshí suì."
+                    },
+                    {
+                      "zh": "这本书很好看。",
+                      "pinyin": "Zhè běn shū hěn hǎokàn."
+                    },
+                    {
+                      "zh": "请坐。",
+                      "pinyin": "Qǐng zuò."
+                    },
+                    {
+                      "zh": "我住在三楼。",
+                      "pinyin": "Wǒ zhù zài sān lóu."
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "为什么 — «почему». 因为 вводит причину: вчера я был занят.",
+                  "id": "2-r3-example-1",
+                  "origin": "original",
+                  "promptPinyin": "Nǐ wèishénme méi qù kàn diànyǐng?"
+                }
+              ]
+            },
+            {
+              "id": "2-r4",
+              "part": 4,
+              "titleZh": "阅读短文选择答案",
+              "titleRu": "Короткий текст",
+              "questionCount": 5,
+              "descriptionRu": "Прочитайте небольшой текст и выберите ответ по его содержанию.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "小林以前不喜欢跑步，现在每天早上都跑半个小时。\n现在小林：",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "每天跑步",
+                      "pinyin": "měitiān pǎobù"
+                    },
+                    {
+                      "zh": "不喜欢运动",
+                      "pinyin": "bù xǐhuan yùndòng"
+                    },
+                    {
+                      "zh": "晚上跑步",
+                      "pinyin": "wǎnshang pǎobù"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "现在每天早上都跑 — теперь он бегает каждое утро; не путайте это с его прежними привычками.",
+                  "id": "2-r4-example-1",
+                  "origin": "original",
+                  "promptPinyin": "Xiǎo Lín yǐqián bù xǐhuan pǎobù, xiànzài měitiān zǎoshang dōu pǎo bàn ge xiǎoshí. Xiànzài Xiǎo Lín:"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "writing",
+          "titleZh": "书写",
+          "titleRu": "Письмо: иероглифы",
+          "questionCount": 10,
+          "durationMinutes": 10,
+          "types": [
+            {
+              "id": "2-w1",
+              "part": 1,
+              "titleZh": "选择部件完成汉字",
+              "titleRu": "Соберите иероглиф",
+              "questionCount": 5,
+              "descriptionRu": "Выберите недостающий графический компонент иероглифа. Здесь это выбор части знака, а не порядка слов.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "女 + □ → 好",
+                  "promptRu": "Выберите недостающий компонент справа.",
+                  "options": [
+                    {
+                      "zh": "木"
+                    },
+                    {
+                      "zh": "口"
+                    },
+                    {
+                      "zh": "子"
+                    },
+                    {
+                      "zh": "日"
+                    },
+                    {
+                      "zh": "月"
+                    },
+                    {
+                      "zh": "人"
+                    }
+                  ],
+                  "answerIndex": 2,
+                  "explanationRu": "好 состоит из 女 слева и 子 справа. Недостающая часть — 子.",
+                  "id": "2-w1-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "2-w2",
+              "part": 2,
+              "titleZh": "根据拼音写汉字",
+              "titleRu": "Иероглиф по пиньиню",
+              "questionCount": 5,
+              "descriptionRu": "Впишите иероглиф, соответствующий пиньиню и контексту.",
+              "examples": [
+                {
+                  "kind": "text",
+                  "promptZh": "今天是星期（tiān）。",
+                  "promptRu": "Введите ответ по-китайски.",
+                  "acceptedAnswers": [
+                    "天"
+                  ],
+                  "answerZh": "天",
+                  "explanationRu": "星期天 — воскресенье. В данном контексте tiān записывается как 天.",
+                  "id": "2-w2-example-1",
+                  "origin": "original",
+                  "promptPinyin": "Jīntiān shì xīngqī (tiān)."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "titleRu": "HSK 3",
+      "writtenQuestionCount": 70,
+      "writtenDurationMinutes": 83,
+      "speakingQuestionCount": 15,
+      "speakingDurationMinutes": 15,
+      "questionCount": 85,
+      "durationMinutes": 98,
+      "speakingRequired": true,
+      "speakingIntegrated": false,
+      "timingRu": "Время письменной части приблизительное и включает заполнение личных данных и бланка ответов. Время устной части включает подготовку. Письменная и устная части проводятся отдельно.",
+      "scoringRu": "В проверенных новых образцах не указаны шкала баллов и проходной балл. Старые пороги HSK 2.0 здесь не применяются. Результат тренировки — только проверка конкретных ответов, не официальный балл HSK.",
+      "sources": [
+        "cti-structure-2025-12",
+        "cti-samples-2026",
+        "cti-pilot-2026-09"
+      ],
+      "sections": [
+        {
+          "id": "listening",
+          "titleZh": "听力",
+          "titleRu": "Аудирование",
+          "questionCount": 30,
+          "durationMinutes": 23,
+          "types": [
+            {
+              "id": "3-l1",
+              "part": 1,
+              "titleZh": "听对话匹配图片",
+              "titleRu": "Диалог → картинка",
+              "questionCount": 10,
+              "descriptionRu": "Прослушайте диалог и выберите подходящую картинку из общего набора.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "请选择图片。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🚆 🎫",
+                        "altRu": "Билет на поезд"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "📞",
+                        "altRu": "Телефонный разговор"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🍳",
+                        "altRu": "Приготовление еды"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🚲",
+                        "altRu": "Велосипед"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "🏊",
+                        "altRu": "Плавание"
+                      }
+                    },
+                    {
+                      "zh": "",
+                      "visual": {
+                        "emoji": "📚",
+                        "altRu": "Книги"
+                      }
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "明天去上海的火车票 — билет на завтрашний поезд в Шанхай.",
+                  "audioTextZh": "女：你买好票了吗？男：买好了，是明天去上海的火车票。",
+                  "id": "3-l1-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "3-l2",
+              "part": 2,
+              "titleZh": "听对话选择答案",
+              "titleRu": "Вопросы по диалогу",
+              "questionCount": 10,
+              "descriptionRu": "Пять вопросов относятся к диалогам из одного обмена репликами, пять — из двух обменов.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "她为什么要换衣服？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "衣服太大"
+                    },
+                    {
+                      "zh": "衣服太贵"
+                    },
+                    {
+                      "zh": "不喜欢颜色"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Размер слишком велик; цвет ей нравится, а цена не обсуждается.",
+                  "audioTextZh": "女：这件衣服颜色很好，可是太大了。男：那我给您换一件小一点儿的吧。问：她为什么要换衣服？",
+                  "id": "3-l2-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "3-l3",
+              "part": 3,
+              "titleZh": "听短文选择答案",
+              "titleRu": "Короткий монолог",
+              "questionCount": 10,
+              "descriptionRu": "Прослушайте небольшой монолог и ответьте на вопрос.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "今天图书馆几点开门？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "八点"
+                    },
+                    {
+                      "zh": "九点"
+                    },
+                    {
+                      "zh": "十点"
+                    }
+                  ],
+                  "answerIndex": 1,
+                  "explanationRu": "Обычно библиотека открывается в восемь, но сегодня — в девять.",
+                  "audioTextZh": "图书馆平时早上八点开门，但是今天要打扫卫生，九点才开门。问：今天图书馆几点开门？",
+                  "id": "3-l3-example-1",
+                  "origin": "original"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "reading",
+          "titleZh": "阅读",
+          "titleRu": "Чтение",
+          "questionCount": 30,
+          "durationMinutes": 30,
+          "types": [
+            {
+              "id": "3-r1",
+              "part": 1,
+              "titleZh": "句子匹配",
+              "titleRu": "Соедините реплики",
+              "questionCount": 10,
+              "descriptionRu": "Выберите предложение, которое логично связано с данным.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "我的手机找不到了，你能帮我找找吗？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "别着急，我给你的手机打个电话。"
+                    },
+                    {
+                      "zh": "这家饭店很好吃。"
+                    },
+                    {
+                      "zh": "我每天跑步。"
+                    },
+                    {
+                      "zh": "会议已经结束了。"
+                    },
+                    {
+                      "zh": "天气越来越热了。"
+                    },
+                    {
+                      "zh": "他比我高。"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Звонок поможет найти потерявшийся телефон. Остальные реплики не отвечают на просьбу.",
+                  "id": "3-r1-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "3-r2",
+              "part": 2,
+              "titleZh": "选词填空",
+              "titleRu": "Слово в контексте",
+              "questionCount": 10,
+              "descriptionRu": "Заполните пропуски в отдельных предложениях и коротких диалогах.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "这道题有点儿难，请你给我（　）一下。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "解释"
+                    },
+                    {
+                      "zh": "离开"
+                    },
+                    {
+                      "zh": "经过"
+                    },
+                    {
+                      "zh": "安静"
+                    },
+                    {
+                      "zh": "银行"
+                    },
+                    {
+                      "zh": "颜色"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "解释一下 — немного объяснить. 给我 указывает, кому объясняют.",
+                  "id": "3-r2-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "3-r3",
+              "part": 3,
+              "titleZh": "阅读短文选择答案",
+              "titleRu": "Понимание текста",
+              "questionCount": 10,
+              "descriptionRu": "Ответьте на вопросы по небольшим текстам: часть текстов имеет один вопрос, часть — два.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "小陈每天坐地铁上班。昨天地铁站临时关闭，他只好坐公共汽车，所以比平时晚到了二十分钟。\n小陈昨天为什么迟到了？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "改变了交通方式"
+                    },
+                    {
+                      "zh": "起床太晚"
+                    },
+                    {
+                      "zh": "忘了带手机"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Причина — закрытая станция метро и необходимость ехать автобусом. В тексте ничего не сказано о позднем подъёме.",
+                  "id": "3-r3-example-1",
+                  "origin": "original"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "writing",
+          "titleZh": "书写",
+          "titleRu": "Письмо",
+          "questionCount": 10,
+          "durationMinutes": 20,
+          "types": [
+            {
+              "id": "3-w1",
+              "part": 1,
+              "titleZh": "根据拼音写汉字",
+              "titleRu": "Иероглиф по пиньиню",
+              "questionCount": 5,
+              "descriptionRu": "Впишите иероглиф по пиньиню с учётом предложения.",
+              "examples": [
+                {
+                  "kind": "text",
+                  "promptZh": "我们一起（qù）吃午饭吧。",
+                  "promptRu": "Введите ответ по-китайски.",
+                  "acceptedAnswers": [
+                    "去"
+                  ],
+                  "answerZh": "去",
+                  "explanationRu": "去吃午饭 — пойти обедать. 一起 означает «вместе».",
+                  "id": "3-w1-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "3-w2",
+              "part": 2,
+              "titleZh": "看图用词造句",
+              "titleRu": "Картинка + слово → предложение",
+              "questionCount": 5,
+              "descriptionRu": "Напишите предложение по картинке, обязательно употребив заданное слово.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "用“做饭”写一句话。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "妈妈正在厨房里做饭。",
+                  "explanationRu": "Допустимы разные предложения. Нужно использовать 做饭 и описать действие на картинке.",
+                  "selfCheckRu": [
+                    "В предложении есть 做饭.",
+                    "Предложение соответствует картинке и грамматически закончено."
+                  ],
+                  "visual": {
+                    "emoji": "🧑‍🍳 🍳",
+                    "altRu": "Человек готовит еду"
+                  },
+                  "requiredWords": [
+                    "做饭"
+                  ],
+                  "id": "3-w2-example-1",
+                  "origin": "original"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "speaking",
+          "titleZh": "口语",
+          "titleRu": "Устная часть",
+          "questionCount": 15,
+          "durationMinutes": 15,
+          "types": [
+            {
+              "id": "3-s1",
+              "part": 1,
+              "titleZh": "听后重复",
+              "titleRu": "Повторите услышанное",
+              "questionCount": 8,
+              "descriptionRu": "Повторите услышанное предложение. В образце на каждый ответ отведено 10 секунд.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "请重复你听到的句子。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "我下班以后想去超市买点儿水果。",
+                  "explanationRu": "Повторите исходную фразу, сохранив порядок слов, тоны и смысл.",
+                  "selfCheckRu": [
+                    "Я повторил всю фразу без пропусков.",
+                    "Я произнёс слова разборчиво и сохранил тоны."
+                  ],
+                  "audioTextZh": "我下班以后想去超市买点儿水果。",
+                  "answerSeconds": 10,
+                  "id": "3-s1-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "3-s2",
+              "part": 2,
+              "titleZh": "看图说话",
+              "titleRu": "Опишите картинку",
+              "questionCount": 5,
+              "descriptionRu": "Скажите по картинке одно или несколько предложений. На каждый ответ — 15 секунд.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "请说说图上有什么。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "一个人正在看书。",
+                  "explanationRu": "Назовите человека и действие. 正在 помогает сказать, что действие происходит сейчас.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "visual": {
+                    "emoji": "🧑 📖",
+                    "altRu": "Человек читает книгу"
+                  },
+                  "answerSeconds": 15,
+                  "id": "3-s2-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "3-s3",
+              "part": 3,
+              "titleZh": "回答问题",
+              "titleRu": "Ответьте на вопрос",
+              "questionCount": 2,
+              "descriptionRu": "Развёрнуто ответьте на личный или повседневный вопрос. На каждый ответ — 1,5 минуты. Подготовка к каждому из двух вопросов третьей части: 3 минуты (в сумме 6 минут).",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "你周末一般做什么？请介绍一下。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "我周末一般先做作业，然后和朋友一起去公园。如果下雨，我就在家看书。星期日晚上，我会准备下周要用的东西。这样的安排让我觉得很舒服。",
+                  "explanationRu": "План ответа: обычные занятия → конкретный пример → ваши впечатления. Образец показывает начало ответа; на экзамене развейте его до отведённого времени.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "answerSeconds": 90,
+                  "id": "3-s3-example-1",
+                  "origin": "original"
+                }
+              ],
+              "preparationSecondsPerQuestion": 180
+            }
+          ],
+          "preparationMinutes": 6,
+          "preparationNoteRu": "Общие 6 минут подготовки относятся только к двум вопросам третьей части: по 3 минуты на каждый. Для повторения и описания картинок в образце отдельная подготовка не указана."
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "titleRu": "HSK 4",
+      "writtenQuestionCount": 70,
+      "writtenDurationMinutes": 85,
+      "speakingQuestionCount": 5,
+      "speakingDurationMinutes": 20,
+      "questionCount": 75,
+      "durationMinutes": 105,
+      "speakingRequired": true,
+      "speakingIntegrated": false,
+      "timingRu": "Время письменной части приблизительное и включает заполнение личных данных и бланка ответов. Время устной части включает подготовку. Письменная и устная части проводятся отдельно.",
+      "scoringRu": "В проверенных новых образцах не указаны шкала баллов и проходной балл. Старые пороги HSK 2.0 здесь не применяются. Результат тренировки — только проверка конкретных ответов, не официальный балл HSK.",
+      "sources": [
+        "cti-structure-2025-12",
+        "cti-samples-2026",
+        "cti-pilot-2026-09"
+      ],
+      "sections": [
+        {
+          "id": "listening",
+          "titleZh": "听力",
+          "titleRu": "Аудирование",
+          "questionCount": 32,
+          "durationMinutes": 20,
+          "types": [
+            {
+              "id": "4-l1",
+              "part": 1,
+              "titleZh": "听对话选择答案",
+              "titleRu": "Вопросы по диалогам",
+              "questionCount": 14,
+              "descriptionRu": "Семь заданий — диалоги из одного обмена репликами, семь — из двух. Выберите один из четырёх ответов.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "女的建议男的怎么去机场？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "坐地铁"
+                    },
+                    {
+                      "zh": "坐出租车"
+                    },
+                    {
+                      "zh": "开车"
+                    },
+                    {
+                      "zh": "骑车"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Она рекомендует метро, потому что на дорогах пробки; такси — первоначальный план мужчины.",
+                  "audioTextZh": "男：我准备打车去机场。女：这个时间容易堵车，坐地铁更保险。男：那我得换乘吗？女：不用，直接坐到终点站就行。问：女的建议男的怎么去机场？",
+                  "id": "4-l1-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "4-l2",
+              "part": 2,
+              "titleZh": "听语段选择答案",
+              "titleRu": "Монологи и группы вопросов",
+              "questionCount": 18,
+              "descriptionRu": "Пять отдельных вопросов и тринадцать вопросов в группах по общему сообщению.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "活动地点为什么改变了？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "原来的房间太小"
+                    },
+                    {
+                      "zh": "天气太热"
+                    },
+                    {
+                      "zh": "老师迟到了"
+                    },
+                    {
+                      "zh": "大家不想上课"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Количество участников выросло, поэтому нужна более просторная комната.",
+                  "audioTextZh": "通知大家一下，明天的读书活动改在二楼会议室举行。因为报名的人比原来多，原来的教室坐不下。时间不变，还是下午两点。问：活动地点为什么改变了？",
+                  "id": "4-l2-example-1",
+                  "origin": "original"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "reading",
+          "titleZh": "阅读",
+          "titleRu": "Чтение",
+          "questionCount": 32,
+          "durationMinutes": 30,
+          "types": [
+            {
+              "id": "4-r1",
+              "part": 1,
+              "titleZh": "选词填空",
+              "titleRu": "Слова в предложениях и диалогах",
+              "questionCount": 10,
+              "descriptionRu": "Выберите подходящее слово для пропуска в предложении или диалоге.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "为了（　）浪费，食堂建议大家按需要取餐。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "减少"
+                    },
+                    {
+                      "zh": "收到"
+                    },
+                    {
+                      "zh": "丰富"
+                    },
+                    {
+                      "zh": "同意"
+                    },
+                    {
+                      "zh": "参加"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "减少浪费 — сократить потери / избежать лишних отходов. 为了 вводит цель.",
+                  "id": "4-r1-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "4-r2",
+              "part": 2,
+              "titleZh": "阅读语段选择答案",
+              "titleRu": "Понимание небольших текстов",
+              "questionCount": 15,
+              "descriptionRu": "Прочитайте текст и ответьте на один или несколько вопросов по нему.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "这家书店每周六组织读书会。参加者不需要购买书籍，只要提前报名，就能和其他读者交流。店主希望更多人把阅读变成生活习惯。\n参加读书会需要：",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "提前报名"
+                    },
+                    {
+                      "zh": "购买一本书"
+                    },
+                    {
+                      "zh": "成为作家"
+                    },
+                    {
+                      "zh": "每周都到场"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Условие участия — предварительная регистрация: 只要提前报名. Покупать книги прямо не требуется: 不需要购买书籍.",
+                  "id": "4-r2-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "4-r3",
+              "part": 3,
+              "titleZh": "选句填空",
+              "titleRu": "Предложения в пропуски",
+              "questionCount": 7,
+              "descriptionRu": "Восстановите связность текста, вставив подходящие предложения.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "小区新增了自行车停车区。（　）这样，居民出门更方便，楼道也不再被自行车挡住。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "大家可以把车集中停在那里。"
+                    },
+                    {
+                      "zh": "自行车比赛已经结束了。"
+                    },
+                    {
+                      "zh": "这家饭店的菜很好吃。"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "那里 указывает на новую парковку. Следующее 这样 объясняет результат такого решения.",
+                  "id": "4-r3-example-1",
+                  "origin": "original"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "writing",
+          "titleZh": "写作",
+          "titleRu": "Письмо",
+          "questionCount": 6,
+          "durationMinutes": 25,
+          "types": [
+            {
+              "id": "4-w1",
+              "part": 1,
+              "titleZh": "看图用词造句",
+              "titleRu": "Предложение по картинке",
+              "questionCount": 5,
+              "descriptionRu": "Напишите грамматически законченное предложение по картинке и используйте указанное слово.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "用“打扫”写一句话。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "他正在打扫房间，准备迎接客人。",
+                  "explanationRu": "Обязательное слово 打扫 значит «убирать». Можно добавить цель или причину, если предложение остаётся естественным.",
+                  "selfCheckRu": [
+                    "Я употребил 打扫.",
+                    "Моё предложение описывает уборку на картинке.",
+                    "Порядок слов и грамматика правильные."
+                  ],
+                  "visual": {
+                    "emoji": "🧑 🧹 🏠",
+                    "altRu": "Человек убирает комнату"
+                  },
+                  "requiredWords": [
+                    "打扫"
+                  ],
+                  "id": "4-w1-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "4-w2",
+              "part": 2,
+              "titleZh": "写短文",
+              "titleRu": "Небольшое сочинение",
+              "questionCount": 1,
+              "descriptionRu": "Напишите связный текст по теме. В опубликованном образце требуется не менее 80 иероглифов.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "请介绍一次你帮助别人的经历，不少于80字。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "上个周末，我在地铁站看见一位老人。他拿着手机，不知道怎么去医院。我先问清楚他要去的医院，然后帮他查了路线。因为我们正好坐同一条地铁，我就陪他一起上车，并告诉他应该在哪一站换车。下车时，他一直向我道谢。这件事让我觉得，帮助别人并不一定要做很大的事情，一点儿耐心也能让人感到温暖。",
+                  "explanationRu": "Сюжет: когда и где → кому и как помогли → результат → ваше впечатление. Объём считается в китайских знаках, а не в русских словах.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "minimumHanCharacters": 80,
+                  "id": "4-w2-example-1",
+                  "origin": "original"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "speaking",
+          "titleZh": "口语",
+          "titleRu": "Устная часть",
+          "questionCount": 5,
+          "durationMinutes": 20,
+          "types": [
+            {
+              "id": "4-s1",
+              "part": 1,
+              "titleZh": "听后复述",
+              "titleRu": "Перескажите услышанное",
+              "questionCount": 2,
+              "descriptionRu": "Прослушайте текст и передайте основные события и связи своими словами. На ответ в образце: 40 секунд.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "请复述你听到的内容。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "小李以前开车上班。因为公司附近修路，他改坐地铁，发现地铁更准时，还能在路上看书。修路结束后，他仍然选择坐地铁。",
+                  "explanationRu": "Сохраните главные факты, причины и результат. Пересказ допускает другие слова; нельзя добавлять несуществующие факты.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "audioTextZh": "小李原来总是开车上班。上个月，公司附近修路，他开始坐地铁。他发现，坐地铁不但更准时，而且可以在路上看书。现在即使道路已经修好了，他还是决定继续坐地铁。",
+                  "answerSeconds": 40,
+                  "id": "4-s1-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "4-s2",
+              "part": 2,
+              "titleZh": "看图说话",
+              "titleRu": "Рассказ по картинке",
+              "questionCount": 1,
+              "descriptionRu": "Опишите людей, место, действия и возможные связи между ними. На ответ — 2 минуты; подготовка в образце — 3 минуты.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "请根据图片说一段话。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "几位邻居正在公园里一起清理垃圾。有人捡塑料瓶，有人把垃圾分类放进袋子里。大家分工合作，公园很快变得干净了。这次活动不仅改善了环境，也让邻居们更加熟悉。",
+                  "explanationRu": "Сначала назовите место и участников, затем действия. Предположения формулируйте как предположения. Этот короткий образец можно развить, добавив детали.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "visual": {
+                    "emoji": "🧑 🤝 🧑  🌳  🧹 🗑️",
+                    "altRu": "Двое соседей совместно убирают мусор в парке"
+                  },
+                  "answerSeconds": 120,
+                  "id": "4-s2-example-1",
+                  "origin": "original"
+                }
+              ],
+              "preparationSecondsPerQuestion": 180
+            },
+            {
+              "id": "4-s3",
+              "part": 3,
+              "titleZh": "回答问题",
+              "titleRu": "Обоснуйте ответ",
+              "questionCount": 2,
+              "descriptionRu": "Выскажите мнение или ответьте на открытый вопрос и приведите аргументы. На ответ — 2 минуты. Подготовка к каждому из двух вопросов третьей части: 3,5 минуты (в сумме 7 минут).",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "你准备怎样欢迎一位新同学？",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "我会先向新同学介绍自己，带他看看教室和图书馆。午饭时，我会邀请他和大家坐在一起。如果他不懂课程安排，我可以帮助他。这样，他就能更快熟悉学校，也更容易交到朋友。",
+                  "explanationRu": "Структура: позиция → аргумент → пример → вывод. Краткий образец показывает логику; в тренировке развейте собственные примеры до нужного времени.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "answerSeconds": 120,
+                  "id": "4-s3-example-1",
+                  "origin": "original"
+                }
+              ],
+              "preparationSecondsPerQuestion": 210
+            }
+          ],
+          "preparationMinutes": 10,
+          "preparationNoteRu": "Общие 10 минут подготовки: 3 минуты перед единственным заданием по картинке во второй части и по 3,5 минуты перед каждым из двух вопросов третьей части. Для пересказов в первой части отдельная подготовка не указана."
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "titleRu": "HSK 5",
+      "writtenQuestionCount": 72,
+      "writtenDurationMinutes": 110,
+      "speakingQuestionCount": 5,
+      "speakingDurationMinutes": 23,
+      "questionCount": 77,
+      "durationMinutes": 133,
+      "speakingRequired": true,
+      "speakingIntegrated": false,
+      "timingRu": "Время письменной части приблизительное и включает заполнение личных данных и бланка ответов. Время устной части включает подготовку. Письменная и устная части проводятся отдельно.",
+      "scoringRu": "В проверенных новых образцах не указаны шкала баллов и проходной балл. Старые пороги HSK 2.0 здесь не применяются. Результат тренировки — только проверка конкретных ответов, не официальный балл HSK.",
+      "sources": [
+        "cti-structure-2025-12",
+        "cti-samples-2026",
+        "cti-pilot-2026-09"
+      ],
+      "sections": [
+        {
+          "id": "listening",
+          "titleZh": "听力",
+          "titleRu": "Аудирование",
+          "questionCount": 35,
+          "durationMinutes": 25,
+          "types": [
+            {
+              "id": "5-l1",
+              "part": 1,
+              "titleZh": "听对话选择答案",
+              "titleRu": "Короткие и развёрнутые диалоги",
+              "questionCount": 19,
+              "descriptionRu": "Десять вопросов по диалогам из двух обменов репликами и девять вопросов по более длинным диалогам.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "女的认为新方案最需要解决什么问题？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "服务怎样持续运行"
+                    },
+                    {
+                      "zh": "标志是否够醒目"
+                    },
+                    {
+                      "zh": "房间是不是太大"
+                    },
+                    {
+                      "zh": "活动名称是否好听"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Собеседница поддерживает идею читального зала, но спрашивает, кто будет дежурить и оплачивать работу в будущем. Значит, её беспокоит устойчивость сервиса, а не оформление.",
+                  "audioTextZh": "男：我们想把空教室改成夜间自习室，你觉得怎么样？女：想法很好，但不能只考虑装修。男：你是说还要考虑灯光和座位？女：那些当然重要。我更关心谁来值班，以及长期的费用由谁承担。问：女的认为新方案最需要解决什么问题？",
+                  "id": "5-l1-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "5-l2",
+              "part": 2,
+              "titleZh": "听篇章选择答案",
+              "titleRu": "Текст и несколько вопросов",
+              "questionCount": 16,
+              "descriptionRu": "Прослушайте связный рассказ или объяснение и ответьте на группу вопросов.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "这个项目成功的主要原因是什么？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "根据居民需求调整服务"
+                    },
+                    {
+                      "zh": "免费赠送大量手机"
+                    },
+                    {
+                      "zh": "要求所有人上网办理"
+                    },
+                    {
+                      "zh": "完全取消了窗口"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Команда узнала, какие повседневные задачи затрудняют пожилых людей, и перестроила занятия под эти потребности. Вопрос касается причины успеха проекта.",
+                  "audioTextZh": "社区开展手机使用培训，起初报名的人很少。工作人员走访后发现，老人并不想先学复杂的软件，而是想学挂号、乘车和与家人视频联系。于是课程改成一个问题一次练习，并保留课后咨询。参加的人逐渐多了起来。问：这个项目成功的主要原因是什么？",
+                  "id": "5-l2-example-1",
+                  "origin": "original"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "reading",
+          "titleZh": "阅读",
+          "titleRu": "Чтение",
+          "questionCount": 35,
+          "durationMinutes": 35,
+          "types": [
+            {
+              "id": "5-r1",
+              "part": 1,
+              "titleZh": "选词或短语填空",
+              "titleRu": "Пропуски в тексте",
+              "questionCount": 10,
+              "descriptionRu": "Выберите слова или фразы, которые подходят по значению и связям внутри текста.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "城市绿道不仅给居民提供了运动场所，也把原本分散的公园（　）起来，形成了连续的公共空间。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "连接"
+                    },
+                    {
+                      "zh": "拒绝"
+                    },
+                    {
+                      "zh": "取消"
+                    },
+                    {
+                      "zh": "假设"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "连接起来 — соединить в единую сеть. Слово соотносится с 分散 и 连续.",
+                  "id": "5-r1-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "5-r2",
+              "part": 2,
+              "titleZh": "段落排序",
+              "titleRu": "Порядок абзацев",
+              "questionCount": 10,
+              "descriptionRu": "Восстановите последовательность абзацев. В примере ниже впишите буквы подряд; это один сокращённый набор для освоения формата.",
+              "examples": [
+                {
+                  "kind": "text",
+                  "promptZh": "A. 过了一个月，参加的人越来越多，大家决定每周固定见面。\nB. 后来，她在社区群里发出邀请，希望找到一起练习的人。\nC. 小周刚搬到新城市，想练习汉语口语，却找不到伙伴。\nD. 三位邻居回复了她，他们约好周末在公园交流。\nE. 如今，这个小组已成为邻居们学习和交朋友的地方。",
+                  "promptRu": "Введите порядок букв, например ABCDE.",
+                  "acceptedAnswers": [
+                    "CBDAE"
+                  ],
+                  "answerZh": "CBDAE",
+                  "explanationRu": "Сначала проблема C, затем приглашение B, первые участники D, развитие A и нынешний результат E.",
+                  "id": "5-r2-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "5-r3",
+              "part": 3,
+              "titleZh": "阅读篇章选择答案",
+              "titleRu": "Понимание статьи",
+              "questionCount": 15,
+              "descriptionRu": "Ответьте на вопросы по содержанию, связям и авторской позиции в статье.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "某市把旧厂房改成文化空间。设计团队没有把旧设备全部拆掉，而是保留了部分机器，并配上工人的口述记录。参观者因此不仅看到建筑，也能了解曾经在这里生活和劳动的人。项目负责人认为，城市更新不应只追求外观新颖，还应保留地方的记忆。\n保留机器和口述记录主要是为了：",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "呈现地方历史与人的经历"
+                    },
+                    {
+                      "zh": "恢复工厂大规模生产"
+                    },
+                    {
+                      "zh": "降低所有参观者的消费"
+                    },
+                    {
+                      "zh": "证明新设备不够耐用"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Автор подчёркивает сохранение местной памяти и опыта работников. Машины и устные рассказы помогают показать человеческую историю здания.",
+                  "id": "5-r3-example-1",
+                  "origin": "original"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "writing",
+          "titleZh": "写作",
+          "titleRu": "Письмо",
+          "questionCount": 2,
+          "durationMinutes": 40,
+          "types": [
+            {
+              "id": "5-w1",
+              "part": 1,
+              "titleZh": "看图写作",
+              "titleRu": "История по четырём картинкам",
+              "questionCount": 1,
+              "descriptionRu": "Напишите связную историю по четырём картинкам; в опубликованном образце — не менее 100 иероглифов.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "请根据四幅图写一篇故事，不少于100字。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "星期天，小安和朋友去公园散步。他们看见草地上有不少塑料瓶，觉得这么美的地方不应该被垃圾破坏。于是，两个人回家拿来手套和垃圾袋，开始捡拾草地上的垃圾。路过的居民看见后，也主动加入了他们。大家分工合作，把瓶子和其他垃圾分类放好。忙了一个上午，公园终于恢复了干净的样子。小安望着整洁的草地很高兴，他和朋友决定以后每个月都组织一次这样的活动。",
+                  "explanationRu": "Свяжите четыре сцены: проблема → подготовка → совместное действие → результат. Не ограничивайтесь четырьмя несвязанными подписями.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "visualSequence": [
+                    {
+                      "emoji": "🌳 🗑️ 🧴",
+                      "altRu": "В парке лежат бутылки и мусор"
+                    },
+                    {
+                      "emoji": "🧑 🧤 🛍️",
+                      "altRu": "Человек приносит перчатки и пакет"
+                    },
+                    {
+                      "emoji": "🧑 🤝 🧑 🧹",
+                      "altRu": "Люди вместе убирают"
+                    },
+                    {
+                      "emoji": "🌳 🌷 ✨",
+                      "altRu": "Чистый парк"
+                    }
+                  ],
+                  "minimumHanCharacters": 100,
+                  "id": "5-w1-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "5-w2",
+              "part": 2,
+              "titleZh": "话题作文",
+              "titleRu": "Сочинение по теме",
+              "questionCount": 1,
+              "descriptionRu": "Раскройте предложенную тему, приведите опыт или аргументы. В образце — не менее 200 иероглифов.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "一次失败可能带来新的认识。请写一次你遇到困难后改变方法的经历，不少于200字。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "刚开始学习汉语时，我每天花很长时间抄写生词，希望很快提高水平。可是几个月以后，我发现自己虽然能认出不少词，遇到真实对话时却常常说不出来。一次课堂讨论中，我准备了很多内容，最后还是因为太紧张而没有表达清楚。我很失望，也开始怀疑自己的学习方法。\n后来，老师建议我把词语放进具体情景中练习。我不再只抄写词表，而是每天选一个生活话题，先说一分钟，再听录音，找出停顿和错误。我还邀请同学一起模拟买东西、问路和安排旅行。开始的时候，我们说得很慢，但坚持一段时间后，我越来越敢开口了。\n这次经历让我明白，努力很重要，方法同样重要。失败并不意味着自己没有能力，它也可能提醒我们停下来观察问题。只要愿意调整方法，把大目标分成能完成的小任务，就能逐渐看到进步。",
+                  "explanationRu": "План: прежний подход → трудность → изменение действий → результат и вывод. Образец не является единственно правильным ответом.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "minimumHanCharacters": 200,
+                  "id": "5-w2-example-1",
+                  "origin": "original"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "speaking",
+          "titleZh": "口语",
+          "titleRu": "Устная часть",
+          "questionCount": 5,
+          "durationMinutes": 23,
+          "types": [
+            {
+              "id": "5-s1",
+              "part": 1,
+              "titleZh": "听后复述",
+              "titleRu": "Перескажите услышанное",
+              "questionCount": 2,
+              "descriptionRu": "Прослушайте текст и передайте основные события и связи своими словами. На ответ в образце: 1,5 минуты.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "请复述你听到的内容。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "居民把社区的一块闲置空地改成了菜园。老人组织种植，孩子和年轻人也参与其中。菜园既产出了蔬菜，也促进了邻里交流。这个故事说明，共同参与小事可以增进社区联系。",
+                  "explanationRu": "Сохраните главные факты, причины и результат. Пересказ допускает другие слова; нельзя добавлять несуществующие факты.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "audioTextZh": "社区原来有一块闲置的空地，居民常把旧东西堆在那里。后来，几位退休老人提出把空地改成小菜园。他们邀请孩子参加种植，也请年轻人设计说明牌。几个月以后，菜园不仅提供了新鲜蔬菜，还让原来不熟悉的邻居有了交流的机会。",
+                  "answerSeconds": 90,
+                  "id": "5-s1-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "5-s2",
+              "part": 2,
+              "titleZh": "看图说话",
+              "titleRu": "Рассказ по картинке",
+              "questionCount": 1,
+              "descriptionRu": "Опишите людей, место, действия и возможные связи между ними. На ответ — 2 минуты; подготовка в образце — 3 минуты.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "请根据图片说一段话。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "几位邻居正在公园里一起清理垃圾。有人捡塑料瓶，有人把垃圾分类放进袋子里。大家分工合作，公园很快变得干净了。这次活动不仅改善了环境，也让邻居们更加熟悉。",
+                  "explanationRu": "Сначала назовите место и участников, затем действия. Предположения формулируйте как предположения. Этот короткий образец можно развить, добавив детали.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "visual": {
+                    "emoji": "🧑 🤝 🧑  🌳  🧹 🗑️",
+                    "altRu": "Двое соседей совместно убирают мусор в парке"
+                  },
+                  "answerSeconds": 120,
+                  "id": "5-s2-example-1",
+                  "origin": "original"
+                }
+              ],
+              "preparationSecondsPerQuestion": 180
+            },
+            {
+              "id": "5-s3",
+              "part": 3,
+              "titleZh": "回答问题",
+              "titleRu": "Обоснуйте ответ",
+              "questionCount": 2,
+              "descriptionRu": "Выскажите мнение или ответьте на открытый вопрос и приведите аргументы. На ответ — 2,5 минуты. Подготовка к каждому из двух вопросов третьей части: 3,5 минуты (в сумме 7 минут).",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "城市里应该保留更多公共阅读空间吗？请说明理由。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "我认为应该保留更多公共阅读空间。不是每个人家里都有安静的学习环境，公共空间能降低阅读的门槛。同时，这些场所还可以举办读书交流活动。不过，建设时应了解居民的需求，合理安排位置和开放时间，避免只追求漂亮的外观。",
+                  "explanationRu": "Структура: позиция → аргумент → пример → вывод. Краткий образец показывает логику; в тренировке развейте собственные примеры до нужного времени.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "answerSeconds": 150,
+                  "id": "5-s3-example-1",
+                  "origin": "original"
+                }
+              ],
+              "preparationSecondsPerQuestion": 210
+            }
+          ],
+          "preparationMinutes": 10,
+          "preparationNoteRu": "Общие 10 минут подготовки: 3 минуты перед единственным заданием по картинке во второй части и по 3,5 минуты перед каждым из двух вопросов третьей части. Для пересказов в первой части отдельная подготовка не указана."
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "titleRu": "HSK 6",
+      "writtenQuestionCount": 82,
+      "writtenDurationMinutes": 125,
+      "speakingQuestionCount": 5,
+      "speakingDurationMinutes": 23,
+      "questionCount": 87,
+      "durationMinutes": 148,
+      "speakingRequired": true,
+      "speakingIntegrated": false,
+      "timingRu": "Время письменной части приблизительное и включает заполнение личных данных и бланка ответов. Время устной части включает подготовку. Письменная и устная части проводятся отдельно.",
+      "scoringRu": "В проверенных новых образцах не указаны шкала баллов и проходной балл. Старые пороги HSK 2.0 здесь не применяются. Результат тренировки — только проверка конкретных ответов, не официальный балл HSK.",
+      "sources": [
+        "cti-structure-2025-12",
+        "cti-samples-2026",
+        "cti-pilot-2026-09"
+      ],
+      "sections": [
+        {
+          "id": "listening",
+          "titleZh": "听力",
+          "titleRu": "Аудирование",
+          "questionCount": 40,
+          "durationMinutes": 30,
+          "types": [
+            {
+              "id": "6-l1",
+              "part": 1,
+              "titleZh": "听短文选择符合内容的选项",
+              "titleRu": "Выберите верное утверждение",
+              "questionCount": 8,
+              "descriptionRu": "Прослушайте короткий текст и выберите утверждение, которое соответствует его содержанию.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "请选择符合内容的一项。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "调查促使图书馆调整开放时间"
+                    },
+                    {
+                      "zh": "图书馆决定停止晚间服务"
+                    },
+                    {
+                      "zh": "所有读者都反对预约制度"
+                    },
+                    {
+                      "zh": "图书馆只允许学生进入"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Из опроса выяснился спрос на посещение после работы, поэтому библиотека пробует более поздние часы. Остальные утверждения не подтверждены.",
+                  "audioTextZh": "市图书馆开展读者调查后发现，许多上班族只能在晚上到馆。为回应这一需求，图书馆决定试行延长部分区域的开放时间，并通过预约了解实际使用情况。",
+                  "id": "6-l1-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "6-l2",
+              "part": 2,
+              "titleZh": "听篇章选择答案",
+              "titleRu": "Развёрнутый монолог",
+              "questionCount": 20,
+              "descriptionRu": "Прослушайте статью, сообщение или объяснение и ответьте на связанные вопросы.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "说话人强调了什么？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "评价技术应考虑具体使用条件"
+                    },
+                    {
+                      "zh": "只要采用新技术就一定节约资源"
+                    },
+                    {
+                      "zh": "传统办法必须全部取消"
+                    },
+                    {
+                      "zh": "设备价格是唯一评价标准"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Техническая возможность и реальный результат различаются: обучение, обслуживание и привычки пользователей влияют на эффект. Новая техника сама по себе не гарантирует экономию.",
+                  "audioTextZh": "一些学校使用智能照明后，用电量明显下降。然而，在另一项试点中，由于人员不了解控制方法，设备经常被手动设为常亮，节能效果并不明显。这说明，技术的潜力不会自动转化为实际收益。除了采购设备，还要考虑培训、维护以及使用者的习惯。问：说话人强调了什么？",
+                  "id": "6-l2-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "6-l3",
+              "part": 3,
+              "titleZh": "听访谈选择答案",
+              "titleRu": "Интервью",
+              "questionCount": 12,
+              "descriptionRu": "Прослушайте интервью, различайте факты и позиции собеседников и ответьте на вопросы.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "受访者认为修复老建筑的关键是什么？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "兼顾使用需求和历史价值"
+                    },
+                    {
+                      "zh": "把所有房间恢复成同一种样子"
+                    },
+                    {
+                      "zh": "尽量隐藏所有旧材料"
+                    },
+                    {
+                      "zh": "只考虑游客拍照的需求"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Собеседник предлагает одновременно учитывать историческую ценность и сегодняшнее использование. Он выступает против превращения здания в красивую, но бесполезную декорацию.",
+                  "audioTextZh": "女：您认为老建筑修复最容易出现什么问题？男：有时人们只注意外观，把修复理解为恢复一个漂亮的立面。女：那内部应该如何处理？男：应研究建筑的历史，也要考虑今天谁来使用。既不能抹去有价值的痕迹，也不能让它成为无法进入的摆设。问：受访者认为修复老建筑的关键是什么？",
+                  "id": "6-l3-example-1",
+                  "origin": "original"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "reading",
+          "titleZh": "阅读",
+          "titleRu": "Чтение",
+          "questionCount": 40,
+          "durationMinutes": 40,
+          "types": [
+            {
+              "id": "6-r1",
+              "part": 1,
+              "titleZh": "选词填空",
+              "titleRu": "Лексика в связном тексте",
+              "questionCount": 10,
+              "descriptionRu": "Выберите слово по смыслу, сочетаемости и стилю текста.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "公共服务的改进不能仅凭少数人的直觉，还应以持续收集的数据为（　），并关注容易被忽视的群体。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "依据"
+                    },
+                    {
+                      "zh": "景色"
+                    },
+                    {
+                      "zh": "口气"
+                    },
+                    {
+                      "zh": "礼物"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "以……为依据 — «основываться на…». Здесь важна устойчивая конструкция и логика аргумента.",
+                  "id": "6-r1-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "6-r2",
+              "part": 2,
+              "titleZh": "选句填空",
+              "titleRu": "Восстановите связность текста",
+              "questionCount": 10,
+              "descriptionRu": "Заполните пропуски предложениями из набора, учитывая ссылки, противопоставления и логику.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "远程办公减少了通勤时间，也让招聘不再局限于同一座城市。（　）因此，一些团队开始重新规定沟通时间，避免员工整天处于随时回复消息的状态。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "但工作与休息的界限也可能变得模糊。"
+                    },
+                    {
+                      "zh": "所以每个人都愿意搬到更远的地方。"
+                    },
+                    {
+                      "zh": "与此同时，纸张的历史十分悠久。"
+                    },
+                    {
+                      "zh": "这些变化与管理方式完全无关。"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Следующее 因此 требует причины появления правил коммуникации. Размытая граница работы и отдыха логично объясняет их.",
+                  "id": "6-r2-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "6-r3",
+              "part": 3,
+              "titleZh": "阅读篇章选择答案",
+              "titleRu": "Анализ статьи",
+              "questionCount": 20,
+              "descriptionRu": "Ответьте на вопросы о фактах, выводах, значении выражений и позиции автора.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "一些城市用新增设施的数量衡量公共服务的进步，但数量增长不一定等于使用体验改善。一座地处偏远、开放时间不合理的场馆，即使设备先进，也可能长期闲置。相反，小型社区空间如果贴近居民的日常生活，往往能发挥更大作用。因此，评估公共投入时，既要记录建设了什么，也要观察谁能使用、如何使用，以及使用之后产生了什么变化。\n作者最可能赞同哪种评价方式？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "结合实际可及性与使用效果"
+                    },
+                    {
+                      "zh": "只统计新增设施的数量"
+                    },
+                    {
+                      "zh": "以建筑规模决定服务价值"
+                    },
+                    {
+                      "zh": "用设备价格替代使用调查"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Автор показывает ограниченность подсчёта объектов и предлагает оценивать доступность и реальные последствия использования. Верный вариант обобщает эту позицию.",
+                  "id": "6-r3-example-1",
+                  "origin": "original"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "writing",
+          "titleZh": "写作",
+          "titleRu": "Письмо",
+          "questionCount": 2,
+          "durationMinutes": 45,
+          "types": [
+            {
+              "id": "6-w1",
+              "part": 1,
+              "titleZh": "应用文写作",
+              "titleRu": "Практический письменный текст",
+              "questionCount": 1,
+              "descriptionRu": "Напишите текст для конкретной ситуации и адресата, включив все требуемые сведения. В образце — не менее 150 иероглифов.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "你要组织一个周末汉语交流活动。请写一则招募通知，包括对象、时间、地点、内容和报名方式，不少于150字。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "周末汉语交流活动招募通知\n为了给汉语学习者提供轻松交流的机会，我们计划于本周六下午两点至四点，在社区图书馆二楼活动室举办汉语交流活动。活动欢迎能进行简单中文对话的学习者参加，不限年龄，也不要求达到某个考试等级。\n当天我们将分组介绍各自的城市，模拟旅行中常见的交流场景，并分享有效的学习方法。现场会有志愿者帮助大家理解不熟悉的表达。请参加者准备一张与家乡有关的照片，手机图片也可以。\n有意参加者请于周五晚上六点前到图书馆服务台登记姓名和联系方式。活动免费，人数限二十人，报满即止。如果报名后无法参加，请提前告知工作人员，以便把名额留给其他学习者。期待与你相见！",
+                  "explanationRu": "Проверьте не только объём, но и обязательные детали: кому, когда, где, что будет происходить и как записаться. Тон должен соответствовать объявлению.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "minimumHanCharacters": 150,
+                  "id": "6-w1-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "6-w2",
+              "part": 2,
+              "titleZh": "话题议论文",
+              "titleRu": "Аргументированное эссе",
+              "questionCount": 1,
+              "descriptionRu": "Сформулируйте позицию, развейте аргументы и рассмотрите ограничения. В образце — не менее 300 иероглифов.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "线上学习越来越普遍，它能否完全取代面对面的学习？请谈谈你的观点，不少于300字。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "我认为，线上学习会成为教育的重要组成部分，但很难完全取代面对面的学习。判断一种学习方式是否有效，不能只看它使用了什么技术，还要看学习目标、学习者的情况以及课程怎样组织。\n首先，线上学习能够突破时间和地点的限制。住在偏远地区的人可以接触丰富的课程，上班族也能根据自己的安排反复观看讲解。对于需要记忆、复习或独立练习的内容，这种灵活性尤其有价值。优秀的线上课程还可以及时反馈错误，帮助学习者发现薄弱环节。\n不过，知识学习并不只是接收信息。讨论、合作和实践同样重要。有些实验必须使用现场设备，有些能力则是在与他人共同解决问题的过程中形成的。面对面交流时，老师更容易观察学生的困惑，同学之间也能通过日常接触建立信任。对于缺乏自主学习习惯的人，固定的课堂环境还能提供必要的支持。\n当然，这并不意味着线下课堂天然更好。一堂缺少互动的课，即使大家坐在同一个房间里，也未必有效。相反，设计合理的线上活动同样可以鼓励合作。因此，与其争论哪一种方式应该取代另一种，不如根据具体任务组合使用：把基础知识的预习放在线上，把讨论和实践安排在线下，并为有困难的学习者提供额外帮助。这样才能真正发挥不同方式的优势。",
+                  "explanationRu": "Начните с чёткой позиции. Затем рассмотрите преимущества, ограничения и возможное решение. Не подменяйте аргументацию перечнем общих фраз.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "minimumHanCharacters": 300,
+                  "id": "6-w2-example-1",
+                  "origin": "original"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "speaking",
+          "titleZh": "口语",
+          "titleRu": "Устная часть",
+          "questionCount": 5,
+          "durationMinutes": 23,
+          "types": [
+            {
+              "id": "6-s1",
+              "part": 1,
+              "titleZh": "听后复述",
+              "titleRu": "Перескажите услышанное",
+              "questionCount": 2,
+              "descriptionRu": "Прослушайте текст и передайте основные события и связи своими словами. На ответ в образце: 1,5 минуты.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "请复述你听到的内容。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "博物馆通过试行延长开放时间，发现夜间参观确有需求，但客流分布不均。它没有简单取消或全面扩大夜场，而是依据数据调整预约和讲解安排，力求兼顾公共服务、参观体验与运营成本。",
+                  "explanationRu": "Сохраните главные факты, причины и результат. Пересказ допускает другие слова; нельзя добавлять несуществующие факты.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "audioTextZh": "一家博物馆尝试延长晚间开放时间。起初，管理人员担心参观人数不足，无法覆盖运营成本。试行三个月后，调查发现，许多白天上班的居民和游客愿意晚上参观。不过，热门展厅过于拥挤，而其他展厅利用率较低。馆方据此调整预约名额，并增加讲解路线，希望在可及性、体验质量和成本之间取得平衡。",
+                  "answerSeconds": 90,
+                  "id": "6-s1-example-1",
+                  "origin": "original"
+                }
+              ]
+            },
+            {
+              "id": "6-s2",
+              "part": 2,
+              "titleZh": "看图说话",
+              "titleRu": "Рассказ по картинке",
+              "questionCount": 1,
+              "descriptionRu": "Опишите людей, место, действия и возможные связи между ними. На ответ — 2 минуты; подготовка в образце — 3 минуты.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "请根据图片说一段话。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "几位邻居正在公园里一起清理垃圾。有人捡塑料瓶，有人把垃圾分类放进袋子里。大家分工合作，公园很快变得干净了。这次活动不仅改善了环境，也让邻居们更加熟悉。",
+                  "explanationRu": "Сначала назовите место и участников, затем действия. Предположения формулируйте как предположения. Этот короткий образец можно развить, добавив детали.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "visual": {
+                    "emoji": "🧑 🤝 🧑  🌳  🧹 🗑️",
+                    "altRu": "Двое соседей совместно убирают мусор в парке"
+                  },
+                  "answerSeconds": 120,
+                  "id": "6-s2-example-1",
+                  "origin": "original"
+                }
+              ],
+              "preparationSecondsPerQuestion": 180
+            },
+            {
+              "id": "6-s3",
+              "part": 3,
+              "titleZh": "回答问题",
+              "titleRu": "Обоснуйте ответ",
+              "questionCount": 2,
+              "descriptionRu": "Выскажите мнение или ответьте на открытый вопрос и приведите аргументы. На ответ — 2,5 минуты. Подготовка к каждому из двух вопросов третьей части: 3,5 минуты (в сумме 7 минут).",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "评价一项公共服务时，效率和公平应该如何兼顾？",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "效率和公平并不是完全对立的目标。办事流程清晰、信息共享充分，往往既节省时间，也减少普通人的负担。但如果所有服务只提供网络渠道，就可能排除不熟悉技术的人。因此，应在优化线上流程的同时保留必要的人工帮助，并用不同群体的实际体验来评价改革效果。",
+                  "explanationRu": "Структура: позиция → аргумент → пример → вывод. Краткий образец показывает логику; в тренировке развейте собственные примеры до нужного времени.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "answerSeconds": 150,
+                  "id": "6-s3-example-1",
+                  "origin": "original"
+                }
+              ],
+              "preparationSecondsPerQuestion": 210
+            }
+          ],
+          "preparationMinutes": 10,
+          "preparationNoteRu": "Общие 10 минут подготовки: 3 минуты перед единственным заданием по картинке во второй части и по 3,5 минуты перед каждым из двух вопросов третьей части. Для пересказов в первой части отдельная подготовка не указана."
+        }
+      ]
+    },
+    {
+      "id": "7-9",
+      "titleRu": "HSK 7–9 · единый экзамен",
+      "questionCount": 91,
+      "durationMinutes": 200,
+      "speakingRequired": true,
+      "speakingIntegrated": true,
+      "objectiveQuestionCount": 60,
+      "subjectiveQuestionCount": 31,
+      "timingRu": "Единый экзамен по пяти навыкам, около 200 минут. Указанные минуты относятся к выполнению частей; расписание экзаменационного центра может включать перерыв.",
+      "scoringRu": "Это один экзамен, а не три отдельных варианта. Официальный результат: ниже уровня 7, уровень 7, 8 или 9. Для пяти навыков сообщаются оценки 0–100, рассчитанные с использованием IRT. Количество верных учебных ответов нельзя напрямую перевести в эти оценки или присвоить по нему уровень.",
+      "noteRu": "Сверено с текущим официальным архивом HSK3.0.zip и страницей HSK 7–9: 91 задание, около 200 минут. Более старый официальный PDF с 98 заданиями и 210 минутами к этой версии не относится. Письменная и устная речь, а также перевод входят в общий экзамен.",
+      "sources": [
+        "cti-samples-2026",
+        "cti-advanced-current"
+      ],
+      "sections": [
+        {
+          "id": "listening",
+          "titleZh": "听力",
+          "titleRu": "Аудирование",
+          "questionCount": 40,
+          "durationMinutes": 33,
+          "types": [
+            {
+              "id": "7-9-l1",
+              "part": 1,
+              "titleZh": "听材料判断正误及未提及",
+              "titleRu": "Верно / неверно / не сказано",
+              "questionCount": 10,
+              "descriptionRu": "Сопоставьте утверждение с записью: √ соответствует, × противоречит, 〇 в записи не упомянуто. Отсутствие информации отличается от опровержения.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "判断：这座公园的建设费用全部来自居民捐款。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "√",
+                      "ru": "Соответствует записи"
+                    },
+                    {
+                      "zh": "×",
+                      "ru": "Противоречит записи"
+                    },
+                    {
+                      "zh": "〇",
+                      "ru": "В записи не сказано"
+                    }
+                  ],
+                  "answerIndex": 2,
+                  "explanationRu": "В записи есть срок открытия, происхождение участка и правила посещения. Источник финансирования не указан, поэтому следует выбрать 〇, а не ×.",
+                  "audioTextZh": "这座社区公园由一片闲置空地改建而成，预计下月开放。居民可以免费进入，但团体活动需要提前预约。公园将安排志愿者介绍当地的植物。",
+                  "id": "7-9-l1-example-1",
+                  "origin": "original"
+                }
+              ],
+              "scoring": "objective"
+            },
+            {
+              "id": "7-9-l2-choice",
+              "part": 2,
+              "titleZh": "听材料选择答案",
+              "titleRu": "Материал: выбор ответа",
+              "questionCount": 9,
+              "descriptionRu": "Во второй части смешаны выбор ответа и заполнение пропусков: 9 вопросов с вариантами и 3 открытых. Улавливайте детали, причины и намерения участников.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "双方尚未达成一致的是：",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "培训安排"
+                    },
+                    {
+                      "zh": "付款方式"
+                    },
+                    {
+                      "zh": "交付日期"
+                    },
+                    {
+                      "zh": "设备数量"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Срок поставки и оплата уже согласованы. Покупатель отдельно просит очное обучение, продавец пока обещает уточнить возможность.",
+                  "audioTextZh": "男：设备数量和交付日期没有问题，我们可以接受分两次付款。女：好的，另外我们提供远程培训。男：我们的操作人员经验不足，希望能安排一次现场培训。女：这一点我需要与技术部门确认，明天给您回复。问：双方尚未达成一致的是什么？",
+                  "id": "7-9-l2-choice-example-1",
+                  "origin": "original"
+                }
+              ],
+              "scoring": "objective"
+            },
+            {
+              "id": "7-9-l2-fill",
+              "part": 2,
+              "titleZh": "听材料填空",
+              "titleRu": "Материал: заполните пропуск",
+              "questionCount": 3,
+              "descriptionRu": "Запишите недостающую информацию по услышанному. На экзамене это открытые ответы; здесь сравните смысл с образцом самостоятельно.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "该项目第一阶段的重点是（　）。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "了解居民的实际需求",
+                  "explanationRu": "Важен первый этап — изучение потребностей жителей. Не подменяйте его последующим проектированием или строительством.",
+                  "selfCheckRu": [
+                    "Я назвал изучение реальных потребностей жителей.",
+                    "Я не перепутал первый этап со вторым."
+                  ],
+                  "audioTextZh": "项目不会马上开工。第一阶段，我们将走访不同年龄的居民，了解他们的实际需求；第二阶段再据此提出设计方案。",
+                  "id": "7-9-l2-fill-example-1",
+                  "origin": "original"
+                }
+              ],
+              "scoring": "subjective"
+            },
+            {
+              "id": "7-9-l3-choice",
+              "part": 3,
+              "titleZh": "听长篇材料选择答案",
+              "titleRu": "Развёрнутый материал: выбор",
+              "questionCount": 15,
+              "descriptionRu": "Третья часть также смешанная: 15 вопросов с вариантами и 3 пропуска. Материалы могут быть лекциями, интервью и выступлениями.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "说话人对历史街区数字化持什么态度？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "支持，但强调其不能取代实地保护"
+                    },
+                    {
+                      "zh": "反对，因为所有数字记录都不可靠"
+                    },
+                    {
+                      "zh": "认为扫描完成后就无需维护建筑"
+                    },
+                    {
+                      "zh": "认为数字展览只能用于商业宣传"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Позиция условно положительная: цифровая запись помогает изучать объекты, но физическая сохранность остаётся необходимой.",
+                  "audioTextZh": "对历史街区进行数字化记录，有助于研究者比较不同时期的变化，也让远方的公众有机会了解街区。然而，数字模型再精细，也无法完全呈现居民的日常生活和建筑材料的真实状态。因此，数字化应当成为保护工作的补充，而不是停止日常维护的理由。问：说话人对历史街区数字化持什么态度？",
+                  "id": "7-9-l3-choice-example-1",
+                  "origin": "original"
+                }
+              ],
+              "scoring": "objective"
+            },
+            {
+              "id": "7-9-l3-fill",
+              "part": 3,
+              "titleZh": "听长篇材料填空",
+              "titleRu": "Развёрнутый материал: пропуск",
+              "questionCount": 3,
+              "descriptionRu": "Дополните мысль ключевыми сведениями из записи. Сохраняйте логические связи и не добавляйте собственные предположения.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "报告认为，判断一项政策是否有效，不能只看短期数字，还要考察（　）。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "不同群体的长期受益情况",
+                  "explanationRu": "Требуется долгосрочная польза для разных групп. Сам по себе рост числа мероприятий не отвечает вопросу.",
+                  "selfCheckRu": [
+                    "Я передал и длительность эффекта, и различия между группами.",
+                    "Я не добавил данные, которых нет в записи."
+                  ],
+                  "audioTextZh": "报告指出，评估一项公共政策，不能仅仅比较短期内的增长数字。更关键的是，观察不同群体是否持续受益，以及原本处于不利位置的人是否获得了更多机会。",
+                  "id": "7-9-l3-fill-example-1",
+                  "origin": "original"
+                }
+              ],
+              "scoring": "subjective"
+            }
+          ]
+        },
+        {
+          "id": "reading",
+          "titleZh": "阅读",
+          "titleRu": "Чтение",
+          "questionCount": 40,
+          "durationMinutes": 50,
+          "types": [
+            {
+              "id": "7-9-r1",
+              "part": 1,
+              "titleZh": "阅读篇章选择答案",
+              "titleRu": "Анализ развёрнутых текстов",
+              "questionCount": 21,
+              "descriptionRu": "Вопросы охватывают содержание, лексику в контексте, пропуски, выводы и авторскую позицию. Выберите один из четырёх вариантов.",
+              "examples": [
+                {
+                  "kind": "choice",
+                  "promptZh": "某研究发现，增加社区文化活动的次数，并不必然提高居民的参与程度。如果活动主题与居民的生活经验脱节，再密集的安排也可能流于形式。研究者建议，在制定计划前让居民参与讨论，并对未参加者进行访谈，而不是仅凭到场者的满意评价判断项目效果。\n作者为何强调访谈未参加者？",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "避免评价只反映已参与群体的经验"
+                    },
+                    {
+                      "zh": "证明参加者的评价全部不可信"
+                    },
+                    {
+                      "zh": "减少未来活动的次数"
+                    },
+                    {
+                      "zh": "用访谈完全替代统计数据"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "Если изучать только тех, кто уже пришёл, можно не заметить препятствия для остальных. Автор дополняет данные, а не объявляет все отзывы ложными.",
+                  "id": "7-9-r1-example-1",
+                  "origin": "original"
+                },
+                {
+                  "kind": "choice",
+                  "promptZh": "虽然数字化能够保存大量资料，但如果缺少清晰的分类和检索方式，这些资料仍可能难以利用。因此，保存数量的增长不能（　）知识可及性的提升。",
+                  "promptRu": "Выберите правильный ответ.",
+                  "options": [
+                    {
+                      "zh": "等同于"
+                    },
+                    {
+                      "zh": "追溯到"
+                    },
+                    {
+                      "zh": "取决于"
+                    },
+                    {
+                      "zh": "归属于"
+                    }
+                  ],
+                  "answerIndex": 0,
+                  "explanationRu": "等同于 — «приравниваться к». Противопоставляются объём сохранённых сведений и возможность их найти и использовать.",
+                  "id": "7-9-r1-example-2",
+                  "origin": "original"
+                }
+              ],
+              "scoring": "objective"
+            },
+            {
+              "id": "7-9-r2",
+              "part": 2,
+              "titleZh": "段落排序并排除干扰项",
+              "titleRu": "Абзацы: порядок и лишний фрагмент",
+              "questionCount": 5,
+              "descriptionRu": "Восстановите порядок пяти абзацев. Один абзац уже закреплён на своём месте, ещё один — лишний. Впишите только пять недостающих букв.",
+              "examples": [
+                {
+                  "kind": "text",
+                  "promptZh": "A. 项目负责人首先发现，老年居民并不熟悉预约软件，因而很少使用新服务。\nB. 根据这些反馈，团队设置了电话预约和现场指导两种辅助方式。\nC. 服务上线三个月后，社区开始调查不同群体的使用情况。\nD. 与此同时，另一座城市举办了一场与本项目无关的摄影比赛。\nE. 又过了两个月，老年居民的使用比例提高，工作人员也收到了更具体的建议。\nF. 因此，团队决定保留辅助渠道，并把定期听取反馈写入工作流程。\nG. 进一步访谈显示，一些人担心操作出错，也有人根本不知道可以预约。\n顺序：□ → □ → G（已固定）→ □ → □ → □",
+                  "promptRu": "Введите пять букв по порядку, не включая фиксированный G и лишний абзац.",
+                  "acceptedAnswers": [
+                    "CABEF"
+                  ],
+                  "answerZh": "CABEF",
+                  "explanationRu": "C задаёт этап исследования; A — первый вывод; G уже закреплён и уточняет проблему; B — меры; E — результаты; F — решение. D относится к другому городу и является лишним.",
+                  "id": "7-9-r2-example-1",
+                  "origin": "original"
+                }
+              ],
+              "scoring": "objective"
+            },
+            {
+              "id": "7-9-r3",
+              "part": 3,
+              "titleZh": "阅读后简短回答",
+              "titleRu": "Краткий ответ: до 10 знаков",
+              "questionCount": 14,
+              "descriptionRu": "Ответьте на вопросы по тексту своими словами или точной информацией из него. Каждый ответ — не более 10 китайских знаков. Значение важнее буквального совпадения с образцом.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "研究者发现，部分居民没有使用夜间文化场馆，并不是缺乏兴趣，而是因为末班车过早，参观后难以回家。\n影响他们参与的主要因素是什么？（十个字以内）",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "夜间交通不便",
+                  "explanationRu": "Причина — недостаточная доступность ночного транспорта. «没有兴趣» противоречит тексту. Возможны другие краткие формулировки того же смысла.",
+                  "selfCheckRu": [
+                    "Я назвал проблему транспорта, а не отсутствие интереса.",
+                    "В ответе не более 10 китайских знаков."
+                  ],
+                  "maximumHanCharacters": 10,
+                  "id": "7-9-r3-example-1",
+                  "origin": "original"
+                }
+              ],
+              "scoring": "subjective"
+            }
+          ]
+        },
+        {
+          "id": "writing",
+          "titleZh": "写作",
+          "titleRu": "Письмо",
+          "questionCount": 2,
+          "durationMinutes": 55,
+          "types": [
+            {
+              "id": "7-9-w1",
+              "part": 1,
+              "titleZh": "图表描述与分析",
+              "titleRu": "Описание и анализ диаграммы",
+              "questionCount": 1,
+              "descriptionRu": "Опишите данные, сопоставьте значения и предложите осторожное объяснение. Не менее 200 иероглифов; 15 минут.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "下表是一项虚构的社区图书馆调查（100名受访者，每人选一项）。请描述并分析结果，不少于200字。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "这张表展示了一项社区图书馆调查的结果。调查共有一百名受访者，每人只能选择一个最希望改进的方面，因此各项比例之和为百分之百。结果显示，希望延长开放时间的人最多，占百分之四十；其次是增加座位，占百分之三十。希望丰富图书种类的占百分之二十，而希望增加活动的占百分之十。\n从这些数据可以看出，受访者首先关注的是图书馆能否方便、稳定地满足日常使用需求。开放时间和座位两项合计占百分之七十，明显高于其他两项。图书馆可以进一步了解不同时间段的客流，评估延长开放和调整座位安排的可行性。\n不过，这只是一百名受访者的意见，不能直接代表所有居民。调查也没有说明受访者的年龄、职业及使用频率。因此，在作出长期安排前，还应听取未到馆居民的意见，并结合经费、人员等条件进行小范围试行。",
+                  "explanationRu": "Сначала точно передайте числа и главные различия. Затем отделите осторожное объяснение от подтверждённых фактов. Данные этого упражнения вымышлены.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "chart": {
+                    "headers": [
+                      "最希望改进的方面",
+                      "人数",
+                      "比例"
+                    ],
+                    "rows": [
+                      [
+                        "延长开放时间",
+                        "40",
+                        "40%"
+                      ],
+                      [
+                        "增加座位",
+                        "30",
+                        "30%"
+                      ],
+                      [
+                        "丰富图书种类",
+                        "20",
+                        "20%"
+                      ],
+                      [
+                        "增加活动",
+                        "10",
+                        "10%"
+                      ]
+                    ]
+                  },
+                  "minimumHanCharacters": 200,
+                  "answerSeconds": 900,
+                  "id": "7-9-w1-example-1",
+                  "origin": "original"
+                }
+              ],
+              "durationMinutes": 15,
+              "scoring": "subjective"
+            },
+            {
+              "id": "7-9-w2",
+              "part": 2,
+              "titleZh": "话题议论文",
+              "titleRu": "Развёрнутое аргументированное эссе",
+              "questionCount": 1,
+              "descriptionRu": "Сформулируйте и обоснуйте позицию по теме. Не менее 600 иероглифов; 40 минут.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "有人认为“公共服务越数字化，生活就一定越方便”。你是否赞同？请写一篇不少于600字的文章，论证你的观点。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "数字化已经深刻改变了公共服务的提供方式。预约、查询、缴费和材料提交逐渐转移到网络上，确实为许多人节省了时间。然而，我并不赞同“越数字化，生活就一定越方便”这一绝对判断。技术能够创造便利，但便利是否真正实现，还取决于服务设计是否尊重不同人的处境，以及是否解决了原有问题。\n首先，数字化的优势值得充分肯定。过去，人们办理一项手续，可能要反复前往不同窗口，提交内容相近的材料。如果不同部门能够在明确授权的前提下共享必要信息，办事人就不必一次次证明同一件事。对居住较远、行动不便或者工作时间固定的人来说，线上服务尤其重要。系统还可以提示材料缺项，显示办理进度，使流程更加透明。\n但数字化也可能把原本由服务机构承担的复杂工作转移给个人。例如，有些平台要求用户安装多个软件、重复注册账号，却没有清楚说明每一步的目的。页面看起来先进，实际操作却更加繁琐。对于不熟悉智能设备的人，这种安排甚至会使原来能够独立完成的事情变得困难。如果把线下渠道全部取消，他们就只能依赖家人、邻居或付费中介，便利反而成为新的门槛。\n此外，效率不能只用平均办理时间衡量。一个流程可能让多数人更快完成操作，却让少数特殊情况长期得不到处理。例如，系统只接受固定格式的材料，但现实生活中存在合理的例外。如果没有人工解释和复核机制，办事人就会陷入不断提交、不断被拒的循环。这并不是技术能力不足的问题，而是服务规则过于僵化。\n因此，公共服务的数字化应当围绕实际需求展开。第一，在设计前邀请不同年龄、职业和能力的使用者参与测试，观察他们在哪些地方遇到困难。第二，简化流程，而不是把纸质表格原封不动地搬到屏幕上。第三，保留必要的现场和电话帮助，让无法使用网络的人仍能获得服务。第四，明确数据使用范围，减少不必要的信息收集，以可靠的保护措施建立信任。最后，还应通过长期反馈持续改进，而不是把平台上线视为工作的终点。\n总之，数字化是一种手段，便利、公平和可靠才是公共服务应追求的目标。真正成功的改革，不是让每个人适应同一种技术，而是让技术帮助不同的人更容易解决自己的问题。只有坚持这一方向，数字化带来的效率提升才有可能转化为普遍而持久的生活改善。",
+                  "explanationRu": "Оспаривайте абсолютное утверждение аргументами, а не лозунгом. Образец признаёт преимущества, анализирует ограничения, предлагает меры и возвращается к тезису.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "minimumHanCharacters": 600,
+                  "answerSeconds": 2400,
+                  "id": "7-9-w2-example-1",
+                  "origin": "original"
+                }
+              ],
+              "durationMinutes": 40,
+              "scoring": "subjective"
+            }
+          ]
+        },
+        {
+          "id": "translation",
+          "titleZh": "翻译",
+          "titleRu": "Перевод",
+          "questionCount": 4,
+          "durationMinutes": 42,
+          "types": [
+            {
+              "id": "7-9-t1",
+              "part": 1,
+              "titleZh": "外文材料笔译成中文",
+              "titleRu": "Письменный перевод на китайский",
+              "questionCount": 2,
+              "descriptionRu": "Переведите два текста с иностранного языка на китайский; на письменную часть — 35 минут. Авторский пример дан по-русски. Язык реального экзамена уточняйте при регистрации.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "请把下面的俄语材料译成中文。",
+                  "promptRu": "Переведите на китайский: «Районная библиотека расширила круг услуг. Теперь читатели могут не только брать книги, но и посещать бесплатные занятия по цифровым навыкам. Организаторы подчёркивают: цель занятий — не заменить живое общение интернетом, а помочь людям самостоятельнее пользоваться повседневными услугами».",
+                  "answerZh": "社区图书馆扩大了服务范围。如今，读者不仅可以借阅图书，还可以参加免费的数字技能课程。组织者指出，课程的目的并不是用网络取代人际交流，而是帮助人们更独立地使用日常服务。",
+                  "explanationRu": "Передавайте смысл, а не русский порядок слов. «Самостоятельно» здесь — 更独立地, а не 孤独地. «Расширила круг услуг» естественно передать как 扩大了服务范围.",
+                  "selfCheckRu": [
+                    "Сохранены все факты и логические противопоставления.",
+                    "Я не добавил обещаний или деталей, которых нет в исходнике.",
+                    "Китайский текст звучит естественно; терминология последовательна."
+                  ],
+                  "id": "7-9-t1-example-1",
+                  "origin": "original"
+                }
+              ],
+              "durationMinutes": 35,
+              "scoring": "subjective"
+            },
+            {
+              "id": "7-9-t2",
+              "part": 2,
+              "titleZh": "外文材料口译成中文",
+              "titleRu": "Устный перевод на китайский",
+              "questionCount": 2,
+              "descriptionRu": "Устно переведите иностранный материал на китайский. В образце — по 2 минуты на ответ. Учебный исходный текст дан по-русски и может быть прочитан перед устным переводом.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "请将俄语材料口译成中文。",
+                  "promptRu": "Переведите устно: «Перед строительством новых спортивных объектов город опросил жителей. Многие объяснили, что им нужен не большой стадион, а бесплатное место для занятий рядом с домом. Поэтому проект изменили и оборудовали небольшие спортивные площадки в нескольких районах».",
+                  "answerZh": "这座城市在新建体育设施之前，先对居民进行了调查。许多人表示，他们需要的不是大型体育场，而是家附近可以免费锻炼的地方。因此，项目作出了调整，在几个社区设置了小型运动场地。",
+                  "explanationRu": "Сначала передайте ход событий: опрос → выявленная потребность → изменение проекта. Сохраняйте противопоставление большого стадиона и доступных площадок.",
+                  "selfCheckRu": [
+                    "Перевод выполнен устно по-китайски.",
+                    "Сохранены причина изменения и результат.",
+                    "Речь понятна; основные сведения переданы без искажения."
+                  ],
+                  "answerSeconds": 120,
+                  "id": "7-9-t2-example-1",
+                  "origin": "original"
+                }
+              ],
+              "scoring": "subjective"
+            }
+          ]
+        },
+        {
+          "id": "speaking",
+          "titleZh": "口语",
+          "titleRu": "Устная речь",
+          "questionCount": 5,
+          "durationMinutes": 20,
+          "types": [
+            {
+              "id": "7-9-s1",
+              "part": 1,
+              "titleZh": "应用读说",
+              "titleRu": "Практическое выступление по материалу",
+              "questionCount": 1,
+              "descriptionRu": "Прочитайте таблицу или практический документ и выступите в указанной роли, включив все пункты задания. Ответ — 3 минуты.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "你是社区志愿活动负责人。请根据安排向志愿者介绍活动，并说几句鼓励的话。注意：提前十分钟到场；遇到问题先联系负责人；工具由社区提供。",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "各位志愿者，感谢大家参加这次社区服务活动。我们周六上午九点在图书馆门口集合，先协助整理图书；十点半转到公园，开展环境清理。下午两点，我们回到活动室，交流当天的经验。请大家提前十分钟到场，不必自带工具，社区会统一准备。遇到任何问题，请先联系负责人，不要独自处理。希望大家互相配合，也注意自己的安全。每个人付出一点时间，就能让社区变得更温暖。",
+                  "explanationRu": "Задача требует не чтения таблицы по строкам, а понятного обращения к участникам: последовательность, правила и поддержка. Не добавляйте неуказанных обещаний.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "chart": {
+                    "headers": [
+                      "时间",
+                      "地点",
+                      "任务"
+                    ],
+                    "rows": [
+                      [
+                        "周六09:00",
+                        "图书馆门口",
+                        "整理图书"
+                      ],
+                      [
+                        "周六10:30",
+                        "社区公园",
+                        "清理环境"
+                      ],
+                      [
+                        "周六14:00",
+                        "社区活动室",
+                        "交流经验"
+                      ]
+                    ]
+                  },
+                  "answerSeconds": 180,
+                  "id": "7-9-s1-example-1",
+                  "origin": "original"
+                }
+              ],
+              "scoring": "subjective"
+            },
+            {
+              "id": "7-9-s2",
+              "part": 2,
+              "titleZh": "听材料回答问题",
+              "titleRu": "Ответы по услышанному",
+              "questionCount": 3,
+              "descriptionRu": "Прослушайте материал и ответьте на три вопроса. В образце первые два ответа — по 30 секунд, третий — 2 минуты.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "1. 原来的安排遇到了什么问题？\n2. 团队后来做了什么调整？\n3. 你认为这次调整有什么启示？",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "1. 原来的活动时间与许多居民的工作时间冲突，部分人无法参加。\n2. 团队增加了晚间场次，并保留周末活动。\n3. 这说明公共活动应根据不同群体的生活安排设计。不能只观察已经到场的人，还应听取缺席者的意见。不过，增加场次也要考虑工作人员和场地的承受能力，可以先试行，再根据实际参与情况调整。",
+                  "explanationRu": "Первые два вопроса проверяют факты, третий позволяет обосновать вывод. Не выдавайте собственные рекомендации за сведения из записи.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "audioTextZh": "社区最初把所有文化活动都安排在工作日下午。虽然到场者评价不错，但参加人数一直不多。团队访谈后发现，不少居民白天上班，根本无法到场。于是，他们在保留周末活动的同时增加了晚间场次，并计划三个月后再次评估。",
+                  "answerSeconds": 180,
+                  "answerTimingRu": "Вопрос 1: 30 секунд; вопрос 2: 30 секунд; вопрос 3: 2 минуты.",
+                  "id": "7-9-s2-example-1",
+                  "origin": "original"
+                }
+              ],
+              "scoring": "subjective"
+            },
+            {
+              "id": "7-9-s3",
+              "part": 3,
+              "titleZh": "观点表达",
+              "titleRu": "Аргументированное мнение",
+              "questionCount": 1,
+              "descriptionRu": "Выскажите позицию, приведите аргументы и примеры, учитывайте возможную противоположную точку зрения. Ответ — 3 минуты.",
+              "examples": [
+                {
+                  "kind": "self-assess",
+                  "promptZh": "有人认为，城市更新应优先保留旧建筑；也有人认为，应优先满足新的生活需求。你怎么看？",
+                  "promptRu": "Составьте свой ответ, затем сравните с примером. Автоматической оценки нет.",
+                  "answerZh": "我认为，这两种目标不必完全对立。城市更新首先应识别哪些建筑具有不可替代的历史和文化价值，再研究它们能否承担新的功能。例如，旧厂房可以改为图书馆或活动中心，既保存城市记忆，也回应当下需求。另一方面，并非所有旧建筑都值得原样保留，安全状况、维护成本和居民生活也需要考虑。关键在于公开说明判断依据，让居民、专业人员和管理部门共同讨论。相比一味拆除或一律保留，具体问题具体分析，更可能形成长期可行的方案。",
+                  "explanationRu": "Краткий образец показывает структуру аргумента. Для трёхминутного ответа добавьте собственный пример и рассмотрите сильный аргумент противоположной стороны.",
+                  "selfCheckRu": [
+                    "Я выполнил все пункты задания.",
+                    "Мысли связаны логично; слова и грамматика подходят ситуации.",
+                    "Я сравнил свой ответ с образцом и исправил ошибки."
+                  ],
+                  "answerSeconds": 180,
+                  "id": "7-9-s3-example-1",
+                  "origin": "original"
+                }
+              ],
+              "scoring": "subjective"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "version": "HSK 3.0 · новые форматы 1–6 и текущий общий экзамен 7–9 · проверено 05.11.2026",
+  "sourceConflicts": [
+    {
+      "url": "https://download.chinesetest.cn/newhsk-site/model/HSK7-9.pdf",
+      "noteRu": "Более старый образец: 98 заданий, около 210 минут. Не используется. Текущий архив и текущая страница организатора совпадают: 91 задание, около 200 минут."
+    }
+  ]
+}

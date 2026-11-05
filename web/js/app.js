@@ -40,15 +40,18 @@ const ART_READ = `<svg viewBox="0 0 160 130" fill="none" stroke="#18191a" stroke
 const ART_WELCOME = `<svg viewBox="0 0 280 225" fill="none" stroke="#202226" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M33 91C44 49 93 36 137 43c53-18 112 18 113 68 19 49-33 83-81 81-58 16-122-3-138-42-10-21-7-42 2-59Z" fill="#EDF4FD" stroke="none"/><path d="M70 105c22-8 46-8 70 4v84c-24-12-48-12-70-4z" fill="#fff"/><path d="M210 105c-22-8-46-8-70 4v84c24-12 48-12 70-4z" fill="#fff"/><path d="M86 128c14-4 28-3 40 2M86 145c14-4 28-3 40 2M154 130c12-5 26-6 40-2M154 147c12-5 26-6 40-2" stroke="#8aa3c4"/><path d="M96 38h88a10 10 0 0 1 10 10v28a10 10 0 0 1-10 10h-56l-14 12V86H96a10 10 0 0 1-10-10V48a10 10 0 0 1 10-10Z" fill="#fff"/><text x="140" y="72" text-anchor="middle" font-family="Noto Sans SC,sans-serif" font-size="25" font-weight="700" fill="#202226" stroke="none">你好！</text><path d="M60 46l8 7M54 70h11M218 44l-8 8M224 66h-11"/><path d="M228 170l18-48 7 3-18 48-8 5z" fill="#fff"/></svg>`;
 
 /* ---------- состояние ---------- */
-const DEFAULT = { v: 2, profile: null, settings: { level: 1, goal: 20, newPerDay: 10, pinyin: true, rate: 0.85 }, srs: {}, book: {}, stats: { answered: 0, correct: 0, days: {} }, day: null, history: [] };
+const DEFAULT = { v: 2, profile: null, settings: { level: 1, curriculum: "hsk2", hsk3Level: "1", goal: 20, newPerDay: 10, pinyin: true, rate: 0.85 }, srs: {}, book: {}, stats: { answered: 0, correct: 0, days: {} }, day: null, history: [] };
 const S = (() => { try { const s = JSON.parse(localStorage.getItem(APP_KEY)); if (s && s.v === 2) return Object.assign(structuredClone(DEFAULT), s, { settings: Object.assign({}, DEFAULT.settings, s.settings) }); } catch (_) {} return structuredClone(DEFAULT); })();
 let saveT = 0;
 function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(APP_KEY, JSON.stringify(S)); } catch (_) { toast("Не удалось сохранить прогресс на устройстве"); } }, 120); }
 function D() { const t = today(); if (!S.day || S.day.date !== t) S.day = { date: t, correct: 0, answered: 0, learned: 0, reviewed: 0 }; return S.day; }
 function markStudy() { const t = today(); S.stats.days[t] = (S.stats.days[t] || 0) + 1; }
-function record(ok, hz, lv) {
+function record(ok, key, lv, word) {
   const d = D(); d.answered++; S.stats.answered++; if (ok) { d.correct++; S.stats.correct++; } markStudy();
-  if (!ok && hz) S.book[hz] = { lv, t: Date.now(), why: "ошибка" };
+  if (!ok && key) {
+    const snapshot = word || S.book[key]?.word || S.srs[key]?.word;
+    S.book[key] = { lv, t: Date.now(), why: "ошибка", ...(snapshot ? { word: snapshot } : {}) };
+  }
   save();
 }
 function streak() { let n = 0; for (let t = Date.now(); S.stats.days[today(t)]; t -= DAY) n++; if (!n && S.stats.days[today(Date.now() - DAY)]) for (let t = Date.now() - DAY; S.stats.days[today(t)]; t -= DAY) n++; return n; }
@@ -63,19 +66,28 @@ function level(lv) {
   return cache[lv];
 }
 const allWords = () => Promise.all([1, 2, 3, 4, 5, 6].map(level)).then(a => a.flat());
+// Legacy keys stay as Hanzi. HSK 3.0 IDs distinguish readings and retain both curricula.
+const wordKey = w => w.curriculum === "hsk3" ? w.id : w.hz;
+const hsk3Selected = () => S.settings.curriculum === "hsk3";
+const hsk3Level = () => ["1", "2", "3", "4", "5", "6", "7-9"].includes(String(S.settings.hsk3Level)) ? String(S.settings.hsk3Level) : "1";
+const levelLabel = lv => String(lv).replace("7-9", "7–9");
+const wordLabel = w => w.curriculum === "hsk3" ? `HSK 3.0 · ${levelLabel(w.level ?? w.lv)}` : w.lv ? `HSK 2.0 · ${w.lv}` : "Большой словарь";
+const currentCourseName = () => hsk3Selected() ? `HSK 3.0 · ${levelLabel(hsk3Level())}` : lvName(S.settings.level);
+const coursePath = view => hsk3Selected() ? `#/hsk3/${hsk3Level()}/${view}` : `#/${view === "vocab" ? "level" : view}/${S.settings.level}`;
 const short = ru => ru.split(/[;\n]/)[0].trim();
 const plain = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ü/g, "v").toLowerCase().replace(/[^a-zа-яё0-9]/g, "");
 
 /* ---------- интервальное повторение ---------- */
 const STEPS = [0, 1, 2, 4, 7, 15, 30, 60, 120];
-const known = lv => Object.values(S.srs).filter(x => x.lv === lv && x.b >= 1).length;
-function dueList() { const now = Date.now(); return Object.entries(S.srs).filter(([, x]) => x.d <= now).map(([hz, x]) => ({ hz, ...x })); }
+const known = lv => Object.values(S.srs).filter(x => x.curriculum !== "hsk3" && x.word?.curriculum !== "hsk3" && x.lv === lv && x.b >= 1).length;
+function dueList() { const now = Date.now(); return Object.entries(S.srs).filter(([, x]) => x.d <= now).map(([key, x]) => ({ ...x, key, hz: x.word?.hz || key })); }
 function grade(w, ok) {
-  const x = S.srs[w.hz] || { b: 0, d: 0, lv: w.lv, r: 0, w: 0, first: Date.now() };
+  const key = wordKey(w), x = S.srs[key] || { b: 0, d: 0, lv: w.lv, r: 0, w: 0, first: Date.now() };
   if (ok) { x.b = Math.min(x.b + 1, STEPS.length - 1); x.r++; x.d = new Date(today()).getTime() + STEPS[x.b] * DAY + 4 * 3600e3; }
   else { x.b = 0; x.w++; x.d = Date.now() + 60e3; }
-  S.srs[w.hz] = x; save();
-  if (!w.lv && w.source) x.word = w;
+  if (w.curriculum === "hsk3") { x.curriculum = "hsk3"; x.word = w; }
+  else if (!w.lv && w.source) x.word = w;
+  S.srs[key] = x; save();
 }
 
 /* ---------- озвучивание (системный голос zh-CN) ---------- */
@@ -104,54 +116,55 @@ document.addEventListener("click", e => { const b = e.target.closest("[data-say]
 function toast(msg) { $$(".toast").forEach(t => t.remove()); const t = h(`<div class="toast" role="status">${esc(msg)}</div>`); document.body.append(t); setTimeout(() => t.remove(), 2800); }
 const topbar = (title, back = "#/home") => `<div class="topbar"><a class="round" href="${back}" aria-label="Назад">${ic("back")}</a><h1>${title}</h1></div>`;
 const row = (href, icon, title, small) => `<a href="${href}"><span class="ic">${ic(icon)}</span><span class="t"><b>${title}</b>${small ? `<small>${small}</small>` : ""}</span>${ic("go", "i go")}</a>`;
-const starBtn = w => `<button class="star" data-star="${esc(w.hz)}" data-lv="${w.lv}" aria-pressed="${!!S.book[w.hz]}" aria-label="В мой словарик">${ic("star")}</button>`;
+const starBtn = w => `<button class="star" data-star="${esc(wordKey(w))}" data-lv="${esc(w.lv)}" aria-pressed="${!!S.book[wordKey(w)]}" aria-label="В мой словарик">${ic("star")}</button>`;
 document.addEventListener("click", async e => {
   const b = e.target.closest("[data-star]"); if (!b || b.disabled) return;
-  const hz = b.dataset.star; b.disabled = true;
+  const key = b.dataset.star; b.disabled = true;
   try {
-    if (S.book[hz]) delete S.book[hz];
+    if (S.book[key]) delete S.book[key];
     else {
-      const word = await findWord(hz);
+      const word = await findWord(key);
       if (!word || word.missing) throw Error("Сначала загрузите словарную статью");
-      S.book[hz] = { lv: word.lv, t: Date.now(), why: "добавлено", ...(!word.lv ? { word } : {}) };
+      S.book[key] = { lv: word.lv, t: Date.now(), why: "добавлено", word };
     }
-    $$('[data-star]').filter(x => x.dataset.star === hz).forEach(x => x.setAttribute("aria-pressed", String(!!S.book[hz])));
-    save(); toast(S.book[hz] ? "Добавлено в мой словарик" : "Убрано из словарика");
+    $$('[data-star]').filter(x => x.dataset.star === key).forEach(x => x.setAttribute("aria-pressed", String(!!S.book[key])));
+    save(); toast(S.book[key] ? "Добавлено в мой словарик" : "Убрано из словарика");
   } catch (err) { toast(err.message); } finally { b.disabled = false; }
 });
-const wordRow = w => `<div class="word"><a class="h zh" href="#/word/${encodeURIComponent(w.hz)}">${esc(w.hz)}</a><a class="m" href="#/word/${encodeURIComponent(w.hz)}"><div class="py">${esc(w.py)}${w.pos ? `<span class="tag">${esc(w.pos)}</span>` : ""}${w.source ? '<span class="tag">大БКРС</span>' : ""}</div><div class="word-summary">${esc(w.ru)}</div></a>${w.missing ? "" : starBtn(w)}${sayBtn(w.hz)}</div>`;
+const wordRow = w => `<div class="word"><a class="h zh" href="#/word/${encodeURIComponent(wordKey(w))}">${esc(w.hz)}</a><a class="m" href="#/word/${encodeURIComponent(wordKey(w))}"><div class="py">${esc(w.py)}${w.pos ? `<span class="tag">${esc(w.pos)}</span>` : ""}${w.lv ? `<span class="tag">${esc(wordLabel(w))}</span>` : w.source === "bkrs" ? '<span class="tag">大БКРС</span>' : ""}</div><div class="word-summary">${esc(w.ru)}</div></a>${w.missing ? "" : starBtn(w)}${sayBtn(w.hz)}</div>`;
 const greeting = () => { const hr = new Date().getHours(); return hr < 5 ? "Доброй ночи" : hr < 12 ? "Доброе утро" : hr < 18 ? "Добрый день" : "Добрый вечер"; };
-const lvName = lv => `HSK ${lv} · ${LEVELS[lv].title}`;
+const lvName = lv => `HSK 2.0 · ${lv} · ${LEVELS[lv].title}`;
 let leaveFns = [];
 const onLeave = fn => leaveFns.push(fn);
 
 /* ========== страницы ========== */
 function pageWelcome() {
-  let lv = S.settings.level;
+  let lv = "1";
   app.innerHTML = `<section class="welcome"><div class="top"><span class="wordmark">ZH<span>·</span></span><span class="ed">Русский · 中文</span></div>
     <div class="art">${ART_WELCOME}</div><p class="kicker" style="margin-top:14px">每天说一点中文</p>
     <h1>Каждый день —<br><u>немного китайского.</u></h1><p class="sub">Услышать фразу, запомнить слово, сказать в ответ.<br>От первого «你好» до свободного разговора — без спешки.</p>
-    <div class="lvnote">HSK 1 — HSK 6 · шаг за шагом</div>
+    <div class="lvnote">HSK 3.0 · уровни 1–6 и 7–9</div>
     <label class="field" style="text-align:left"><span>Как к вам обращаться?</span><input id="nick" maxlength="20" placeholder="Например, Анна" autocomplete="given-name"></label>
-    <div class="field" style="text-align:left"><span>С какого уровня начать?</span><div class="lvpick">${[1, 2, 3, 4, 5, 6].map(n => `<button data-lv="${n}" aria-pressed="${n === lv}"><b>HSK ${n}</b>${LEVELS[n].title}</button>`).join("")}</div></div>
+    <div class="field" style="text-align:left"><span>С какого уровня начать?</span><div class="lvpick">${["1", "2", "3", "4", "5", "6", "7-9"].map(n => `<button data-lv="${n}" aria-pressed="${n === lv}"><b>HSK ${levelLabel(n)}</b>${n === "7-9" ? "Высший этап" : LEVELS[n].title}</button>`).join("")}</div></div>
     <button class="btn" id="go">Начать ${ic("go")}</button><p class="hint mt">Прогресс хранится на этом устройстве. В профиле можно сделать резервную копию.</p></section>`;
-  $$(".lvpick button").forEach(b => b.onclick = () => { lv = +b.dataset.lv; $$(".lvpick button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
-  $("#go").onclick = () => { S.profile = { nick: $("#nick").value.trim() || "друг", created: Date.now() }; S.settings.level = lv; save(); location.hash = "#/home"; };
+  $$(".lvpick button").forEach(b => b.onclick = () => { lv = b.dataset.lv; $$(".lvpick button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
+  $("#go").onclick = () => { S.profile = { nick: $("#nick").value.trim() || "друг", created: Date.now() }; S.settings.curriculum = "hsk3"; S.settings.hsk3Level = lv; save(); location.hash = "#/home"; };
 }
 
 async function pageHome() {
   const lv = S.settings.level, d = D(), due = dueList().length, goal = S.settings.goal, pct = Math.min(100, d.correct / goal * 100);
   const wk = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"], now = new Date(), mon = new Date(now); mon.setDate(now.getDate() - (now.getDay() + 6) % 7);
   const week = wk.map((n, i) => { const x = new Date(mon); x.setDate(mon.getDate() + i); const t = today(x.getTime()); return `<span class="${t === today() ? "today" : ""} ${S.stats.days[t] ? "done" : ""}">${n}<b>${x.getDate()}</b></span>`; }).join("");
-  app.innerHTML = `<section class="page"><div class="greet intro"><div><p class="kicker">${greeting()}</p><h1>${esc(S.profile.nick)},<br>сегодня тоже немного <span class="zh">中文</span>.</h1></div><a class="pill" href="#/levels">HSK ${lv} ${ic("go")}</a></div>
+  app.innerHTML = `<section class="page"><div class="greet intro"><div><p class="kicker">${greeting()}</p><h1>${esc(S.profile.nick)},<br>сегодня тоже немного <span class="zh">中文</span>.</h1></div><a class="pill" href="${hsk3Selected() ? "#/hsk3" : "#/levels"}">${hsk3Selected() ? `HSK 3.0 · ${levelLabel(hsk3Level())}` : `HSK 2.0 · ${lv}`} ${ic("go")}</a></div>
     <div class="week">${week}</div>
-    <div class="card-blue"><p class="kicker">每天一点</p><h2>Понемногу каждый день.</h2><p class="sub">${lvName(lv)}</p><div class="art">${ART_READ}</div>
+    <div class="card-blue"><p class="kicker">每天一点</p><h2>Понемногу каждый день.</h2><p class="sub">${currentCourseName()}</p><div class="art">${ART_READ}</div>
       <div class="prog"><div class="row"><span>Цель на сегодня — верных ответов</span><b>${d.correct} / ${goal}</b></div><div class="bar"><i style="width:${pct}%"></i></div></div>
-      <a class="btn" href="#/study/${lv}">${d.correct >= goal ? "Цель выполнена — ещё немного" : "Продолжить"} ${ic("go")}</a></div>
+      <a class="btn" href="${coursePath("study")}">${d.correct >= goal ? "Цель выполнена — ещё немного" : "Продолжить"} ${ic("go")}</a></div>
     <div class="section"><h2>План на сегодня</h2><a href="#/plan">Настроить ›</a></div>
     <div class="list">${row("#/review", "review", "Повторить знакомое", due ? `${due} ${plural(due, "слово ждёт", "слова ждут", "слов ждут")} повторения` : "Повторение и мой словарик")}
-    ${row(`#/study/${lv}`, "book", "Выучить новое", `HSK ${lv} · новые слова карточками`)}
-    ${row(`#/quiz/${lv}`, "check", "Ежедневный тест", `Сегодня верных ответов: ${d.correct}`)}</div>
+    ${row(coursePath("study"), "book", "Выучить новое", `${currentCourseName()} · новые слова карточками`)}
+    ${row(coursePath("quiz"), "check", "Ежедневный тест", `Сегодня верных ответов: ${d.correct}`)}
+    ${row("#/hsk3", "layers", "Новый HSK 3.0", "Словарь 1–6 и 7–9 · карточки · форматы заданий")}</div>
     <div class="tiles"><a href="#/dict">${ic("search")}Словарь</a><a href="#/book">${ic("bookmark")}Мой словарик</a><a href="#/stats">${ic("chart")}Статистика</a></div>
     <div class="section"><h2>Понемногу, но регулярно.</h2></div>
     <div class="stats"><div><b>${studyDays()}</b><small>дней учёбы</small></div><div><b>${accuracy()}%</b><small>точность</small></div><div><b>${S.stats.correct}</b><small>верных ответов</small></div></div>
@@ -161,13 +174,24 @@ async function pageHome() {
 }
 
 function pageLearn() {
+  if (hsk3Selected()) {
+    const lv = hsk3Level(), count = Object.values(S.srs).filter(x => x.word?.curriculum === "hsk3" && String(x.word.level ?? x.lv) === lv && x.b >= 1).length;
+    app.innerHTML = `<section class="page"><div class="intro"><p class="kicker">Ваш учебный маршрут</p><h1>HSK 3.0</h1><p class="sub">Слова, карточки и знакомство с форматами заданий.</p></div>
+      <a class="card-blue" href="${coursePath("vocab")}" style="display:block"><h2>${currentCourseName()}</h2><p class="sub">Выучено карточек: ${count}</p><span>Открыть слова ${ic("go")}</span></a>
+      <div class="section"><h2>Продолжить учиться</h2><a href="#/hsk3">Выбрать уровень ›</a></div>
+      <div class="list">${row(coursePath("study"), "cards", "Карточки", "Новые слова и интервальное повторение")}${row(coursePath("quiz"), "check", "Тренировка слов", "Китайские слова и русские значения")}${row(coursePath("exam"), "trophy", "Форматы заданий HSK 3.0", "Структура экзамена и учебные упражнения")}${row("#/library", "book", "Библиотека «Путь к успеху»", "Учебники и аудио к урокам")}</div>
+      <div class="section"><h2>Дополнительная практика</h2></div><p class="hint">Авторские материалы прежнего курса HSK 2.0. Их уровни не перенесены на новый стандарт.</p>
+      <div class="grid2"><a href="#/pinyin"><span class="ic">${ic("wave")}</span><b>Пиньинь и тоны</b></a><a href="#/grammar"><span class="ic">${ic("pen")}</span><b>Грамматика</b></a><a href="#/dialogues"><span class="ic">${ic("chat")}</span><b>Диалоги</b></a><a href="#/reading"><span class="ic">${ic("read")}</span><b>Чтение</b></a><a href="#/shadow"><span class="ic">${ic("mic")}</span><b>Повторение вслух</b></a><a href="#/tones"><span class="ic">${ic("ear")}</span><b>Тренажёр тонов</b></a></div>
+      <div class="list mt">${row("#/levels", "layers", "Прежний курс HSK 2.0", "Уровни 1–6 · сохранённый прогресс")}${row("#/shelf", "book", "Мои учебники", "Книги и аудио на устройстве")}</div></section>`;
+    return;
+  }
   const lv = S.settings.level, total = LEVELS[lv].words, k = known(lv);
   app.innerHTML = `<section class="page"><div class="intro"><p class="kicker">Ваш учебный маршрут</p><h1>Шаг за шагом —<br>говорить больше.</h1><p class="sub">От тонов и звуков — к собственным фразам.</p></div>
-    <a class="card-blue" href="#/level/${lv}" style="display:block"><div style="display:flex;justify-content:space-between"><b style="font-size:19px">HSK ${lv} · ${LEVELS[lv].title}</b>${ic("go")}</div><p class="sub" style="max-width:none">${LEVELS[lv].desc}</p>
+    <a class="card-blue" href="#/level/${lv}" style="display:block"><div style="display:flex;justify-content:space-between"><b style="font-size:19px">HSK 2.0 · ${lv} · ${LEVELS[lv].title}</b>${ic("go")}</div><p class="sub" style="max-width:none">${LEVELS[lv].desc}</p>
       <div class="prog"><div class="row"><span>Выучено слов уровня</span><span>${k} / ${total}</span></div><div class="bar"><i style="width:${k / total * 100}%"></i></div></div></a>
     <div class="section"><h2>С чего начать?</h2><a href="#/levels">Выбрать уровень ›</a></div>
     <div class="steps"><a href="#/pinyin" class="${k < 10 ? "cur" : ""}"><span class="n">01</span><span class="t"><b>Услышать звуки китайского</b><small>Пиньинь · четыре тона · инициали и финали</small></span>${ic("go", "i go")}</a>
-      <a href="#/study/${lv}" class="${k >= 10 && k < 60 ? "cur" : ""}"><span class="n">02</span><span class="t"><b>Узнать слова во фразе</b><small>Лексика HSK ${lv} · карточки · части речи</small></span>${ic("go", "i go")}</a>
+      <a href="#/study/${lv}" class="${k >= 10 && k < 60 ? "cur" : ""}"><span class="n">02</span><span class="t"><b>Узнать слова во фразе</b><small>Лексика HSK 2.0 · ${lv} · карточки · части речи</small></span>${ic("go", "i go")}</a>
       <a href="#/dialogues"><span class="n">03</span><span class="t"><b>Понять на слух и ответить</b><small>Диалоги · аудирование · повторение вслух</small></span>${ic("go", "i go")}</a>
       <a href="#/reading"><span class="n">04</span><span class="t"><b>Прочитать текст, написать фразу</b><small>Чтение · письмо</small></span>${ic("go", "i go")}</a></div>
     <div class="section"><h2>Отдельные тренировки</h2></div>
@@ -179,8 +203,8 @@ function pageLearn() {
       <a href="#/hanzi/${lv}"><span class="ic">${ic("pen")}</span><b>Иероглифы</b><small>Пишите по порядку черт</small></a>
       <a href="#/cloud/${lv}"><span class="ic">${ic("layers")}</span><b>Облако слов</b><small>Слова уровня по частоте</small></a>
       <a href="#/tones"><span class="ic">${ic("wave")}</span><b>Тренажёр тонов</b><small>Угадайте тон на слух</small></a>
-      <a href="#/exam/${lv}"><span class="ic">${ic("trophy")}</span><b>Подготовка к HSK</b><small>Пробный тест с таймером</small></a></div>
-    <div class="list mt">${row("#/library", "book", "Библиотека «Путь к успеху»", "Учебники PDF · аудио · материалы к урокам")}${row("#/shelf", "download", "Мои файлы", "Добавить другие учебники с устройства")}${row("#/levels", "layers", "Уровни курса", "HSK 1 – HSK 6 и ваш прогресс")}</div></section>`;
+      <a href="#/exam/${lv}"><span class="ic">${ic("trophy")}</span><b>Слова на время</b><small>Учебная тренировка · 10 минут</small></a></div>
+    <div class="list mt">${row("#/hsk3", "layers", "Новый HSK 3.0", "Уровни 1–6 и 7–9 · словарь и форматы заданий")}${row("#/library", "book", "Библиотека «Путь к успеху»", "Учебники PDF · аудио · материалы к урокам")}${row("#/shelf", "download", "Мои файлы", "Добавить другие учебники с устройства")}${row("#/levels", "layers", "Уровни прежнего курса", "HSK 2.0 · уровни 1–6 и ваш прогресс")}</div></section>`;
 }
 
 function pageReview() {
@@ -188,12 +212,10 @@ function pageReview() {
   app.innerHTML = `<section class="page"><div class="intro"><p class="kicker">Повторение</p><h1>Знакомое —<br>начинается со второй встречи.</h1><p class="sub">Сначала повторите то, что пора освежить.</p></div>
     <div class="card-blue"><p class="kicker">Ждут повторения</p><div style="font-size:54px;font-weight:750;letter-spacing:-2px">${due.length}</div>
       <p class="sub" style="max-width:none">${due.length ? "Слова, у которых подошёл срок. Займёт пару минут." : `Пока ничего не ждёт. Можно выучить ${S.settings.newPerDay} новых слов или открыть свой словарик.`}</p>
-      <a class="btn" href="${due.length ? "#/study/review" : `#/study/${lv}`}">${due.length ? "Начать повторение" : "Учить новые слова"} ${ic("go")}</a></div>
+      <a class="btn" href="${due.length ? "#/study/review" : coursePath("study")}">${due.length ? "Начать повторение" : "Учить новые слова"} ${ic("go")}</a></div>
     <div class="section"><h2>С чего начать?</h2></div>
-    <div class="list">${row(`#/study/${lv}`, "cards", "Карточки", "Новые и знакомые слова · «помню / не помню»")}
-      ${row(`#/pairs/${lv}`, "layers", "Игра «Найди пару»", "Иероглиф ↔ перевод на скорость")}
-      ${row(`#/cloud/${lv}`, "wave", "Облако слов", "Крупнее — чаще встречается")}
-      ${row(`#/hanzi/${lv}`, "pen", "Пишем иероглифы", "Знакомые слова по порядку черт")}
+    <div class="list">${row(coursePath("study"), "cards", "Карточки", `${currentCourseName()} · «помню / не помню»`)}
+      ${hsk3Selected() ? row(coursePath("quiz"), "check", "Тренировка слов HSK 3.0", "Проверить значения слов") : row(`#/pairs/${lv}`, "layers", "Игра «Найди пару»", "HSK 2.0 · иероглиф ↔ перевод на скорость") + row(`#/cloud/${lv}`, "wave", "Облако слов", "HSK 2.0 · крупнее — чаще встречается") + row(`#/hanzi/${lv}`, "pen", "Пишем иероглифы", "HSK 2.0 · знакомые слова по порядку черт")}
       ${row("#/book", "bookmark", "Мой словарик", bk ? `${bk} ${plural(bk, "слово", "слова", "слов")} · ошибки и отмеченные` : "Отмечайте слова звёздочкой")}
       ${row("#/study/book", "review", "Повторить словарик", "Карточки только из моего словаря")}
       ${row("#/grammar", "pen", "Повторить грамматику", "Примеры к каждой конструкции")}</div>
@@ -203,9 +225,9 @@ function pageReview() {
 function pageMe() {
   const days = studyDays(), bk = Object.keys(S.book).length;
   app.innerHTML = `<section class="page"><div style="display:flex;align-items:center;gap:16px;margin:4px 0 8px"><span style="width:84px;height:84px;border-radius:50%;background:var(--glaze);display:flex;align-items:center;justify-content:center">${PANDA.replace("<svg", '<svg style="width:64px;height:64px"')}</span>
-      <div style="flex:1"><div style="font-size:23px;font-weight:750">${esc(S.profile.nick)}</div><div class="muted">${lvName(S.settings.level)}</div><a class="muted" href="#/settings">Настройки ›</a></div></div>
+      <div style="flex:1"><div style="font-size:23px;font-weight:750">${esc(S.profile.nick)}</div><div class="muted">${currentCourseName()}</div><a class="muted" href="#/settings">Настройки ›</a></div></div>
     <div class="box"><h3>Мои данные</h3><div class="stats"><div><b>${days}</b><small>дней учёбы</small></div><div><b>${accuracy()}%</b><small>точность</small></div><div><b>${streak()}</b><small>дней подряд</small></div></div></div>
-    <div class="box list" style="padding:4px 20px">${row("#/stats", "clock", "История занятий", "Последние 14 дней")}${row("#/book", "bookmark", "Мой словарик", `${bk} ${plural(bk, "слово", "слова", "слов")}`)}${row("#/plan", "target", "Учебный план", `Цель: ${S.settings.goal} ответов в день`)}${row("#/levels", "layers", "Уровни", "Переключить уровень HSK")}${row("#/shelf", "book", "Мои учебники", "Книги и аудио на устройстве")}</div>
+    <div class="box list" style="padding:4px 20px">${row("#/stats", "clock", "История занятий", "Последние 14 дней")}${row("#/book", "bookmark", "Мой словарик", `${bk} ${plural(bk, "слово", "слова", "слов")}`)}${row("#/plan", "target", "Учебный план", `Цель: ${S.settings.goal} ответов в день`)}${row("#/hsk3", "layers", "HSK 3.0", "Уровни 1–6 и 7–9")}${row("#/levels", "layers", "HSK 2.0", "Прежний курс и его прогресс")}${row("#/shelf", "book", "Мои учебники", "Книги и аудио на устройстве")}</div>
     <div class="box list" style="padding:4px 20px">${row("#/settings", "gear", "Настройки", "Голос, пиньинь, резервная копия")}${row("#/about", "info", "О приложении и данных", "Источники словаря и лицензии")}</div></section>`;
 }
 
@@ -214,19 +236,19 @@ async function pageStudy(arg) {
   const routeHash = location.hash;
   app.innerHTML = `<p class="empty">Загрузка…</p>`;
   let queue = [], title = "";
-  if (arg === "review") { queue = (await Promise.all(shuffle(dueList()).slice(0, 40).map(x => findWord(x.hz)))).filter(Boolean); title = "Повторение"; }
+  if (arg === "review") { queue = (await Promise.all(shuffle(dueList()).slice(0, 40).map(x => findWord(x.key)))).filter(Boolean); title = "Повторение"; }
   else if (arg === "book") { queue = (await Promise.all(shuffle(Object.keys(S.book)).slice(0, 30).map(findWord))).filter(Boolean); title = "Мой словарик"; }
   else { const lv = +arg || S.settings.level; const words = await level(lv); const now = Date.now();
-    const due = words.filter(w => S.srs[w.hz] && S.srs[w.hz].d <= now); const fresh = words.filter(w => !S.srs[w.hz]).slice(0, Math.max(0, S.settings.newPerDay - D().learned));
-    queue = shuffle(due).slice(0, 20).concat(fresh); title = `HSK ${lv} · карточки`; }
+    const due = words.filter(w => S.srs[wordKey(w)] && S.srs[wordKey(w)].d <= now); const fresh = words.filter(w => !S.srs[wordKey(w)]).slice(0, Math.max(0, S.settings.newPerDay - D().learned));
+    queue = shuffle(due).slice(0, 20).concat(fresh); title = `HSK 2.0 · ${lv} · карточки`; }
   if (location.hash !== routeHash) return;
-  if (!queue.length) { app.innerHTML = `${topbar(title, "#/review")}<div class="empty"><b>${arg === "book" ? "Словарик пуст" : "На сегодня всё!"}</b>${arg === "book" ? "Сюда попадают ошибки из тестов и слова со звёздочкой." : "Новых слов на сегодня больше нет, повторять пока нечего. Загляните завтра или пройдите тест."}<br><a class="btn small" href="#/quiz/${S.settings.level}">Пройти тест</a></div>`; return; }
+  if (!queue.length) { app.innerHTML = `${topbar(title, "#/review")}<div class="empty"><b>${arg === "book" ? "Словарик пуст" : "На сегодня всё!"}</b>${arg === "book" ? "Сюда попадают ошибки из тестов и слова со звёздочкой." : "Новых слов на сегодня больше нет, повторять пока нечего. Загляните завтра или пройдите тест."}<br><a class="btn small" href="${coursePath("quiz")}">Пройти тест</a></div>`; return; }
   const total = queue.length; let done = 0, shown = false;
   function draw() {
     const w = queue[0]; if (!w) return finish();
-    const isNew = !S.srs[w.hz]; shown = false;
+    const isNew = !S.srs[wordKey(w)]; shown = false;
     app.innerHTML = `${topbar(title, "#/review")}<div class="qhead"><div class="bar"><i style="width:${done / total * 100}%"></i></div><span class="muted">${done}/${total}</span></div>
-      <div class="stack"><div class="flash" id="card"><span class="meta">${w.lv ? `HSK ${w.lv}` : "Большой словарь"}${isNew ? " · новое" : ""}</span><div style="position:absolute;top:10px;right:10px;display:flex">${starBtn(w)}</div>
+      <div class="stack"><div class="flash" id="card"><span class="meta">${esc(wordLabel(w))}${isNew ? " · новое" : ""}</span><div style="position:absolute;top:10px;right:10px;display:flex">${starBtn(w)}</div>
         <div class="big zh">${esc(w.hz)}</div><div class="py ${S.settings.pinyin || shown ? "" : "hid"}" id="py">${esc(w.py)}</div><div class="ru hid" id="ru">${esc(w.ru)}</div>${sayBtn(w.hz)}</div></div>
       <div id="act"><button class="btn" id="show">Показать перевод</button></div>`;
     speak(w.hz, $("#card .say"));
@@ -236,11 +258,11 @@ async function pageStudy(arg) {
     if (shown) return; shown = true; const w = queue[0];
     $("#py").classList.remove("hid"); $("#ru").classList.remove("hid");
     $("#act").innerHTML = `<div class="two"><button class="btn ghost" id="no">Не помню</button><button class="btn" id="yes">Помню ${ic("check")}</button></div>`;
-    $("#no").onclick = () => { if (!S.srs[w.hz]) D().learned++; grade(w, false); record(false, null); queue.push(queue.shift()); draw(); };
-    $("#yes").onclick = () => { if (!S.srs[w.hz]) D().learned++; else D().reviewed++; grade(w, true); record(true); queue.shift(); done++; draw(); };
+    $("#no").onclick = () => { if (!S.srs[wordKey(w)]) D().learned++; grade(w, false); record(false, null); queue.push(queue.shift()); draw(); };
+    $("#yes").onclick = () => { if (!S.srs[wordKey(w)]) D().learned++; else D().reviewed++; grade(w, true); record(true); queue.shift(); done++; draw(); };
   }
   function finish() { app.innerHTML = `${topbar(title, "#/review")}<div class="result"><div style="width:110px;margin:0 auto">${PANDA}</div><div class="score">${total}</div><p>${plural(total, "карточка пройдена", "карточки пройдены", "карточек пройдено")}. Отличная работа!</p>
-      <a class="btn" href="#/quiz/${S.settings.level}">Закрепить тестом ${ic("go")}</a><a class="btn ghost" href="#/home">На главную</a></div>`; }
+      <a class="btn" href="${coursePath("quiz")}">Закрепить тестом ${ic("go")}</a><a class="btn ghost" href="#/home">На главную</a></div>`; }
   draw();
 }
 
@@ -248,7 +270,7 @@ async function pageStudy(arg) {
 async function pageQuiz(lv, mode = "mix") {
   lv = +lv || S.settings.level; app.innerHTML = `<p class="empty">Загрузка…</p>`;
   const words = await level(lv); const exam = mode === "exam", N = exam ? 20 : 10;
-  const seen = words.filter(w => S.srs[w.hz]); const base = seen.length >= 8 ? shuffle(seen.concat(shuffle(words).slice(0, 6))) : shuffle(words.slice(0, Math.min(words.length, 120)));
+  const seen = words.filter(w => S.srs[wordKey(w)]); const base = seen.length >= 8 ? shuffle(seen.concat(shuffle(words).slice(0, 6))) : shuffle(words.slice(0, Math.min(words.length, 120)));
   const qs = [...new Set(base)].slice(0, N).map((w, i) => {
     const types = mode === "listen" ? ["listen"] : exam ? ["zh2ru", "ru2zh", "listen", "py"] : ["zh2ru", "ru2zh", "listen", "py", "zh2ru"];
     const type = types[i % types.length]; const others = shuffle(words.filter(x => x.hz !== w.hz && short(x.ru) !== short(w.ru))).slice(0, 3);
@@ -256,7 +278,7 @@ async function pageQuiz(lv, mode = "mix") {
   });
   let k = 0, right = 0, t0 = Date.now(), timer = 0; const wrongs = [];
   const back = exam ? "#/learn" : mode === "listen" ? "#/learn" : "#/home";
-  const ttl = exam ? `Пробный HSK ${lv}` : mode === "listen" ? `Аудирование · HSK ${lv}` : `Тест · HSK ${lv}`;
+  const ttl = exam ? `Слова на время · HSK 2.0 · ${lv}` : mode === "listen" ? `Аудирование · HSK 2.0 · ${lv}` : `Тест · HSK 2.0 · ${lv}`;
   if (exam) { timer = setInterval(() => { const s = Math.max(0, 600 - (Date.now() - t0) / 1e3 | 0); const el = $("#tm"); if (el) el.textContent = `${s / 60 | 0}:${String(s % 60).padStart(2, "0")}`; if (!s) { clearInterval(timer); finish(); } }, 500); onLeave(() => clearInterval(timer)); }
   function draw() {
     const q = qs[k]; if (!q) return finish(); const w = q.w;
@@ -270,7 +292,7 @@ async function pageQuiz(lv, mode = "mix") {
     $$(".opt").forEach(b => b.onclick = () => {
       if ($(".opt.right")) return; const ok = b.dataset.hz === w.hz;
       $$(".opt").forEach(x => { if (x.dataset.hz === w.hz) x.classList.add("right"); }); if (!ok) { b.classList.add("wrong"); wrongs.push(w); } else right++;
-      record(ok, w.hz, w.lv); if (S.srs[w.hz]) grade(w, ok);
+      record(ok, wordKey(w), w.lv, w); if (S.srs[wordKey(w)]) grade(w, ok);
       $("#fb").innerHTML = `<div class="fb ${ok ? "ok" : "no"}">${ok ? "Верно!" : "Не совсем."} <b class="zh">${esc(w.hz)}</b> ${esc(w.py)} — ${esc(w.ru)}</div><button class="btn" id="next">${k + 1 < qs.length ? "Дальше" : "Результат"} ${ic("go")}</button>`;
       if (q.type !== "listen") speak(w.hz);
       $("#next").onclick = () => { k++; draw(); };
@@ -292,14 +314,14 @@ async function pageWrite(lv) {
   lv = +lv || S.settings.level; const words = shuffle(await level(lv)).slice(0, 10); let k = 0, right = 0;
   function draw() {
     const w = words[k]; if (!w) { app.innerHTML = `${topbar("Письмо", "#/learn")}<div class="result"><div class="score">${right}/${words.length}</div><p>Отличная практика!</p><button class="btn" id="again">Ещё раз</button></div>`; $("#again").onclick = () => pageWrite(lv); return; }
-    app.innerHTML = `${topbar(`Письмо · HSK ${lv}`, "#/learn")}<div class="qhead"><div class="bar"><i style="width:${k / words.length * 100}%"></i></div><span class="muted">${k + 1}/${words.length}</span></div>
+    app.innerHTML = `${topbar(`Письмо · HSK 2.0 · ${lv}`, "#/learn")}<div class="qhead"><div class="bar"><i style="width:${k / words.length * 100}%"></i></div><span class="muted">${k + 1}/${words.length}</span></div>
       <div class="qcard"><div class="q">Напишите по-китайски (иероглифами или пиньинем, тоны можно цифрами)</div><div class="mid">${esc(w.ru)}</div>${sayBtn(w.hz)}</div>
       <label class="field"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="например: nihao, ni3hao или 你好"></label><button class="btn" id="chk">Проверить</button><div id="fb"></div>`;
     const inp = $("#ans"); inp.focus(); inp.onkeydown = e => { if (e.key === "Enter") $("#chk").click(); };
     $("#chk").onclick = () => {
       const a = inp.value.trim(); if (!a) return;
       const ok = a === w.hz || plain(a.replace(/[1-5]/g, "")) === plain(w.py);
-      if (ok) right++; record(ok, w.hz, w.lv);
+      if (ok) right++; record(ok, wordKey(w), w.lv, w);
       $("#fb").innerHTML = `<div class="fb ${ok ? "ok" : "no"}">${ok ? "Верно!" : "Правильно так:"} <b class="zh" style="font-size:20px">${esc(w.hz)}</b> ${esc(w.py)}</div><button class="btn" id="next">Дальше ${ic("go")}</button>`;
       $("#chk").remove(); speak(w.hz); $("#next").onclick = () => { k++; draw(); };
     };
@@ -336,11 +358,11 @@ function pageTones() {
 /* ---------- грамматика, диалоги, чтение ---------- */
 function pageGrammar(id) {
   if (id) { const g = GRAMMAR.find(x => x.id === id); if (!g) return pageGrammar();
-    app.innerHTML = `${topbar(g.title, "#/grammar")}<span class="pill">HSK ${g.lv}</span><p style="font-size:15px;line-height:1.75">${esc(g.rule)}</p>
+    app.innerHTML = `${topbar(g.title, "#/grammar")}<span class="pill">HSK 2.0 · ${g.lv}</span><p style="font-size:15px;line-height:1.75">${esc(g.rule)}</p>
       <div class="section"><h2>Примеры</h2><button class="muted" id="all">${ic("speaker")}</button></div><div class="dlg">${g.ex.map(e => `<div class="line" data-say="${esc(e[0])}"><div><div class="zh">${esc(e[0])}</div><div class="py">${esc(e[1])}</div><div class="ru">${esc(e[2])}</div></div></div>`).join("")}</div>`;
     $("#all").onclick = () => speakAll($$(".dlg .line").map(el => ({ el, text: el.dataset.say }))); return; }
-  app.innerHTML = `${topbar("Грамматика", "#/learn")}<p class="sub" style="margin-top:-6px">Главные конструкции HSK 1–4 с примерами и озвучкой.</p>
-    ${[1, 2, 3, 4].map(lv => `<div class="section"><h2>HSK ${lv}</h2></div><div class="list">${GRAMMAR.filter(g => g.lv === lv).map(g => row(`#/grammar/${g.id}`, "pen", g.title, esc(g.ex[0][0]))).join("")}</div>`).join("")}`;
+  app.innerHTML = `${topbar("Грамматика", "#/learn")}<p class="sub" style="margin-top:-6px">Авторские конструкции прежнего курса HSK 2.0, уровни 1–4, с примерами и озвучкой.</p>
+    ${[1, 2, 3, 4].map(lv => `<div class="section"><h2>HSK 2.0 · ${lv}</h2></div><div class="list">${GRAMMAR.filter(g => g.lv === lv).map(g => row(`#/grammar/${g.id}`, "pen", g.title, esc(g.ex[0][0]))).join("")}</div>`).join("")}`;
 }
 function linesView(lines, kind) {
   const hp = !S.settings.pinyin;
@@ -358,7 +380,7 @@ function pageDialogues(id) {
     app.innerHTML = `${topbar(g.title, "#/dialogues")}${linesView(g.lines.map(([who, zh, py, ru]) => ({ who, zh, py, ru })), "dlg")}<p class="hint">Нажмите на реплику, чтобы услышать её. Скройте перевод и попробуйте понять на слух.</p><a class="btn" href="#/shadow/${g.id}">Повторить вслух ${ic("mic")}</a>`;
     bindLines(); return; }
   app.innerHTML = `${topbar("Диалоги", "#/learn")}<p class="sub" style="margin-top:-6px">Короткие сценки из жизни: знакомство, кафе, магазин, дорога.</p>
-    ${[1, 2, 3].map(lv => `<div class="section"><h2>HSK ${lv}</h2></div><div class="list">${DIALOGUES.filter(g => g.lv === lv).map(g => row(`#/dialogue/${g.id}`, "chat", g.title, esc(g.lines[0][1]))).join("")}</div>`).join("")}`;
+    ${[1, 2, 3].map(lv => `<div class="section"><h2>HSK 2.0 · ${lv}</h2></div><div class="list">${DIALOGUES.filter(g => g.lv === lv).map(g => row(`#/dialogue/${g.id}`, "chat", g.title, esc(g.lines[0][1]))).join("")}</div>`).join("")}`;
 }
 function pageReading(id) {
   if (id) { const g = READINGS.find(x => x.id === id); if (!g) return pageReading();
@@ -366,7 +388,7 @@ function pageReading(id) {
     bindLines();
     $$(".box .opt").forEach(b => b.onclick = () => { if ($(".box .right")) return; const ok = +b.dataset.i === g.q[2]; record(ok); $(`.box .opt[data-i="${g.q[2]}"]`).classList.add("right"); if (!ok) b.classList.add("wrong"); toast(ok ? "Верно!" : "Перечитайте текст ещё раз"); });
     return; }
-  app.innerHTML = `${topbar("Чтение", "#/learn")}<p class="sub" style="margin-top:-6px">Небольшие тексты с пиньинем, переводом и вопросом на понимание.</p><div class="list">${READINGS.map(g => row(`#/reading/${g.id}`, "read", `${g.title} · HSK ${g.lv}`, esc(g.text[0][0]))).join("")}</div>
+  app.innerHTML = `${topbar("Чтение", "#/learn")}<p class="sub" style="margin-top:-6px">Небольшие тексты с пиньинем, переводом и вопросом на понимание.</p><div class="list">${READINGS.map(g => row(`#/reading/${g.id}`, "read", `${g.title} · HSK 2.0 · ${g.lv}`, esc(g.text[0][0]))).join("")}</div>
     <div class="list mt">${row(`#/write/${S.settings.level}`, "pen", "Письмо", "Напишите слово по переводу")}</div>`;
 }
 
@@ -405,42 +427,45 @@ function pageShadow(id) {
 
 /* ---------- списки, словарь, словарик ---------- */
 async function pageLevel(lv) {
-  lv = +lv || 1; app.innerHTML = `${topbar(`HSK ${lv} · слова`, "#/learn")}<p class="empty">Загрузка…</p>`;
+  lv = +lv || 1; app.innerHTML = `${topbar(`HSK 2.0 · ${lv} · слова`, "#/learn")}<p class="empty">Загрузка…</p>`;
   const words = await level(lv); let f = "all";
-  app.innerHTML = `${topbar(`HSK ${lv} · ${LEVELS[lv].title}`, "#/learn")}<p class="sub" style="margin-top:-6px">${words.length} слов · выучено ${known(lv)} · порядок по частотности</p>
+  app.innerHTML = `${topbar(`HSK 2.0 · ${lv} · ${LEVELS[lv].title}`, "#/learn")}<p class="sub" style="margin-top:-6px">${words.length} слов · выучено ${known(lv)} · порядок по частотности</p>
     <div class="seg mt"><button aria-pressed="true" data-f="all">Все</button><button data-f="new">Новые</button><button data-f="known">Изученные</button></div><div id="wl"></div>
     <a class="btn" href="#/study/${lv}" style="position:sticky;bottom:96px">Учить карточками ${ic("go")}</a>`;
-  const draw = () => { const list = words.filter(w => f === "all" || (f === "new" ? !S.srs[w.hz] : S.srs[w.hz])); $("#wl").innerHTML = list.length ? list.map(wordRow).join("") : `<div class="empty">Здесь пока пусто</div>`; };
+  const draw = () => { const list = words.filter(w => f === "all" || (f === "new" ? !S.srs[wordKey(w)] : S.srs[wordKey(w)])); $("#wl").innerHTML = list.length ? list.map(wordRow).join("") : `<div class="empty">Здесь пока пусто</div>`; };
   $$(".seg button").forEach(b => b.onclick = () => { f = b.dataset.f; $$(".seg button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); draw(); });
   draw();
 }
 async function searchHskWords(q) {
-  q = q.trim(); if (!q) return []; const words = await allWords();
+  q = q.trim(); if (!q) return [];
+  const results = await Promise.allSettled([allWords(), HSK3.all()]);
+  const words = results.flatMap(r => r.status === "fulfilled" ? r.value : []);
   const cyr = /[а-яё]/i.test(q), hz = /\p{Script=Han}/u.test(q); const score = w => {
     if (hz) return w.hz === q ? 0 : w.hz.startsWith(q) ? 1 : w.hz.includes(q) ? 2 : 9;
     if (cyr) { const r = w.ru.toLowerCase(), ql = q.toLowerCase(); return r.split(/[;,] ?/).some(x => x.trim() === ql) ? 0 : r.startsWith(ql) ? 1 : new RegExp(`(^|[^а-яё])${ql.replace(/[.*+?^${}()|[\]\\]/g, "")}`).test(r) ? 2 : r.includes(ql) ? 3 : 9; }
     const pp = Dictionary.normalizePinyin(w.py), query = Dictionary.normalizePinyin(q); return !query ? 9 : pp === query ? 0 : pp.startsWith(query) ? 1 : 9; };
-  return words.map(w => [score(w), w]).filter(x => x[0] < 9).sort((a, b) => a[0] - b[0] || a[1].lv - b[1].lv).slice(0, 60).map(x => x[1]);
+  const preferred = w => (w.curriculum === "hsk3") === hsk3Selected() ? 0 : 1;
+  return words.map(w => [score(w), w]).filter(x => x[0] < 9).sort((a, b) => a[0] - b[0] || preferred(a[1]) - preferred(b[1]) || parseInt(a[1].lv, 10) - parseInt(b[1].lv, 10)).slice(0, 60).map(x => x[1]);
 }
 async function searchWords(q) {
   const local = await searchHskWords(q);
   let extended;
   try { extended = await Dictionary.search(q); }
   catch (error) { return { words: local, error: error.message }; }
-  const merged = new Map(local.map(w => [w.hz, w]));
-  for (const w of extended) if (!merged.has(w.hz)) merged.set(w.hz, w);
+  const merged = new Map(local.map(w => [wordKey(w), w])), headwords = new Set(local.map(w => w.hz));
+  for (const w of extended) if (!headwords.has(w.hz)) { merged.set(wordKey(w), w); headwords.add(w.hz); }
   const words = [...merged.values()];
-  if (/\p{Script=Han}/u.test(q)) words.sort((a, b) => (a.hz === q ? -1 : b.hz === q ? 1 : 0));
+  if (/\p{Script=Han}/u.test(q)) words.sort((a, b) => Number(b.hz === q) - Number(a.hz === q));
   return { words: words.slice(0, 60), error: "" };
 }
 function pageDict() {
   const recent = (S.recent || []);
   app.innerHTML = `${topbar("Словарь", "#/home")}<label class="search">${ic("search")}<input id="q" placeholder="你好 · nihao · привет" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-    <p class="hint" id="dict-count">Большой китайско-русский словарь · HSK 1–6 и 大БКРС</p>
+    <p class="hint" id="dict-count">Китайско-русский словарь · HSK 3.0, HSK 2.0 и 大БКРС</p>
     <p class="hint">Китайское слово или его начало, пиньинь с тонами или без, русский перевод (от 3 букв). Нажмите на слово: полное объяснение, примеры, сведения об иероглифах.</p>
     <p class="hint">Разделы загружаются по мере поиска. Для нового раздела нужен интернет; открытые разделы и сохранённые карточки доступны офлайн.</p><div id="res" aria-live="polite">${recent.length ? `<div class="section"><h2>Недавние</h2><button class="muted" id="clr">Очистить</button></div><div class="chips">${recent.map(r => `<button class="chip" data-q="${esc(r)}"><b class="zh" style="font-size:15px">${esc(r)}</b></button>`).join("")}</div>` : ""}</div>`;
   const q = $("#q"), results = $("#res"), count = $("#dict-count"); let t = 0, serial = 0;
-  Dictionary.manifest().then(m => { if (count.isConnected) count.textContent = `${m.entries.toLocaleString("ru-RU")} статей 大БКРС · ${m.charactersWithRussian.toLocaleString("ru-RU")} отдельных иероглифов с русским объяснением · HSK 1–6`; }).catch(() => {});
+  Dictionary.manifest().then(m => { if (count.isConnected) count.textContent = `${m.entries.toLocaleString("ru-RU")} статей 大БКРС · ${m.charactersWithRussian.toLocaleString("ru-RU")} отдельных иероглифов с русским объяснением · HSK 3.0 и HSK 2.0`; }).catch(() => {});
   const run = async () => { const v = q.value.trim(), token = ++serial;
     if (!v) { results.innerHTML = ""; return; }
     results.innerHTML = '<p class="hint">Ищем в словаре…</p>';
@@ -459,24 +484,25 @@ function pageDict() {
 }
 async function pageBook() {
   const keys = Object.keys(S.book);
-  app.innerHTML = `${topbar("Мой словарик", "#/review")}${keys.length ? "" : `<div class="empty"><b>Словарик пуст</b>Сюда попадают слова, в которых вы ошиблись, и слова со звёздочкой.<br><a class="btn small" href="#/level/${S.settings.level}">Открыть слова HSK ${S.settings.level}</a></div>`}<div id="wl"></div>`;
+  app.innerHTML = `${topbar("Мой словарик", "#/review")}${keys.length ? "" : `<div class="empty"><b>Словарик пуст</b>Сюда попадают слова, в которых вы ошиблись, и слова со звёздочкой.<br><a class="btn small" href="${coursePath("vocab")}">Открыть слова ${currentCourseName()}</a></div>`}<div id="wl"></div>`;
   if (!keys.length) return; const container = $("#wl");
-  const list = (await Promise.all(keys.map(findWord))).filter(Boolean).sort((a, b) => S.book[b.hz].t - S.book[a.hz].t);
+  const list = (await Promise.all(keys.map(findWord))).filter(Boolean).sort((a, b) => S.book[wordKey(b)].t - S.book[wordKey(a)].t);
   if (container.isConnected) container.innerHTML = `<p class="sub" style="margin-top:-6px">${list.length} ${plural(list.length, "слово", "слова", "слов")}</p>${list.map(wordRow).join("")}<a class="btn" href="#/study/book">Повторить карточками ${ic("go")}</a>`;
 }
 
 /* ---------- уровни, статистика, план, настройки ---------- */
 function pageLevels() {
-  app.innerHTML = `${topbar("Уровни курса", "#/learn")}<p class="sub" style="margin-top:-6px">Лексика по стандарту HSK 2.0 — около 5000 слов. Выберите текущий уровень.</p>
-    <div class="list">${[1, 2, 3, 4, 5, 6].map(lv => `<button class="row" data-lv="${lv}"><span class="ic" style="${lv === S.settings.level ? "background:var(--ink);color:#fff" : ""}"><b style="font-size:13px">${lv}</b></span><span class="t"><b>HSK ${lv} · ${LEVELS[lv].title}</b><small>${LEVELS[lv].desc} · выучено ${known(lv)}/${LEVELS[lv].words}</small></span>${lv === S.settings.level ? ic("check", "i go") : ic("go", "i go")}</button>`).join("")}</div>`;
-  $$("[data-lv]").forEach(b => b.onclick = () => { S.settings.level = +b.dataset.lv; save(); toast(`Текущий уровень: HSK ${b.dataset.lv}`); pageLevels(); });
+  app.innerHTML = `${topbar("Прежний курс HSK 2.0", "#/learn")}<p class="sub" style="margin-top:-6px">Около 5000 слов. Выбор уровня возвращает вас к прежнему курсу; его прогресс сохранён.</p><a class="btn ghost" href="#/hsk3">Открыть новый HSK 3.0 ${ic("go")}</a>
+    <div class="list">${[1, 2, 3, 4, 5, 6].map(lv => `<button class="row" data-lv="${lv}"><span class="ic" style="${!hsk3Selected() && lv === S.settings.level ? "background:var(--ink);color:#fff" : ""}"><b style="font-size:13px">${lv}</b></span><span class="t"><b>HSK 2.0 · ${lv} · ${LEVELS[lv].title}</b><small>${LEVELS[lv].desc} · выучено ${known(lv)}/${LEVELS[lv].words}</small></span>${!hsk3Selected() && lv === S.settings.level ? ic("check", "i go") : ic("go", "i go")}</button>`).join("")}</div>`;
+  $$("[data-lv]").forEach(b => b.onclick = () => { S.settings.curriculum = "hsk2"; S.settings.level = +b.dataset.lv; save(); toast(`Текущий уровень: HSK 2.0 · ${b.dataset.lv}`); pageLevels(); });
 }
 function pageStats() {
   const days = [...Array(14)].map((_, i) => { const t = today(Date.now() - (13 - i) * DAY); return [t, S.stats.days[t] || 0]; }); const mx = Math.max(1, ...days.map(d => d[1]));
-  const lvRows = [1, 2, 3, 4, 5, 6].map(lv => `<div class="setrow"><span>HSK ${lv}</span><span class="muted">${known(lv)} / ${LEVELS[lv].words}</span></div>`).join("");
+  const lvRows = [1, 2, 3, 4, 5, 6].map(lv => `<div class="setrow"><span>HSK 2.0 · ${lv}</span><span class="muted">${known(lv)} / ${LEVELS[lv].words}</span></div>`).join("");
   app.innerHTML = `${topbar("Статистика", "#/me")}<div class="box"><h3>Последние 14 дней</h3><div class="chart">${days.map(([t, n]) => `<div class="${n ? "on" : ""}" style="height:${n / mx * 100}%" title="${t}: ${n}"><span>${+t.slice(8)}</span></div>`).join("")}</div><p class="hint" style="margin-top:26px">Сегодня: ${D().answered} ответов, ${D().correct} верных · новых слов ${D().learned}</p></div>
-    <div class="box"><h3>Всего</h3><div class="stats"><div><b>${S.stats.answered}</b><small>ответов</small></div><div><b>${accuracy()}%</b><small>точность</small></div><div><b>${Object.keys(S.srs).length}</b><small>слов в работе</small></div></div></div>
-    <div class="box"><h3>Слова по уровням</h3>${lvRows}</div>
+    <div class="box"><h3>Всего</h3><div class="stats"><div><b>${S.stats.answered}</b><small>ответов</small></div><div><b>${accuracy()}%</b><small>точность</small></div><div><b>${Object.keys(S.srs).length}</b><small>карточек в работе</small></div></div></div>
+    <div class="box"><h3>HSK 3.0 · выучено карточек</h3>${["1", "2", "3", "4", "5", "6", "7-9"].map(lv => `<div class="setrow"><span>HSK ${levelLabel(lv)}</span><span class="muted">${Object.values(S.srs).filter(x => x.word?.curriculum === "hsk3" && String(x.word.level ?? x.lv) === lv && x.b >= 1).length}</span></div>`).join("")}</div>
+    <div class="box"><h3>HSK 2.0 · слова по уровням</h3>${lvRows}</div>
     <div class="box"><h3>Последние тесты</h3>${S.history.length ? S.history.slice(0, 10).map(x => `<div class="setrow"><span>${esc(x.kind)}<small>${new Date(x.t).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</small></span><b>${x.score}</b></div>`).join("") : `<p class="hint">Пока нет пройденных тестов.</p>`}</div>`;
 }
 function pagePlan() {
@@ -514,10 +540,11 @@ function sheetCode(exp) {
 }
 function pageAbout() {
   app.innerHTML = `${topbar("О приложении", "#/me")}<div style="width:96px;margin:0 auto">${PANDA}</div><h2 class="center" style="margin:6px 0 0">汉语熊猫 · ХаньюйТун</h2><p class="center muted">Китайский для русскоговорящих · версия 1.1</p>
-    <div class="box"><h3>Словарь</h3><p class="hint" style="margin:0">Список слов HSK 1–6, пиньинь и части речи — <a href="https://github.com/drkameleon/complete-hsk-vocabulary" style="text-decoration:underline">complete-hsk-vocabulary</a> (MIT), основан на данных CC-CEDICT (CC BY-SA 4.0). Русские переводы, диалоги, тексты и объяснения грамматики написаны для этого приложения; переводы краткие и не проверены носителем — сообщайте о неточностях.</p></div>
+    <div class="box"><h3>Словарь</h3><p class="hint" style="margin:0">Прежний список HSK 2.0 (уровни 1–6), пиньинь и части речи — <a href="https://github.com/drkameleon/complete-hsk-vocabulary" style="text-decoration:underline">complete-hsk-vocabulary</a> (MIT), основан на данных CC-CEDICT (CC BY-SA 4.0). Русские переводы, диалоги, тексты и объяснения грамматики написаны для этого приложения; переводы краткие и не проверены носителем — сообщайте о неточностях.</p></div>
     <div class="box"><h3>Большой словарь и иероглифы</h3><p class="hint">Полные русские толкования и словарные примеры: <a href="https://bkrs.info/p47">大БКРС</a>, снимок 5 ноября 2026 года. Источник разрешает свободное использование баз в любых целях. Сохраняются статьи с китайским написанием и русским толкованием. Это слова, иероглифы, имена, термины и словосочетания, а не исчерпывающий список всех слов китайского языка.</p><p class="hint">Ключи, число черт, чтения и варианты: <a href="https://www.unicode.org/reports/tr38/">Unicode Unihan 17.0.0</a>, <a href="data/UNICODE-LICENSE.txt">Unicode License v3</a>. Распаковка данных: fflate 0.8.2 (<a href="vendor/fflate-LICENSE.txt">MIT</a>). <a href="data/DICTIONARY-SOURCES.txt">Описание источников и преобразований</a>.</p><p class="hint">Пояснения простыми словами и ролевые ситуации написаны для приложения. Они не являются цитатами из словаря.</p></div>
     <div class="box"><h3>Порядок черт</h3><p class="hint" style="margin:0">Анимация и проверка черт — <a href="https://github.com/chanind/hanzi-writer" style="text-decoration:underline">Hanzi Writer</a> (MIT); данные черт — Make Me a Hanzi, Arphic Public License (текст лицензии: strokes/ARPHICPL.TXT).</p></div>
     <div class="box"><h3>Озвучивание</h3><p class="hint" style="margin:0">Используется встроенный китайский голос вашего устройства (zh-CN). Если звука нет, установите китайский голос в системных настройках речи.</p></div>
+    <div class="box"><h3>HSK 3.0</h3><p class="hint" style="margin:0">Новый словарь, структура уровней и форматы заданий доступны в <a href="#/hsk3" style="text-decoration:underline">разделе HSK 3.0</a>. Источники и границы покрытия указаны там. Учебные упражнения не выдают официальный результат экзамена.</p></div>
     <div class="box"><h3>Данные</h3><p class="hint" style="margin:0">Аккаунт не нужен. Прогресс хранится в браузере; для переноса используйте код в настройках. Курс HSK доступен офлайн после первого открытия. Большой словарь загружается по разделам: офлайн доступны уже открытые разделы и сохранённые карточки. Браузер может освободить кеш при нехватке места.</p></div>`;
 }
 
@@ -544,35 +571,44 @@ const isHan = c => /^\p{Script=Han}$/u.test(c);
 const gridSVG = size => `<svg width="${size}" height="${size}" style="position:absolute;inset:0" aria-hidden="true"><g stroke="#e8eef6" stroke-dasharray="4 4"><line x1="0" y1="0" x2="${size}" y2="${size}"/><line x1="${size}" y1="0" x2="0" y2="${size}"/><line x1="${size / 2}" y1="0" x2="${size / 2}" y2="${size}"/><line x1="0" y1="${size / 2}" x2="${size}" y2="${size / 2}"/></g></svg>`;
 const charBox = (id, size) => `<div style="position:relative;width:${size}px;height:${size}px;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden">${gridSVG(size)}<div id="${id}" style="position:relative"></div></div>`;
 
-async function findWord(hz) {
-  const all = await allWords(), hsk = all.find(w => w.hz === hz);
-  return hsk || S.book[hz]?.word || S.srs[hz]?.word || await Dictionary.lookup(hz);
+async function findWord(key) {
+  const snapshot = S.book[key]?.word || S.srs[key]?.word;
+  if (snapshot?.curriculum === "hsk3") return snapshot;
+  // New IDs are not plain Hanzi; preserve legacy headword lookup precedence.
+  if (!/^\p{Script=Han}+$/u.test(key)) {
+    const modern = await HSK3.find(key).catch(() => null);
+    if (modern) return modern;
+  }
+  let hsk;
+  try { hsk = (await allWords()).find(w => w.hz === key); }
+  catch (error) { if (snapshot) return snapshot; throw error; }
+  return hsk || snapshot || await Dictionary.lookup(key);
 }
-async function pageWord(hz) {
-  hz = decodeURIComponent(hz || ""); const routeHash = location.hash;
+async function pageWord(key) {
+  key = decodeURIComponent(key || ""); const routeHash = location.hash;
   app.innerHTML = `${topbar("Слово", "#/dict")}<p class="empty">Загрузка статьи…</p>`;
-  let w = await findWord(hz), article = w?.source ? w : null, loadError = "";
-  if (!article) { try { article = await Dictionary.lookup(hz); } catch (e) { loadError = e.message; } }
+  let w = await findWord(key), article = w?.source === "bkrs" ? w : null, loadError = "";
+  if (!article) { try { article = await Dictionary.lookup(w?.hz || key); } catch (e) { loadError = e.message; } }
   if (!w && article) w = article;
-  if (!w && hz && [...hz].every(isHan)) w = { hz, py: "", ru: "Русское толкование пока отсутствует в подключённом словаре.", lv: 0, missing: true };
+  if (!w && key && [...key].every(isHan)) w = { hz: key, py: "", ru: "Русское толкование пока отсутствует в подключённом словаре.", lv: 0, missing: true };
   if (location.hash !== routeHash) return;
   if (!w) { app.innerHTML = `${topbar("Слово", "#/dict")}<div class="empty"><b>Слово не найдено</b>Попробуйте другое написание.</div>`; return; }
   const chars = [...new Set([...w.hz].filter(isHan))], ex = SENTENCES.filter(s => s.zh.includes(w.hz)).slice(0, 4);
   let metadata = null, available = "";
   try { const m = await Dictionary.manifest(); available = m.strokeCharacters; metadata = await Dictionary.character(w.hz); } catch (_) {}
   if (location.hash !== routeHash) return;
-  const srs = S.srs[w.hz], scenario = WORD_SCENARIOS[w.hz];
+  const srs = S.srs[wordKey(w)], scenario = WORD_SCENARIOS[w.hz];
   const knownStrokes = chars.filter(c => available.includes(c));
   const variantLinks = value => [...(value || "")].map(c => `<a class="chip zh" href="#/word/${encodeURIComponent(c)}">${esc(c)}</a>`).join(" ");
   const radicals = metadata?.radical?.split(" ").map(r => { const match = r.match(/^(\d+)(\'*)\.(-?\d+)$/); return match ? `${String.fromCodePoint(0x2f00 + Number(match[1]) - 1)} (${match[1]}${match[2] ? ", упрощённая форма" : ""}; дополнительных черт: ${match[3]})` : r; }).join("; ");
   app.innerHTML = `${topbar("Слово", "#/dict")}
     <div class="center"><h2 class="entry-headword zh">${esc(w.hz)}</h2>
       <div class="py" style="font-size:22px">${esc(w.py || article?.py || metadata?.py || "")}</div>
-      <div class="muted mt">${w.lv ? "HSK " + w.lv : "Вне HSK"}${srs ? ` · ${srs.b >= 3 ? "хорошо знаю" : "изучаю"}` : ""}</div>
+      <div class="muted mt">${esc(wordLabel(w))}${srs ? ` · ${srs.b >= 3 ? "хорошо знаю" : "изучаю"}` : ""}</div>
       <div class="entry-actions">${sayBtn(w.hz)}${w.missing ? "" : starBtn(w)}</div></div>
     ${loadError ? `<p class="notice">${esc(loadError)}</p>` : ""}
     ${scenario ? `<div class="box"><h3>Объяснение простыми словами</h3><p class="entry-definition">${esc(scenario.explanation)}</p><a class="btn ghost" href="#/scenario/${encodeURIComponent(w.hz)}">Разыграть ситуацию ${ic("chat")}</a></div>` : ""}
-    ${w.lv ? `<div class="box"><h3>Краткое значение · HSK</h3><p>${esc(w.ru)}</p></div>` : ""}
+    ${w.lv ? `<div class="box"><h3>Значение · ${esc(wordLabel(w))}</h3><p class="entry-definition">${esc(w.ru)}</p></div>` : ""}
     <div class="box"><h3>${article ? "Полное объяснение · 大БКРС" : "Значение"}</h3><div class="entry-definition">${esc(article?.ru || w.ru)}</div>
       ${article ? '<p class="hint">Источник: <a href="https://bkrs.info/p47" target="_blank" rel="noopener">大БКРС</a>. Толкование и примеры сохранены из словарной статьи.</p>' : ""}</div>
     ${metadata ? `<div class="box"><h3>Об иероглифе</h3><dl class="char-facts"><dt>Ключ (радикал)</dt><dd>${esc(radicals || "Не указан")}</dd><dt>Число черт</dt><dd>${esc(metadata.strokes || "Не указано")}</dd><dt>Чтение в Unihan</dt><dd>${esc(metadata.py || "Не указано")}</dd><dt>Код Unicode</dt><dd>U+${w.hz.codePointAt(0).toString(16).toUpperCase()}</dd></dl>
@@ -607,7 +643,7 @@ function pageScenario(arg) {
 async function pageHanzi(arg, hzArg) {
   let list;
   if (arg === "w") { const hz = decodeURIComponent(hzArg || ""); const w = await findWord(hz) || ([...hz].every(isHan) && hz ? { hz, py: "", ru: hz, lv: 0 } : null); list = w ? [w] : []; }
-  else { const lv = +arg || S.settings.level; const words = await level(lv); const learned = words.filter(w => S.srs[w.hz]);
+  else { const lv = +arg || S.settings.level; const words = await level(lv); const learned = words.filter(w => S.srs[wordKey(w)]);
     list = shuffle(learned.length >= 6 ? learned : words.slice(0, 40)).slice(0, 6); }
   const back = arg === "w" ? `#/word/${encodeURIComponent(hzArg)}` : "#/learn";
   if (!list.length) { app.innerHTML = `${topbar("Иероглифы", back)}<div class="empty"><b>Нечего писать</b></div>`; return; }
@@ -639,10 +675,10 @@ async function pageHanzi(arg, hzArg) {
 
 /* ---------- игры: «Найди пару» и облако слов ---------- */
 async function pagePairs(lv) {
-  lv = +lv || S.settings.level; const words = await level(lv); const pool = words.filter(w => S.srs[w.hz]); const src = shuffle(pool.length >= 6 ? pool : words.slice(0, 60)).slice(0, 6);
+  lv = +lv || S.settings.level; const words = await level(lv); const pool = words.filter(w => S.srs[wordKey(w)]); const src = shuffle(pool.length >= 6 ? pool : words.slice(0, 60)).slice(0, 6);
   let sel = null, left = src.length, miss = 0; const t0 = Date.now();
   const cards = shuffle([...src.map(w => ({ k: w.hz, t: w.hz, zh: true })), ...src.map(w => ({ k: w.hz, t: short(w.ru) }))]);
-  app.innerHTML = `${topbar(`Найди пару · HSK ${lv}`, "#/review")}<p class="sub" style="margin-top:-6px">Соедините иероглиф с переводом.</p>
+  app.innerHTML = `${topbar(`Найди пару · HSK 2.0 · ${lv}`, "#/review")}<p class="sub" style="margin-top:-6px">Соедините иероглиф с переводом.</p>
     <div class="grid2" id="pg" style="grid-template-columns:1fr 1fr 1fr;gap:8px">${cards.map((c, i) => `<button class="opt ${c.zh ? "zhopt" : ""}" data-i="${i}" style="min-height:78px;padding:8px;text-align:center;font-size:${c.zh ? 22 : 13}px">${esc(c.t)}</button>`).join("")}</div><div id="fb"></div>`;
   $$("#pg .opt").forEach(b => b.onclick = () => {
     const c = cards[+b.dataset.i]; if (b.disabled) return;
@@ -658,8 +694,8 @@ async function pagePairs(lv) {
 }
 async function pageCloud(lv) {
   lv = +lv || S.settings.level; const words = (await level(lv)).slice(0, 60);
-  app.innerHTML = `${topbar(`Облако слов · HSK ${lv}`, "#/review")}<p class="sub" style="margin-top:-6px">Чем чаще слово встречается, тем оно крупнее. Нажмите — услышите и увидите перевод. Выученные слова светлее.</p>
-    <div id="cl" style="display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;align-items:center;padding:18px 4px;border:1px solid var(--line);border-radius:24px;margin-top:14px;background:var(--glaze2)">${shuffle(words.map((w, i) => ({ w, i }))).map(({ w, i }) => `<button class="zh" data-hz="${esc(w.hz)}" style="font-size:${Math.round(34 - i * 0.33)}px;line-height:1.3;color:${S.srs[w.hz]?.b >= 2 ? "#9ab6dd" : "#18191a"};transform:rotate(${(Math.random() * 10 - 5).toFixed(1)}deg)">${esc(w.hz)}</button>`).join("")}</div>
+  app.innerHTML = `${topbar(`Облако слов · HSK 2.0 · ${lv}`, "#/review")}<p class="sub" style="margin-top:-6px">Чем чаще слово встречается, тем оно крупнее. Нажмите — услышите и увидите перевод. Выученные слова светлее.</p>
+    <div id="cl" style="display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;align-items:center;padding:18px 4px;border:1px solid var(--line);border-radius:24px;margin-top:14px;background:var(--glaze2)">${shuffle(words.map((w, i) => ({ w, i }))).map(({ w, i }) => `<button class="zh" data-hz="${esc(w.hz)}" style="font-size:${Math.round(34 - i * 0.33)}px;line-height:1.3;color:${S.srs[wordKey(w)]?.b >= 2 ? "#9ab6dd" : "#18191a"};transform:rotate(${(Math.random() * 10 - 5).toFixed(1)}deg)">${esc(w.hz)}</button>`).join("")}</div>
     <div id="cw" class="mt"></div>`;
   const m = new Map(words.map(w => [w.hz, w]));
   $$("#cl button").forEach(b => b.onclick = () => { const w = m.get(b.dataset.hz); speak(w.hz); $("#cw").innerHTML = wordRow(w); });
@@ -770,6 +806,7 @@ async function pageFile(idArg) {
 
 /* ========== маршрутизация ========== */
 const ROUTES = {
+  hsk3: (lv, view) => pageHSK3(lv, view),
   library: id => pageLibrary(id), libfile: id => pageLibraryFile(id),
   welcome: pageWelcome, home: pageHome, learn: pageLearn, review: pageReview, me: pageMe,
   study: pageStudy, quiz: lv => pageQuiz(lv), listen: lv => pageQuiz(lv, "listen"), exam: lv => pageQuiz(lv, "exam"), write: pageWrite,
@@ -784,7 +821,7 @@ async function route() {
   if (!S.profile && name !== "welcome") { location.replace("#/welcome"); return; }
   if (S.profile && name === "welcome") name = "home";
   const fn = ROUTES[name] || pageHome; const bare = name === "welcome";
-  $("#appbar").hidden = bare; $("#tabbar").hidden = bare; $("#fab").hidden = bare || ["study", "quiz", "listen", "exam", "write", "tones", "shadow", "hanzi", "pairs", "file", "libfile"].includes(name);
+  $("#appbar").hidden = bare; $("#tabbar").hidden = bare; $("#fab").hidden = bare || ["study", "quiz", "listen", "exam", "write", "tones", "shadow", "hanzi", "pairs", "file", "libfile"].includes(name) || (name === "hsk3" && ["study", "quiz", "exam"].includes(arg2));
   const tab = TAB[name] || "learn"; $$("#tabbar a").forEach(a => a.toggleAttribute("aria-current", a.dataset.tab === tab));
   window.scrollTo(0, 0);
   try { await fn(arg, arg2); } catch (e) { console.error(e); app.innerHTML = `${topbar("Ошибка")}<div class="empty"><b>Не удалось загрузить</b>Проверьте подключение к интернету и попробуйте снова.<br><button class="btn small" onclick="location.reload()">Обновить</button></div>`; }

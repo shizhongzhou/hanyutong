@@ -1,0 +1,96 @@
+{
+  "schema": 1,
+  "version": "hsk-2025-11",
+  "title": "新版HSK考试大纲（2025-11发布）",
+  "source": {
+    "name": "中文水平考试 HSK 考试大纲",
+    "publisher": "中外语言交流合作中心",
+    "landingUrl": "https://www.chinesetest.cn/syllabus",
+    "url": "https://hsk.cn-bj.ufileos.com/3.0/新版HSK考试大纲1219.pdf",
+    "sha256": "d8b6646599bc9a0c9616a4cb06d4b37461f8792f70a3171016d00fcd8eda09ad",
+    "bytes": 4943759,
+    "published": "2025-11",
+    "coverEffectiveDate": "2026-07",
+    "retrieved": "2026-11-05"
+  },
+  "levelOrder": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7-9"
+  ],
+  "expectedIncrementalCounts": {
+    "1": 300,
+    "2": 200,
+    "3": 500,
+    "4": 1000,
+    "5": 1600,
+    "6": 1800,
+    "7-9": 5600
+  },
+  "expectedCumulativeCounts": {
+    "1": 300,
+    "2": 500,
+    "3": 1000,
+    "4": 2000,
+    "5": 3600,
+    "6": 5400,
+    "7-9": 11000
+  },
+  "totalEntries": 11000,
+  "notes": [
+    "This is the 2025-11 exam syllabus linked by chinesetest.cn, not the 2021 11092-word proficiency standard and not the legacy HSK 2.0 syllabus.",
+    "Levels 7-9 form one official joint band; no separate level 7, 8 or 9 word lists are invented.",
+    "Each official numbered row is retained, including separate homograph senses and readings. Parenthesized level/part-of-speech annotations are preserved.",
+    "Russian definitions are dictionary learning aids from the existing app or the pinned BKRS source; the official syllabus does not supply Russian definitions. A headword definition may cover several senses.",
+    "Pinyin is preserved exactly as printed in the pinned official PDF, including tone sandhi, alternate readings and any source inconsistencies."
+  ],
+  "russian": {
+    "dictionaryVersion": "bkrs-2026-11-05-unihan-17",
+    "dictionarySourceSha256": "9c209b555c654154e147ed76c23c95373832724e734e9d2b799713cc186c852c",
+    "dictionarySourceUrl": "https://bkrs.info/p47",
+    "legacyFiles": [
+      {
+        "file": "web/data/hsk1.json",
+        "sha256": "9f46bf934cd8faa91c664a0c98b318f4678a53ebfa94694c145316d129df7286"
+      },
+      {
+        "file": "web/data/hsk2.json",
+        "sha256": "92dd026c6bfd16188b61ace57a52a2ae7cf38ddae592b05946a6b403e9481164"
+      },
+      {
+        "file": "web/data/hsk3.json",
+        "sha256": "15383d7ca1f5adc26db93c2421ce1e98cdeee8f98fee9d75dda2c8af2de0ce40"
+      },
+      {
+        "file": "web/data/hsk4.json",
+        "sha256": "7c5ee38263cca661f94ab1ebe06c3e2e76f09ea6c29f0005cd39a49b887af95c"
+      },
+      {
+        "file": "web/data/hsk5.json",
+        "sha256": "713a5edff6609a34558f185eaa74f84aecbc160e8102f4c3282cd763bf3d8764"
+      },
+      {
+        "file": "web/data/hsk6.json",
+        "sha256": "5d7809acc1544b4f98e0b7b71f9e03fc2ddca535f0994ba5589da26293410b5d"
+      }
+    ]
+  },
+  "sharding": {
+    "targetBytes": 204800,
+    "maxBytes": 245760,
+    "encoding": "utf-8",
+    "wholeEntries": true
+  },
+  "rebuild": {
+    "command": "python3 scripts/build_hsk3_vocab.py --pdf work/hsk3/syllabus-2025-11.pdf",
+    "dependencies": [
+      "Python 3.10+",
+      "pypdf 6.10.0",
+      "generated web/data/dictionary shards"
+    ]
+  }
+}
