@@ -40,6 +40,71 @@ def iam_token(service_account=None):
     return result.stdout.strip()
 
 
+def remove_owned_usage_policy(token, base):
+    # The old SA-only policy also blocked the deploying user's metadata access.
+    # Remove only our exact two rules, before looking up bucket metadata. The
+    # private, dedicated usage bucket is adequately scoped by its own ACL.
+    if base != 'https://storage.yandexcloud.net/' + BUCKET:
+        raise RuntimeError('Refusing to change another bucket policy')
+    try:
+        with request(token, base + '?policy') as response:
+            data = response.read(32769)
+    except urllib.error.HTTPError as error:
+        if error.code == 404:
+            return
+        raise RuntimeError('Cannot inspect usage bucket policy for repair') from None
+    if len(data) > 32768:
+        raise RuntimeError('Usage bucket policy is unexpectedly large')
+    try:
+        policy = json.loads(data)
+    except (ValueError, UnicodeDecodeError):
+        raise RuntimeError('Cannot parse usage bucket policy for repair') from None
+    expected = {
+        'HanyutongUsageObjects': (
+            {'s3:GetObject', 's3:PutObject'},
+            {'arn:aws:s3:::' + BUCKET + '/app-private/translation-budget/*'}),
+        'HanyutongUsageList': ({'s3:ListBucket'}, {'arn:aws:s3:::' + BUCKET})
+    }
+
+    def values(value):
+        if isinstance(value, str):
+            return {value}
+        if isinstance(value, list) and all(isinstance(item, str) for item in value):
+            return set(value)
+        return None
+
+    if (not isinstance(policy, dict) or set(policy) - {'Version', 'Statement'}
+            or policy.get('Version', '2012-10-17') != '2012-10-17'
+            or not isinstance(policy.get('Statement'), list)
+            or len(policy['Statement']) != 2):
+        raise RuntimeError('Usage bucket has an unexpected policy; left unchanged')
+    seen = set()
+    for rule in policy['Statement']:
+        if (not isinstance(rule, dict)
+                or set(rule) != {'Sid', 'Effect', 'Principal', 'Action', 'Resource'}):
+            raise RuntimeError('Usage bucket has an unexpected policy; left unchanged')
+        sid = rule['Sid']
+        if not isinstance(sid, str) or sid not in expected or sid in seen:
+            raise RuntimeError('Usage bucket has an unexpected policy; left unchanged')
+        principal = rule['Principal']
+        if (rule['Effect'] != 'Allow' or not isinstance(principal, dict)
+                or set(principal) != {'CanonicalUser'}
+                or values(principal['CanonicalUser']) != {SERVICE_ACCOUNT}
+                or values(rule['Action']) != expected[sid][0]
+                or values(rule['Resource']) != expected[sid][1]):
+            raise RuntimeError('Usage bucket has an unexpected policy; left unchanged')
+        seen.add(sid)
+    with request(token, base + '?policy', 'DELETE'):
+        pass
+    try:
+        with request(token, base + '?policy'):
+            raise RuntimeError('Usage bucket policy removal was not confirmed')
+    except urllib.error.HTTPError as error:
+        if error.code != 404:
+            raise RuntimeError('Usage bucket policy removal was not confirmed') from None
+    print('Removed only the previous deployment-owned usage bucket policy', flush=True)
+
+
 def grant_usage_bucket_access(token, base):
     # S3 ACL updates replace the full document. Keep the existing Owner and all
     # grants intact; this grant applies only to the dedicated usage bucket.
@@ -96,6 +161,9 @@ def main():
         raise RuntimeError('Existing reader configuration unavailable; deployment stopped')
     print('Previous function version:', previous['id'], flush=True)
 
+    token = iam_token()
+    base = 'https://storage.yandexcloud.net/' + BUCKET
+    remove_owned_usage_policy(token, base)
     bucket = yc('storage', 'bucket', 'get', '--name', BUCKET, optional=True)
     if bucket is None:
         bucket = yc('storage', 'bucket', 'create', '--name', BUCKET, '--folder-id', FOLDER,
@@ -103,25 +171,7 @@ def main():
     if bucket.get('folder_id') != FOLDER or any(bucket.get('anonymous_access_flags', {}).values()):
         raise RuntimeError('Usage bucket is not private in the expected folder')
 
-    token = iam_token()
-    base = 'https://storage.yandexcloud.net/' + BUCKET
     grant_usage_bucket_access(token, base)
-    try:
-        with request(token, base + '?policy') as response:
-            policy = json.load(response)
-    except urllib.error.HTTPError as error:
-        if error.code != 404:
-            raise RuntimeError('Cannot inspect usage bucket policy') from None
-        policy = {'Version': '2012-10-17', 'Statement': []}
-    owned = {'HanyutongUsageObjects', 'HanyutongUsageList'}
-    policy['Statement'] = [item for item in policy.get('Statement', []) if item.get('Sid') not in owned] + [
-        {'Sid': 'HanyutongUsageObjects', 'Effect': 'Allow', 'Principal': {'CanonicalUser': SERVICE_ACCOUNT},
-         'Action': ['s3:GetObject', 's3:PutObject'], 'Resource': 'arn:aws:s3:::' + BUCKET + '/app-private/translation-budget/*'},
-        {'Sid': 'HanyutongUsageList', 'Effect': 'Allow', 'Principal': {'CanonicalUser': SERVICE_ACCOUNT},
-         'Action': 's3:ListBucket', 'Resource': 'arn:aws:s3:::' + BUCKET}
-    ]
-    with request(token, base + '?policy', 'PUT', json.dumps(policy).encode(), {'Content-Type': 'application/json'}):
-        pass
 
     # Verify storage really enforces both preconditions before enabling paid calls.
     # Probe as the function's actual service account, not the deploying user.
