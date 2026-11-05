@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Hanyutong development API
-  version: 2.0.0
+  version: 3.0.0
 paths:
   /health:
     get:
@@ -109,3 +109,66 @@ paths:
       responses:
         '200':
           description: In-app reading and playback
+  /translate/config:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: Translation service response
+    options:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: Translation service response
+  /translate/text:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: Translation service response
+    options:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: Translation service response
+  /translate/photo:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: Translation service response
+    options:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: Translation service response

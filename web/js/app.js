@@ -14,6 +14,8 @@ const plural = (n, one, few, many) => { const m10 = n % 10, m100 = n % 100; retu
 
 /* ---------- иконки ---------- */
 const ICON = {
+  translate: '<path d="M3 5h12M9 3v2M5 5c1 5 4 8 9 10M13 5c-1 5-4 8-9 10M13 21l4-10 4 10M14.5 17h5"/>',
+  camera: '<path d="M3 7h4l2-3h6l2 3h4v13H3V7Z"/><circle cx="12" cy="13" r="4"/>',
   home: '<path d="M3 10.5 12 3l9 7.5M5.3 9v11h5v-6h3.4v6h5V9"/>',
   book: '<path d="M3 4.8c4-1.4 6.7-1.1 9 1.4 2.3-2.5 5-2.8 9-1.4V20c-4-1.4-6.7-1.1-9 1-2.3-2.1-5-2.4-9-1V4.8ZM12 6.2V21"/>',
   review: '<path d="M5.2 7A8 8 0 1 1 4 14M5.2 3v4H1.4M8.7 11.6l2.2 2.2 4.4-4.6"/>',
@@ -249,7 +251,8 @@ async function pageHome() {
     ${row(coursePath("study"), "book", "Выучить новое", `${currentCourseName()} · новые слова карточками`)}
     ${row(coursePath("quiz"), "check", "Ежедневный тест", `Сегодня верных ответов: ${d.correct}`)}
     ${row("#/stages", "layers", "Выбрать этап", "Единый курс HSK · уровни 1–6 и 7–9")}</div>
-    <div class="tiles"><a href="#/dict">${ic("search")}Словарь</a><a href="#/book">${ic("bookmark")}Мой словарик</a><a href="#/stats">${ic("chart")}Статистика</a></div>
+    <div class="tiles"><a href="#/dict">${ic("search")}Словарь</a><a href="#/translate">${ic("translate")}Переводчик</a><a href="#/translate/photo">${ic("camera")}Перевод по фото</a></div>
+    <div class="list">${row("#/book", "bookmark", "Мой словарик", "Сохранённые слова")}${row("#/stats", "chart", "Статистика", "Ваш прогресс")}</div>
     <div class="section"><h2>Понемногу, но регулярно.</h2></div>
     <div class="stats"><div><b>${studyDays()}</b><small>дней учёбы</small></div><div><b>${accuracy()}%</b><small>точность</small></div><div><b>${S.stats.correct}</b><small>верных ответов</small></div></div>
     <div class="section"><h2>Фраза дня</h2><a href="#/dialogues">Все диалоги ›</a></div><div id="pod"></div></section>`;
@@ -263,6 +266,7 @@ function pageLearn() {
     <a class="card-blue" href="${coursePath("study")}" style="display:block"><h2>${currentCourseName()}</h2><p class="sub">Выучено карточек: ${count}</p><span>Продолжить учиться ${ic("go")}</span></a>
     <div class="section"><h2>Слова и экзамен</h2><a href="#/stages">Выбрать этап ›</a></div>
     <div class="list">${row(coursePath("study"), "cards", "Карточки", "Новые слова и интервальное повторение")}${row(coursePath("vocab"), "book", "Все слова этапа", "Пиньинь и русские значения")}${row(coursePath("quiz"), "check", "Тренировка слов", "Китайские слова и русские значения")}${row(coursePath("exam"), "trophy", "Форматы заданий HSK", "Структура экзамена и учебные упражнения")}</div>
+    <div class="section"><h2>Переводчик</h2></div><div class="grid2"><a href="#/translate"><span class="ic">${ic("translate")}</span><b>Перевести текст</b><small>Китайский ↔ русский</small></a><a href="#/translate/photo"><span class="ic">${ic("camera")}</span><b>Перевести по фото</b><small>Камера или готовый снимок</small></a></div>
     <div class="section"><h2>Практика языка</h2></div><p class="hint">Занимайтесь произношением, разбирайте грамматику и используйте слова в разговоре.</p>
     <div class="grid2"><a href="#/pinyin"><span class="ic">${ic("wave")}</span><b>Пиньинь и тоны</b></a><a href="#/grammar"><span class="ic">${ic("pen")}</span><b>Грамматика</b></a><a href="#/dialogues"><span class="ic">${ic("chat")}</span><b>Диалоги</b></a><a href="#/reading"><span class="ic">${ic("read")}</span><b>Чтение</b></a><a href="#/shadow"><span class="ic">${ic("mic")}</span><b>Повторение вслух</b></a><a href="#/tones"><span class="ic">${ic("ear")}</span><b>Тренажёр тонов</b></a></div>
     <div class="section"><h2>Закрепить навыки</h2></div><div class="grid2"><a href="#/listen/${S.settings.level}"><span class="ic">${ic("ear")}</span><b>Слушать слова</b></a><a href="#/write/${S.settings.level}"><span class="ic">${ic("read")}</span><b>Написать слово</b></a><a href="#/hanzi/${S.settings.level}"><span class="ic">${ic("pen")}</span><b>Порядок черт</b></a><a href="#/pairs/${S.settings.level}"><span class="ic">${ic("layers")}</span><b>Найди пару</b></a></div>
@@ -516,7 +520,7 @@ async function searchWords(q) {
 }
 function pageDict() {
   const recent = (S.recent || []);
-  app.innerHTML = `${topbar("Словарь", "#/home")}<label class="search">${ic("search")}<input id="q" placeholder="你好 · nihao · привет" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+  app.innerHTML = `${topbar("Словарь", "#/home")}<div class="chips" style="margin-bottom:16px"><a class="chip" href="#/translate">${ic("translate")} Перевести текст</a><a class="chip" href="#/translate/photo">${ic("camera")} По фото</a></div><label class="search">${ic("search")}<input id="q" placeholder="你好 · nihao · привет" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
     <p class="hint" id="dict-count">Китайско-русский словарь · единый курс HSK и 大БКРС</p>
     <p class="hint">Китайское слово или его начало, пиньинь с тонами или без, русский перевод (от 3 букв). Нажмите на слово: полное объяснение, примеры, сведения об иероглифах.</p>
     <p class="hint">Разделы загружаются по мере поиска. Для нового раздела нужен интернет; открытые разделы и сохранённые карточки доступны офлайн.</p><div id="res" aria-live="polite">${recent.length ? `<div class="section"><h2>Недавние</h2><button class="muted" id="clr">Очистить</button></div><div class="chips">${recent.map(r => `<button class="chip" data-q="${esc(r)}"><b class="zh" style="font-size:15px">${esc(r)}</b></button>`).join("")}</div>` : ""}</div>`;
@@ -885,12 +889,12 @@ async function pageFile(idArg) {
 const ROUTES = {
   hsk3: (lv, view) => pageHSK3(lv, view), stages: pageStages,
   library: id => pageLibrary(id), libfile: id => pageLibraryFile(id),
-  welcome: pageWelcome, home: pageHome, learn: pageLearn, review: pageReview, me: pageMe,
+  translate: arg => pageTranslate(arg), welcome: pageWelcome, home: pageHome, learn: pageLearn, review: pageReview, me: pageMe,
   study: pageStudy, quiz: lv => pageQuiz(lv), listen: lv => pageQuiz(lv, "listen"), exam: lv => pageQuiz(lv, "exam"), write: pageWrite,
   pinyin: pagePinyin, tones: pageTones, grammar: pageGrammar, dialogues: () => pageDialogues(), dialogue: pageDialogues, reading: pageReading, shadow: pageShadow,
   level: pageLevel, levels: pageLevels, word: pageWord, scenario: pageScenario, hanzi: pageHanzi, pairs: pagePairs, cloud: pageCloud, shelf: pageShelf, file: pageFile, dict: pageDict, book: pageBook, stats: pageStats, plan: pagePlan, settings: pageSettings, about: pageAbout,
 };
-const TAB = { shelf: "learn", file: "learn", pairs: "review", cloud: "review", word: "home", home: "home", learn: "learn", review: "review", me: "me", study: "review", book: "review", quiz: "home", dict: "home", stats: "me", plan: "home", settings: "me", about: "me" };
+const TAB = { translate: "learn", shelf: "learn", file: "learn", pairs: "review", cloud: "review", word: "home", home: "home", learn: "learn", review: "review", me: "me", study: "review", book: "review", quiz: "home", dict: "home", stats: "me", plan: "home", settings: "me", about: "me" };
 async function route() {
   leaveFns.forEach(f => { try { f(); } catch (_) {} }); leaveFns = []; if ("speechSynthesis" in window) speechSynthesis.cancel();
   $$(".sheet").forEach(s => s.remove());
@@ -901,7 +905,7 @@ async function route() {
   if (S.profile) await ensureUnifiedCourse();
   if (location.hash !== routeHash) return;
   const fn = ROUTES[name] || pageHome; const bare = name === "welcome";
-  $("#appbar").hidden = bare; $("#tabbar").hidden = bare; $("#fab").hidden = bare || ["study", "quiz", "listen", "exam", "write", "tones", "shadow", "hanzi", "pairs", "file", "libfile"].includes(name) || (name === "hsk3" && ["study", "quiz", "exam"].includes(arg2));
+  $("#appbar").hidden = bare; $("#tabbar").hidden = bare; $("#fab").hidden = bare || ["translate", "study", "quiz", "listen", "exam", "write", "tones", "shadow", "hanzi", "pairs", "file", "libfile"].includes(name) || (name === "hsk3" && ["study", "quiz", "exam"].includes(arg2));
   const tab = TAB[name] || "learn"; $$("#tabbar a").forEach(a => a.toggleAttribute("aria-current", a.dataset.tab === tab));
   window.scrollTo(0, 0);
   try { await fn(arg, arg2); } catch (e) { console.error(e); app.innerHTML = `${topbar("Ошибка")}<div class="empty"><b>Не удалось загрузить</b>Проверьте подключение к интернету и попробуйте снова.<br><button class="btn small" onclick="location.reload()">Обновить</button></div>`; }

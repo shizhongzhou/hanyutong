@@ -1,6 +1,8 @@
 'use strict';
 const { createHmac, timingSafeEqual } = require('node:crypto');
 const privateCatalog = require('./catalog.json');
+const { createTranslationHandler } = require('./translate.js');
+const { createBudgetGuard } = require('./translation-budget.js');
 const BUCKET = 'https://storage.yandexcloud.net/hanyutong-dev-media-b1gsi4nj/';
 const MAX_RANGE = 1024 * 1024;
 const ORIGINS = new Set(['https://shizhongzhou.github.io', 'http://127.0.0.1:8765', 'http://localhost:8765']);
@@ -90,7 +92,14 @@ function createHandler({catalog = privateCatalog, secret = () => process.env.LIB
     } catch (_) { return response(502, {error:'reading_source_unavailable'}); }
   };
 }
-exports.handler = createHandler();
+const readerHandler = createHandler();
+const translationHandler = createTranslationHandler({
+  reserveUsage: (usage, context) => createBudgetGuard({ token: () => context.token?.access_token })(usage)
+});
+exports.handler = async (event, context) => {
+  if ((event.path || '').startsWith('/translate/')) return translationHandler(event, context);
+  return readerHandler(event, context);
+};
 exports.createHandler = createHandler;
 exports.publicCatalog = publicCatalog;
 exports.requestedRange = requestedRange;
