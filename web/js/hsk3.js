@@ -1,62 +1,123 @@
 "use strict";
-/* New official HSK syllabus. Kept separate from the legacy course and its progress. */
+/* One HSK course: official syllabus plus explicitly marked legacy supplements. */
 const HSK3 = (() => {
   const ids = ["1", "2", "3", "4", "5", "6", "7-9"];
   const limits = [300, 500, 1000, 2000, 3600, 5400, 11000];
   const pending = new Map(), levels = new Map();
+  let unifiedManifest = null;
   const posRu = { 数量: "числ. + счётное сл.", 名: "сущ.", 动: "глаг.", 形: "прил.", 副: "нареч.", 代: "мест.", 数: "числ.", 量: "счётное сл.", 介: "предлог", 连: "союз", 助: "частица", 叹: "междом.", 拟声: "звукоподр.", 区别: "определение", 前缀: "приставка", 后缀: "суффикс" };
-  const read = name => {
-    if (!pending.has(name)) pending.set(name, fetch(`data/hsk3/${name}`).then(r => {
-      if (!r.ok) throw Error(`HSK 3.0: ${r.status}`);
+  const readPath = url => {
+    if (!pending.has(url)) pending.set(url, fetch(url).then(r => {
+      if (!r.ok) throw Error(`HSK: ${r.status}`);
       return r.json();
-    }).catch(e => { pending.delete(name); throw e; }));
-    return pending.get(name);
+    }).catch(e => { pending.delete(url); throw e; }));
+    return pending.get(url);
   };
-  const adapt = w => ({ ...w, curriculum: "hsk3", lv: w.level,
+  const read = name => readPath(`data/hsk3/${name}`);
+  const bridge = () => read("legacy-bridge.json");
+  const legacy = level => readPath(`data/hsk${level}.json`);
+  const isSupplement = row => row[3] === "reading" || row[3] === "extra";
+  const supplementId = row => `hsk3-extra-${row[1]}-${String(row[2] + 1).padStart(4, "0")}`;
+  const adapt = w => ({ ...w, curriculum: "hsk3", lv: w.level, isSupplement: false,
     posZh: w.pos, pos: (w.pos || "").replace(/数量|拟声|区别|前缀|后缀|[名动形副代数量介连助叹]/g, p => posRu[p]) });
+  const supplement = async row => {
+    const record = (await legacy(row[1]))[row[2]];
+    if (!record || record[0] !== row[0]) throw Error("Не удалось сопоставить дополнительное слово");
+    const [hz, py, ru, pos] = record;
+    return { id: supplementId(row), hz, py, ru, pos, level: String(row[1]), lv: String(row[1]),
+      curriculum: "hsk3", isSupplement: true, ruSource: "existing-hsk", ruScope: "headword",
+      officialLabel: hz, additionalLevels: [], number: null, legacyLevel: row[1],
+      legacyIndex: row[2], legacyKind: row[3] };
+  };
+  const manifest = () => {
+    if (!unifiedManifest) unifiedManifest = Promise.all([read("manifest.json"), bridge()]).then(([official, old]) => ({
+      ...official, version: old.version, officialVersion: official.version,
+      totalEntries: old.counts.total, officialEntries: official.totalEntries, supplementEntries: old.counts.supplement,
+      levels: official.levels.map(group => {
+        const unified = old.levels.find(level => level.id === group.id);
+        return { ...group, ...unified, count: unified.totalCount,
+          officialCumulativeCount: group.cumulativeCount };
+      })
+    })).catch(error => { unifiedManifest = null; throw error; });
+    return unifiedManifest;
+  };
   const level = async id => {
     id = String(id);
-    if (!ids.includes(id)) throw Error("Неизвестный уровень HSK 3.0");
-    if (!levels.has(id)) levels.set(id, read("manifest.json").then(async manifest => {
-      const group = manifest.levels.find(l => l.id === id);
-      return (await Promise.all(group.files.map(part => read(part.file)))).flat().map(adapt);
+    if (!ids.includes(id)) throw Error("Неизвестный уровень HSK");
+    if (!levels.has(id)) levels.set(id, Promise.all([read("manifest.json"), bridge()]).then(async ([official, old]) => {
+      const group = official.levels.find(l => l.id === id);
+      const [entries, additions] = await Promise.all([
+        Promise.all(group.files.map(part => read(part.file))),
+        Promise.all(old.rows.filter(row => String(row[1]) === id && isSupplement(row)).map(supplement))
+      ]);
+      return entries.flat().map(adapt).concat(additions);
     }).catch(e => { levels.delete(id); throw e; }));
     return levels.get(id);
   };
   const all = () => Promise.all(ids.map(level)).then(a => a.flat());
-  const cumulative = id => Promise.all(ids.slice(0, ids.indexOf(String(id)) + 1).map(level)).then(a => a.flat());
+  const cumulative = id => {
+    const index = ids.indexOf(String(id));
+    if (index < 0) return Promise.reject(Error("Неизвестный уровень HSK"));
+    return Promise.all(ids.slice(0, index + 1).map(level)).then(a => a.flat());
+  };
+  const extraRow = async key => {
+    const match = /^hsk3-extra-([1-6])-(\d{4})$/.exec(key || "");
+    if (!match || Number(match[2]) < 1) return null;
+    return (await bridge()).rows.find(row => row[1] === Number(match[1]) && row[2] === Number(match[2]) - 1 && isSupplement(row)) || null;
+  };
   const find = async key => {
+    if (/^hsk3-extra-/.test(key || "")) {
+      const row = await extraRow(key);
+      return row ? supplement(row) : null;
+    }
     if (!/^hsk3-\d{5}$/.test(key || "")) return null;
     const number = Number(key.slice(5)), index = limits.findIndex(n => number <= n);
     if (number < 1 || index < 0) return null;
-    const manifest = await read("manifest.json");
-    const group = manifest.levels.find(l => l.id === ids[index]);
+    const official = await read("manifest.json");
+    const group = official.levels.find(l => l.id === ids[index]);
     const part = group.files.find(f => number >= f.firstNumber && number <= f.lastNumber);
+    if (!part) return null;
     const word = (await read(part.file)).find(w => w.id === key);
     return word ? adapt(word) : null;
   };
-  return { ids, level, all, cumulative, find, manifest: () => read("manifest.json"), exams: () => read("exams.json") };
+  const legacyDetails = async key => {
+    let rows;
+    if (/^hsk3-extra-/.test(key || "")) {
+      const row = await extraRow(key); rows = row ? [row] : [];
+    } else if (/^hsk3-\d{5}$/.test(key || "")) {
+      const number = Number(key.slice(5));
+      if (number < 1 || number > 11000) return [];
+      rows = (await bridge()).rows.filter(row => row[4].includes(number));
+    } else return [];
+    return Promise.all(rows.map(async row => {
+      const record = (await legacy(row[1]))[row[2]];
+      if (!record || record[0] !== row[0]) throw Error("Не удалось загрузить исходное значение слова");
+      const [hz, py, ru, pos] = record;
+      return { hz, py, ru, pos, legacyLevel: row[1], legacyIndex: row[2], kind: row[3],
+        officialNumbers: row[4].slice(), sourceFile: `data/hsk${row[1]}.json` };
+    }));
+  };
+  return { ids, level, all, cumulative, find, bridge, manifest, legacyDetails, exams: () => read("exams.json") };
 })();
 
 const h3Tasks = n => `${n} ${plural(n, "задание", "задания", "заданий")}`;
 const h3Label = id => String(id).replace("-", "–");
 const h3Url = (id, view = "vocab") => `#/hsk3/${id}/${view}`;
 const h3Norm = value => String(value || "").normalize("NFD").replace(/u\u0308|u:/gi, "v").replace(/\p{M}/gu, "").toLocaleLowerCase("ru-RU");
-const h3Learned = words => words.filter(w => S.srs[w.id]?.b >= 1).length;
+const h3Learned = words => words.filter(w => wordProgress(w)?.b >= 1).length;
 const h3Visual = v => v ? `<div class="hsk3-visual" role="img" aria-label="${esc(v.altRu || "Иллюстрация")}">${esc(v.emoji || "")}</div>` : "";
 
 async function pageHSK3(id, view = "vocab") {
   const routeHash = location.hash;
-  app.innerHTML = `${topbar("HSK 3.0", "#/learn")}<p class="empty">Загрузка курса…</p>`;
+  app.innerHTML = `${topbar("HSK", "#/stages")}<p class="empty">Загрузка курса…</p>`;
   const manifest = await HSK3.manifest();
   if (location.hash !== routeHash) return;
   if (!id) {
-    app.innerHTML = `${topbar("HSK 3.0 · уровни 1–9", "#/learn")}
-      <div class="card-blue hsk3-intro"><p class="kicker">Новая программа</p><h2>11 000 слов.<br>От первого шага — к сложным темам.</h2><p class="sub">Официальный список нового экзамена HSK, русские значения, карточки и знакомство со всеми типами заданий.</p></div>
-      <p class="hint">В каждой группе — новые слова этого уровня. Для подготовки можно включить слова предыдущих уровней. Уровни 7–9 имеют общий список и один экзамен.</p>
-      <div class="library-books">${manifest.levels.map(l => `<a class="library-book" href="${h3Url(l.id)}"><span class="library-number">${h3Label(l.id)}</span><div><h3>HSK 3.0 · ${h3Label(l.id)}</h3><p>${l.count.toLocaleString("ru-RU")} новых · ${l.cumulativeCount.toLocaleString("ru-RU")} всего до уровня</p></div>${ic("go")}</a>`).join("")}</div>
-      <div class="box"><h3>О программе</h3><p class="hint">Словарь: новая программа HSK, опубликованная в ноябре 2025 года. Общий запуск HSK 3.0 объявлен на 13 декабря 2026 года; формат конкретной сессии уточняйте в экзаменационном центре. Это не список из стандарта 2021 года.</p><p class="hint">Русские значения взяты из учебного словаря приложения и 大БКРС. Это словарные толкования, а не официальный перевод программы. Для разных значений одного слова показана полная словарная статья; отдельные строки программы сохранены.</p><a class="btn small ghost" href="https://www.chinesetest.cn/HSK" target="_blank" rel="noopener">Официальная информация HSK</a></div>
-      <a class="btn ghost" href="#/levels">Предыдущий курс HSK 2.0 и его прогресс</a>`;
+    app.innerHTML = `${topbar("HSK · единый курс 1–9", "#/stages")}
+      <div class="card-blue hsk3-intro"><p class="kicker">Единый курс</p><h2>11 295 словарных карточек.<br>От первого шага — к сложным темам.</h2><p class="sub">11 000 записей официальной программы и 295 дополнительных слов. Русские значения, карточки и все типы заданий — в одном курсе.</p></div>
+      <p class="hint">В каждой группе — слова официальной программы и дополнения прежнего курса. Дополнения сохранены на прежнем учебном этапе; это не официальное присвоение уровня HSK. Уровни 7–9 имеют общий список и один экзамен.</p>
+      <div class="library-books">${manifest.levels.map(l => `<a class="library-book" href="${h3Url(l.id)}"><span class="library-number">${h3Label(l.id)}</span><div><h3>HSK · ${h3Label(l.id)}</h3><p>${l.count.toLocaleString("ru-RU")} карточек · ${l.officialCount.toLocaleString("ru-RU")} по программе + ${l.supplementCount} дополнительных</p></div>${ic("go")}</a>`).join("")}</div>
+      <div class="box"><h3>О программе</h3><p class="hint">Словарь: новая программа HSK, опубликованная в ноябре 2025 года. Общий запуск HSK 3.0 объявлен на 13 декабря 2026 года; формат конкретной сессии уточняйте в экзаменационном центре. Это не список из стандарта 2021 года.</p><p class="hint">Русские значения взяты из учебного словаря приложения и 大БКРС. Это словарные толкования, а не официальный перевод программы. Для разных значений одного слова показана полная словарная статья; отдельные строки программы сохранены.</p><a class="btn small ghost" href="https://www.chinesetest.cn/HSK" target="_blank" rel="noopener">Официальная информация HSK</a></div>`;
     return;
   }
   if (!HSK3.ids.includes(id)) { location.hash = "#/hsk3"; return; }
@@ -71,16 +132,17 @@ async function pageHSK3(id, view = "vocab") {
 }
 
 function h3Header(id, active) {
-  return `${topbar(`HSK 3.0 · ${h3Label(id)}`, "#/hsk3")}<nav class="hsk3-nav" aria-label="Разделы HSK 3.0">${[["vocab", "Слова"], ["study", "Карточки"], ["quiz", "Тест слов"], ["exam", "Типы заданий"]].map(([key, label]) => `<a href="${h3Url(id, key)}" ${key === active ? 'aria-current="page"' : ""}>${label}</a>`).join("")}</nav>`;
+  return `${topbar(`HSK · ${h3Label(id)}`, "#/stages")}<nav class="hsk3-nav" aria-label="Разделы курса HSK">${[["vocab", "Слова"], ["study", "Карточки"], ["quiz", "Тест слов"], ["exam", "Типы заданий"]].map(([key, label]) => `<a href="${h3Url(id, key)}" ${key === active ? 'aria-current="page"' : ""}>${label}</a>`).join("")}</nav>`;
 }
 
 function h3Vocab(id, initial, meta) {
   let words = initial, query = "", page = 0, serial = 0, alive = true;
   const size = 40;
   onLeave(() => { alive = false; serial++; });
-  app.innerHTML = `${h3Header(id, "vocab")}<p class="sub">${meta.count.toLocaleString("ru-RU")} новых слов · ${meta.cumulativeCount.toLocaleString("ru-RU")} с предыдущими уровнями</p>
-    <label class="field"><span>Список слов</span><select id="h3-scope"><option value="new">Только новые слова этого уровня</option>${id !== "1" ? '<option value="all">Включая предыдущие уровни</option>' : ""}</select></label>
-    <label class="search">${ic("search")}<input id="h3-search" placeholder="汉字 · pinyin · русский перевод" aria-label="Поиск по словарю HSK 3.0" autocomplete="off" spellcheck="false"></label>
+  app.innerHTML = `${h3Header(id, "vocab")}<p class="sub">${meta.count.toLocaleString("ru-RU")} карточек · ${meta.cumulativeCount.toLocaleString("ru-RU")} с предыдущими этапами</p>
+    <p class="hint">${meta.officialCount.toLocaleString("ru-RU")} слов официальной программы + ${meta.supplementCount} дополнительных. Дополнительные слова и варианты чтения сохранены на прежнем учебном этапе; этот этап не является их официальным уровнем HSK.</p>
+    <label class="field"><span>Список слов</span><select id="h3-scope"><option value="new">Только слова этого этапа</option>${id !== "1" ? '<option value="all">Включая предыдущие этапы</option>' : ""}</select></label>
+    <label class="search">${ic("search")}<input id="h3-search" placeholder="汉字 · pinyin · русский перевод" aria-label="Поиск по словарю HSK" autocomplete="off" spellcheck="false"></label>
     <p class="hint" id="h3-count" aria-live="polite"></p><div id="h3-words"></div><div class="two" id="h3-pages"></div>`;
   const input = $("#h3-search"), count = $("#h3-count"), container = $("#h3-words"), paging = $("#h3-pages"), scope = $("#h3-scope");
   function draw() {
@@ -88,7 +150,7 @@ function h3Vocab(id, initial, meta) {
     const list = q ? words.filter(w => h3Norm(`${w.hz} ${w.py} ${w.py.replace(/\s/g, "")} ${w.ru}`).includes(q)) : words;
     const pages = Math.max(1, Math.ceil(list.length / size)); page = Math.min(page, pages - 1);
     count.textContent = `Найдено: ${list.length.toLocaleString("ru-RU")} · выучено: ${h3Learned(words)} / ${words.length.toLocaleString("ru-RU")} · страница ${page + 1} / ${pages}`;
-    container.innerHTML = list.length ? list.slice(page * size, (page + 1) * size).map(w => `<div class="hsk3-word">${wordRow(w)}<p class="hint">№ ${w.number} · HSK ${h3Label(w.level)}${w.officialLabel !== w.hz ? ` · запись в программе: <span class="zh">${esc(w.officialLabel)}</span>` : ""}${w.additionalLevels?.length ? ` · дополнительные части речи на уровнях HSK ${w.additionalLevels.map(h3Label).join(", ")}` : ""}</p></div>`).join("") : '<p class="empty">Ничего не найдено. Попробуйте другую форму слова.</p>';
+    container.innerHTML = list.length ? list.slice(page * size, (page + 1) * size).map(w => `<div class="hsk3-word">${wordRow(w)}<p class="hint">${w.isSupplement ? `Дополнительное слово · учебный этап ${h3Label(w.level)}` : `№ ${w.number} · HSK ${h3Label(w.level)}`}${w.officialLabel !== w.hz ? ` · запись в программе: <span class="zh">${esc(w.officialLabel)}</span>` : ""}${w.additionalLevels?.length ? ` · дополнительные части речи на уровнях HSK ${w.additionalLevels.map(h3Label).join(", ")}` : ""}</p></div>`).join("") : '<p class="empty">Ничего не найдено. Попробуйте другую форму слова.</p>';
     paging.innerHTML = `<button class="btn ghost" id="h3-prev" ${!page ? "disabled" : ""}>‹ Назад</button><button class="btn ghost" id="h3-next" ${page + 1 >= pages ? "disabled" : ""}>Дальше ›</button>`;
     $("#h3-prev").onclick = () => { page--; draw(); input.scrollIntoView({ block: "start" }); };
     $("#h3-next").onclick = () => { page++; draw(); input.scrollIntoView({ block: "start" }); };
@@ -104,35 +166,11 @@ function h3Vocab(id, initial, meta) {
 }
 
 function h3Study(id, words) {
-  const due = words.filter(w => S.srs[w.id]?.d <= Date.now());
-  const fresh = words.filter(w => !S.srs[w.id]).slice(0, Math.max(0, S.settings.newPerDay - D().learned));
-  let queue = shuffle(due).slice(0, 20).concat(fresh), total = queue.length, done = 0, revealed = false;
-  let active = true; onLeave(() => { active = false; });
-  function finish() {
-    app.innerHTML = `${h3Header(id, "study")}<div class="result"><div class="score">${done}</div><p>${total ? "Карточки на сегодня пройдены." : "Новых карточек на сегодня больше нет, повторять пока нечего."}</p><a class="btn" href="${h3Url(id, "quiz")}">Закрепить тестом</a><button class="btn ghost" id="h3-extra">Повторить 10 случайных слов</button><a class="btn ghost" href="${h3Url(id)}">К списку слов</a></div>`;
-    $("#h3-extra").onclick = () => { queue = shuffle(words).slice(0, 10); total = queue.length; done = 0; draw(); };
-  }
-  function draw() {
-    if (!active) return;
-    if (!queue.length) return finish();
-    const w = queue[0]; revealed = false;
-    app.innerHTML = `${h3Header(id, "study")}<div class="qhead"><div class="bar"><i style="width:${done / total * 100}%"></i></div><span>${done}/${total}</span></div>
-      <div class="flash hsk3-flash"><span class="meta">№ ${w.number} · ${esc(w.pos)}</span><div class="hsk3-star">${starBtn(w)}</div><div class="big zh">${esc(w.hz)}</div><div class="py" ${S.settings.pinyin ? "" : "hidden"} id="h3-py">${esc(w.py)}</div>${sayBtn(w.hz)}<div class="ru" id="h3-meaning" hidden>${esc(w.ru)}</div></div><div id="h3-act"><button class="btn" id="h3-show">Показать перевод</button></div>`;
-    $("#h3-show").onclick = () => {
-      if (revealed) return; revealed = true;
-      $("#h3-py").hidden = false; $("#h3-meaning").hidden = false;
-      $("#h3-act").innerHTML = '<div class="two"><button class="btn ghost" id="h3-no">Не помню</button><button class="btn" id="h3-yes">Помню ✓</button></div>';
-      let answered = false;
-      const answer = ok => {
-        if (answered || !active) return; answered = true;
-        if (!S.srs[w.id]) D().learned++; else D().reviewed++;
-        grade(w, ok); record(ok, ok ? null : w.id, w.lv, w);
-        queue.shift(); if (ok) done++; else queue.push(w); draw();
-      };
-      $("#h3-no").onclick = () => answer(false); $("#h3-yes").onclick = () => answer(true);
-    };
-  }
-  draw();
+  const due = words.filter(w => wordProgress(w)?.d <= Date.now());
+  const fresh = words.filter(w => !wordProgress(w)).slice(0, Math.max(0, S.settings.newPerDay - D().learned));
+  const queue = shuffle(due).slice(0, 20).concat(fresh);
+  return runStudySession({ queue, words, curriculum: "hsk3", level: id,
+    title: `HSK · ${h3Label(id)}`, backHref: "#/stages", quizHref: h3Url(id, "quiz"), mode: "learn" });
 }
 
 function h3Quiz(id, words) {
@@ -155,7 +193,7 @@ function h3Quiz(id, words) {
     const q = qs[index];
     if (!q) {
       if (finished) return; finished = true;
-      S.history.unshift({ t: Date.now(), kind: `HSK 3.0 · ${h3Label(id)} · слова`, score: `${right}/${qs.length}` }); S.history = S.history.slice(0, 50); save();
+      S.history.unshift({ t: Date.now(), kind: `HSK · ${h3Label(id)} · слова`, score: `${right}/${qs.length}` }); S.history = S.history.slice(0, 50); save();
       app.innerHTML = `${h3Header(id, "quiz")}<div class="result"><div class="score">${right}/${qs.length}</div><p>Это тренировка слов, не экзаменационная оценка HSK.</p><p>Ошибки сохранены в словарике для повторения.</p><button class="btn" id="h3-again">Ещё 10 слов</button><a class="btn ghost" href="${h3Url(id, "exam")}">Официальные типы заданий</a></div>`;
       $("#h3-again").onclick = () => h3Quiz(id, words); return;
     }
@@ -167,7 +205,7 @@ function h3Quiz(id, words) {
       const ok = q.opts[Number(button.dataset.h3Answer)].id === q.w.id;
       $$("[data-h3-answer]").forEach(b => { b.disabled = true; if (q.opts[Number(b.dataset.h3Answer)].id === q.w.id) b.classList.add("right"); });
       if (ok) right++; else button.classList.add("wrong");
-      if (!S.srs[q.w.id]) D().learned++;
+      if (!wordProgress(q.w)) D().learned++;
       grade(q.w, ok); record(ok, q.w.id, q.w.lv, q.w);
       $("#h3-feedback").innerHTML = `<div class="fb ${ok ? "ok" : "no"}"><b>${ok ? "Верно!" : "Правильный ответ:"} <span class="zh">${esc(q.w.hz)}</span></b><p>${esc(q.w.py)}</p><p class="entry-definition">${esc(q.w.ru)}</p>${sayBtn(q.w.hz)}</div><button class="btn" id="h3-continue">${index + 1 < qs.length ? "Дальше" : "Результат"}</button>`;
       $("#h3-continue").onclick = () => { index++; draw(); };

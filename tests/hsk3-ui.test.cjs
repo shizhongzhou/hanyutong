@@ -5,13 +5,14 @@ const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '../web');
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'data/hsk3/manifest.json')));
+const bridge = JSON.parse(fs.readFileSync(path.join(root, 'data/hsk3/legacy-bridge.json')));
 const exams = JSON.parse(fs.readFileSync(path.join(root, 'data/hsk3/exams.json')));
 const source = fs.readFileSync(path.join(root, 'js/hsk3.js'), 'utf8');
 const fileOf = id => { const meta = manifest.levels.find(x => x.id === id); return 'data/hsk3/' + (meta.files?.[0]?.file || meta.file); };
 
 function harness() {
   const elements = new Set(), ids = new Map(), requests = [], failures = new Map(), gates = new Map();
-  const intervals = new Map(), leaves = [], records = [], graded = [];
+  const intervals = new Map(), leaves = [], records = [], graded = [], sessions = [];
   let clock = 0, timerId = 0, marked = 0;
   class Element {
     constructor(attrs = '') {
@@ -46,6 +47,8 @@ function harness() {
     starBtn: () => '', sayBtn: hz => `<button data-say="${esc(hz)}">Звук</button>`,
     short: ru => ru.split(/[;\n]/)[0].trim(), shuffle: values => values.slice(),
     plural: (n, one, few, many) => ({ one, few, many, other: many })[new Intl.PluralRules('ru').select(n)],
+    wordProgress: w => state.srs[w.id] || state.srs[w.hz],
+    runStudySession: options => { sessions.push(options); return options; },
     save() {}, markStudy: () => { marked++; }, record: (...args) => records.push(args),
     grade: (w, ok) => { graded.push([w.id, ok]); state.srs[w.id] = { b: ok ? 1 : 0, d: clock + 1000, word: w }; },
     onLeave: fn => leaves.push(fn), Date: TestDate,
@@ -59,7 +62,7 @@ function harness() {
     }
   });
   vm.runInContext(source, context);
-  return { context, app, state, records, graded, requests, intervals, one, many,
+  return { context, app, state, day, sessions, records, graded, requests, intervals, one, many,
     run: code => vm.runInContext(code, context), marked: () => marked,
     failOnce: url => failures.set(url, 1),
     defer(url) { let release; const promise = new Promise(resolve => { release = resolve; }); gates.set(url, { promise }); return () => { gates.delete(url); release(); }; },
@@ -81,19 +84,74 @@ test('HSK 3.0 is lazy and ID lookup respects every level boundary', async () => 
   assert.equal(h.requests.length, count);
 });
 
-test('cumulative advanced vocabulary contains all 11000 distinct syllabus entries', async () => {
+test('unified course contains all 11000 official entries and 295 supplemental cards', async () => {
   const h = harness(), words = await h.run('HSK3.cumulative("7-9")');
-  assert.equal(words.length, 11000); assert.equal(new Set(words.map(w => w.id)).size, 11000);
+  assert.equal(words.length, 11295); assert.equal(new Set(words.map(w => w.id)).size, 11295);
+  assert.equal(words.filter(w => !w.isSupplement).length, 11000);
+  assert.equal(words.filter(w => w.isSupplement).length, 295);
   assert.equal(words[0].number, 1); assert.equal(words.at(-1).number, 11000);
   assert.ok(words.every(w => w.ru && w.hz && w.py && w.lv === w.level && w.curriculum === 'hsk3'));
-  for (const level of manifest.levels) assert.equal(words.filter(w => w.level === level.id).length, level.count);
+  for (const level of bridge.levels) assert.equal(words.filter(w => w.level === level.id).length, level.totalCount);
+});
+
+test('unified manifest preserves official counts and adds per-stage supplements without mutating the source', async () => {
+  const h = harness(), unified = await h.run('HSK3.manifest()');
+  assert.equal(unified.totalEntries, 11295); assert.equal(unified.officialEntries, 11000);
+  assert.equal(unified.supplementEntries, 295);
+  assert.deepEqual(Array.from(unified.levels, l => l.count), [309, 207, 524, 1027, 1652, 1976, 5600]);
+  assert.deepEqual(Array.from(unified.levels, l => l.cumulativeCount), [309, 516, 1040, 2067, 3719, 5695, 11295]);
+  assert.deepEqual(Array.from(unified.levels, l => l.officialCumulativeCount), [300, 500, 1000, 2000, 3600, 5400, 11000]);
+  assert.deepEqual(Array.from(unified.levels, l => l.officialCount), manifest.levels.map(l => l.count));
+  assert.equal(manifest.totalEntries, 11000);
+  await h.run('HSK3.manifest()'); await h.run('HSK3.bridge()');
+  assert.equal(h.requests.filter(url => url === 'data/hsk3/legacy-bridge.json').length, 1);
+});
+
+test('supplement lookup validates the bridge and retains every original reading and definition', async () => {
+  const h = harness(), additions = bridge.rows.filter(row => ['reading', 'extra'].includes(row[3]));
+  for (const level of [1, 2, 3, 4, 5, 6]) {
+    const group = additions.filter(row => row[1] === level);
+    for (const row of [group[0], group.at(-1)]) {
+      const key = `hsk3-extra-${level}-${String(row[2] + 1).padStart(4, '0')}`;
+      const word = await h.run(`HSK3.find(${JSON.stringify(key)})`);
+      const original = JSON.parse(fs.readFileSync(path.join(root, `data/hsk${level}.json`)))[row[2]];
+      assert.equal(word.id, key); assert.equal(word.hz, original[0]); assert.equal(word.py, original[1]);
+      assert.equal(word.ru, original[2]); assert.equal(word.pos, original[3]);
+      assert.equal(word.isSupplement, true); assert.equal(word.curriculum, 'hsk3');
+      assert.equal(word.level, String(level)); assert.equal(word.number, null);
+      assert.equal(Object.hasOwn(word, 'source'), false);
+      const details = await h.run(`HSK3.legacyDetails(${JSON.stringify(key)})`);
+      assert.equal(details.length, 1); assert.equal(details[0].ru, original[2]);
+      assert.equal(details[0].legacyIndex, row[2]);
+    }
+  }
+  const exact = bridge.rows.find(row => row[3] === 'exact');
+  const excludedId = `hsk3-extra-${exact[1]}-${String(exact[2] + 1).padStart(4, '0')}`;
+  for (const key of [excludedId, 'hsk3-extra-1-0000', 'hsk3-extra-6-9999', 'hsk3-extra-7-0001', 'hsk3-extra-1-1']) {
+    assert.equal(await h.run(`HSK3.find(${JSON.stringify(key)})`), null);
+  }
+  const officialId = `hsk3-${String(exact[4][0]).padStart(5, '0')}`;
+  const details = await h.run(`HSK3.legacyDetails(${JSON.stringify(officialId)})`);
+  assert.equal(details[0].hz, exact[0]); assert.equal(details[0].kind, 'exact');
+  assert.deepEqual(Array.from(await h.run('HSK3.legacyDetails("bad-id")')), []);
+});
+
+test('overview and supplementary vocabulary explain one course without presenting extra words as official', async () => {
+  const h = harness(); await h.run('pageHSK3()');
+  assert.match(h.app.innerHTML, /11 295/); assert.match(h.app.innerHTML, /295 дополнительных/);
+  assert.doesNotMatch(h.app.innerHTML, /Предыдущий курс|href="#\/levels"/);
+  h.context.location.hash = '#/hsk3/1/vocab'; await h.run('pageHSK3("1", "vocab")');
+  assert.match(h.app.innerHTML, /300 слов официальной программы \+ 9 дополнительных/);
+  h.one('#h3-search').value = '北京'; h.one('#h3-search').oninput();
+  assert.match(h.one('#h3-words').innerHTML, /Дополнительное слово/);
+  assert.doesNotMatch(h.one('#h3-words').innerHTML, /№ null|№ undefined/);
 });
 
 test('failed vocabulary requests can retry and concurrent reads share their download', async () => {
   const h = harness(), file = fileOf('1'); h.failOnce(file);
   await assert.rejects(h.run('HSK3.level("1")'), /offline/);
   const [a, b] = await Promise.all([h.run('HSK3.level("1")'), h.run('HSK3.level("1")')]);
-  assert.equal(a.length, 300); assert.equal(b.length, 300);
+  assert.equal(a.length, 309); assert.equal(b.length, 309);
   assert.equal(h.requests.filter(url => url === file).length, 2);
 });
 
@@ -114,7 +172,7 @@ test('vocabulary pagination is bounded and searching resets the current page', a
   assert.equal(h.many('[data-h3-word]').length, 40);
   assert.equal(h.many('[data-h3-word]')[0].dataset.h3Word, 'hsk3-00001');
   for (let i = 0; i < 7; i++) h.one('#h3-next').onclick();
-  assert.equal(h.many('[data-h3-word]').length, 20);
+  assert.equal(h.many('[data-h3-word]').length, 29);
   assert.equal(h.one('#h3-next').disabled, true);
   h.one('#h3-search').value = 'unfindablequery12345'; h.one('#h3-search').oninput();
   assert.equal(h.many('[data-h3-word]').length, 0);
@@ -130,7 +188,7 @@ test('a superseded cumulative request cannot replace the selected new-words list
   await h.settleUntil(() => h.requests.includes(fileOf('1')));
   scope.value = 'new'; await scope.onchange(); release(); await pending;
   assert.equal(h.many('[data-h3-word]')[0].dataset.h3Word, 'hsk3-00301');
-  assert.match(h.one('#h3-count').textContent, /Найдено: 200/);
+  assert.match(h.one('#h3-count').textContent, /Найдено: 207/);
 });
 
 test('pinyin search preserves umlauts when stripping tones', () => {
@@ -139,16 +197,34 @@ test('pinyin search preserves umlauts when stripping tones', () => {
   assert.equal(h.run('h3Norm("nǚ")'), h.run('h3Norm("nü")'));
 });
 
-test('flashcards and word quizzes count each submitted answer once', async () => {
+test('study adapter selects due and fresh words through canonical progress and delegates the session', async () => {
   const h = harness(), words = await h.run('HSK3.level("1")');
-  h.context.wordsForTest = words;
-  h.run('h3Study("1", wordsForTest.slice(0, 1))');
-  h.one('#h3-show').onclick(); const answer = h.one('#h3-yes').onclick;
-  answer(); answer(); assert.equal(h.records.length, 1); assert.equal(h.graded.length, 1);
-  h.leave(); h.run('h3Quiz("1", wordsForTest)');
+  h.context.wordsForTest = words.slice(0, 6);
+  h.state.srs[words[0].hz] = { b: 1, d: 0 }; // Previously stored Hanzi progress.
+  h.state.srs[words[1].id] = { b: 1, d: 1000 }; // Existing card, not due yet.
+  h.state.srs[words[2].id] = { b: 0, d: -1 };
+  h.state.settings.newPerDay = 3; h.day.learned = 2;
+  h.run('h3Study("1", wordsForTest)');
+  assert.equal(h.sessions.length, 1);
+  const session = h.sessions[0];
+  assert.deepEqual(Array.from(session.queue, w => w.id), [words[0].id, words[2].id, words[3].id]);
+  assert.equal(session.words.length, 6);
+  assert.equal(session.curriculum, 'hsk3'); assert.equal(session.level, '1');
+  assert.equal(session.backHref, '#/stages'); assert.equal(session.quizHref, '#/hsk3/1/quiz');
+  assert.equal(session.title, 'HSK · 1'); assert.equal(session.mode, 'learn');
+  assert.equal(h.records.length, 0); assert.equal(h.graded.length, 0);
+  h.state.srs = Object.fromEntries(words.slice(0, 25).map(w => [w.id, { d: 0 }]));
+  h.context.wordsForTest = words; h.day.learned = 0; h.state.settings.newPerDay = 2;
+  h.run('h3Study("1", wordsForTest)');
+  assert.equal(h.sessions[1].queue.length, 22); // Twenty due cards, two fresh cards.
+});
+
+test('word quizzes count each submitted answer once', async () => {
+  const h = harness(); h.context.wordsForTest = await h.run('HSK3.level("1")');
+  h.run('h3Quiz("1", wordsForTest)');
   const choice = h.many('[data-h3-answer]')[0].onclick;
-  choice(); choice(); assert.equal(h.records.length, 2); assert.equal(h.graded.length, 2);
-  h.leave(); choice(); assert.equal(h.records.length, 2);
+  choice(); choice(); assert.equal(h.records.length, 1); assert.equal(h.graded.length, 1);
+  h.leave(); choice(); assert.equal(h.records.length, 1);
 });
 
 function exampleLocation(kind) {
