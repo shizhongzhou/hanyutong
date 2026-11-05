@@ -63,7 +63,7 @@ function level(lv) {
   return cache[lv];
 }
 const allWords = () => Promise.all([1, 2, 3, 4, 5, 6].map(level)).then(a => a.flat());
-const short = ru => ru.split(";")[0].trim();
+const short = ru => ru.split(/[;\n]/)[0].trim();
 const plain = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ü/g, "v").toLowerCase().replace(/[^a-zа-яё0-9]/g, "");
 
 /* ---------- интервальное повторение ---------- */
@@ -75,6 +75,7 @@ function grade(w, ok) {
   if (ok) { x.b = Math.min(x.b + 1, STEPS.length - 1); x.r++; x.d = new Date(today()).getTime() + STEPS[x.b] * DAY + 4 * 3600e3; }
   else { x.b = 0; x.w++; x.d = Date.now() + 60e3; }
   S.srs[w.hz] = x; save();
+  if (!w.lv && w.source) x.word = w;
 }
 
 /* ---------- озвучивание (системный голос zh-CN) ---------- */
@@ -104,8 +105,21 @@ function toast(msg) { $$(".toast").forEach(t => t.remove()); const t = h(`<div c
 const topbar = (title, back = "#/home") => `<div class="topbar"><a class="round" href="${back}" aria-label="Назад">${ic("back")}</a><h1>${title}</h1></div>`;
 const row = (href, icon, title, small) => `<a href="${href}"><span class="ic">${ic(icon)}</span><span class="t"><b>${title}</b>${small ? `<small>${small}</small>` : ""}</span>${ic("go", "i go")}</a>`;
 const starBtn = w => `<button class="star" data-star="${esc(w.hz)}" data-lv="${w.lv}" aria-pressed="${!!S.book[w.hz]}" aria-label="В мой словарик">${ic("star")}</button>`;
-document.addEventListener("click", e => { const b = e.target.closest("[data-star]"); if (!b) return; const hz = b.dataset.star; if (S.book[hz]) delete S.book[hz]; else S.book[hz] = { lv: +b.dataset.lv, t: Date.now(), why: "добавлено" }; b.setAttribute("aria-pressed", String(!!S.book[hz])); save(); toast(S.book[hz] ? "Добавлено в мой словарик" : "Убрано из словарика"); });
-const wordRow = w => `<div class="word"><a class="h zh" href="#/word/${encodeURIComponent(w.hz)}">${esc(w.hz)}</a><a class="m" href="#/word/${encodeURIComponent(w.hz)}"><div class="py">${esc(w.py)}${w.pos ? `<span class="tag">${esc(w.pos)}</span>` : ""}</div><div>${esc(w.ru)}</div></a>${starBtn(w)}${sayBtn(w.hz)}</div>`;
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-star]"); if (!b || b.disabled) return;
+  const hz = b.dataset.star; b.disabled = true;
+  try {
+    if (S.book[hz]) delete S.book[hz];
+    else {
+      const word = await findWord(hz);
+      if (!word || word.missing) throw Error("Сначала загрузите словарную статью");
+      S.book[hz] = { lv: word.lv, t: Date.now(), why: "добавлено", ...(!word.lv ? { word } : {}) };
+    }
+    $$('[data-star]').filter(x => x.dataset.star === hz).forEach(x => x.setAttribute("aria-pressed", String(!!S.book[hz])));
+    save(); toast(S.book[hz] ? "Добавлено в мой словарик" : "Убрано из словарика");
+  } catch (err) { toast(err.message); } finally { b.disabled = false; }
+});
+const wordRow = w => `<div class="word"><a class="h zh" href="#/word/${encodeURIComponent(w.hz)}">${esc(w.hz)}</a><a class="m" href="#/word/${encodeURIComponent(w.hz)}"><div class="py">${esc(w.py)}${w.pos ? `<span class="tag">${esc(w.pos)}</span>` : ""}${w.source ? '<span class="tag">大БКРС</span>' : ""}</div><div class="word-summary">${esc(w.ru)}</div></a>${w.missing ? "" : starBtn(w)}${sayBtn(w.hz)}</div>`;
 const greeting = () => { const hr = new Date().getHours(); return hr < 5 ? "Доброй ночи" : hr < 12 ? "Доброе утро" : hr < 18 ? "Добрый день" : "Добрый вечер"; };
 const lvName = lv => `HSK ${lv} · ${LEVELS[lv].title}`;
 let leaveFns = [];
@@ -197,20 +211,22 @@ function pageMe() {
 
 /* ---------- карточки (учить / повторять) ---------- */
 async function pageStudy(arg) {
+  const routeHash = location.hash;
   app.innerHTML = `<p class="empty">Загрузка…</p>`;
   let queue = [], title = "";
-  if (arg === "review") { const due = dueList(); const words = await allWords(); const m = new Map(words.map(w => [w.hz, w])); queue = shuffle(due.map(x => m.get(x.hz)).filter(Boolean)).slice(0, 40); title = "Повторение"; }
-  else if (arg === "book") { const words = await allWords(); const m = new Map(words.map(w => [w.hz, w])); queue = shuffle(Object.keys(S.book).map(k => m.get(k)).filter(Boolean)).slice(0, 30); title = "Мой словарик"; }
+  if (arg === "review") { queue = (await Promise.all(shuffle(dueList()).slice(0, 40).map(x => findWord(x.hz)))).filter(Boolean); title = "Повторение"; }
+  else if (arg === "book") { queue = (await Promise.all(shuffle(Object.keys(S.book)).slice(0, 30).map(findWord))).filter(Boolean); title = "Мой словарик"; }
   else { const lv = +arg || S.settings.level; const words = await level(lv); const now = Date.now();
     const due = words.filter(w => S.srs[w.hz] && S.srs[w.hz].d <= now); const fresh = words.filter(w => !S.srs[w.hz]).slice(0, Math.max(0, S.settings.newPerDay - D().learned));
     queue = shuffle(due).slice(0, 20).concat(fresh); title = `HSK ${lv} · карточки`; }
+  if (location.hash !== routeHash) return;
   if (!queue.length) { app.innerHTML = `${topbar(title, "#/review")}<div class="empty"><b>${arg === "book" ? "Словарик пуст" : "На сегодня всё!"}</b>${arg === "book" ? "Сюда попадают ошибки из тестов и слова со звёздочкой." : "Новых слов на сегодня больше нет, повторять пока нечего. Загляните завтра или пройдите тест."}<br><a class="btn small" href="#/quiz/${S.settings.level}">Пройти тест</a></div>`; return; }
   const total = queue.length; let done = 0, shown = false;
   function draw() {
     const w = queue[0]; if (!w) return finish();
     const isNew = !S.srs[w.hz]; shown = false;
     app.innerHTML = `${topbar(title, "#/review")}<div class="qhead"><div class="bar"><i style="width:${done / total * 100}%"></i></div><span class="muted">${done}/${total}</span></div>
-      <div class="stack"><div class="flash" id="card"><span class="meta">HSK ${w.lv}${isNew ? " · новое" : ""}</span><div style="position:absolute;top:10px;right:10px;display:flex">${starBtn(w)}</div>
+      <div class="stack"><div class="flash" id="card"><span class="meta">${w.lv ? `HSK ${w.lv}` : "Большой словарь"}${isNew ? " · новое" : ""}</span><div style="position:absolute;top:10px;right:10px;display:flex">${starBtn(w)}</div>
         <div class="big zh">${esc(w.hz)}</div><div class="py ${S.settings.pinyin || shown ? "" : "hid"}" id="py">${esc(w.py)}</div><div class="ru hid" id="ru">${esc(w.ru)}</div>${sayBtn(w.hz)}</div></div>
       <div id="act"><button class="btn" id="show">Показать перевод</button></div>`;
     speak(w.hz, $("#card .say"));
@@ -398,23 +414,45 @@ async function pageLevel(lv) {
   $$(".seg button").forEach(b => b.onclick = () => { f = b.dataset.f; $$(".seg button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); draw(); });
   draw();
 }
-async function searchWords(q) {
-  q = q.trim(); if (!q) return []; const words = await allWords(); const p = plain(q.replace(/[1-5]/g, ""));
-  const cyr = /[а-яё]/i.test(q), hz = /[一-鿿]/.test(q); const score = w => {
+async function searchHskWords(q) {
+  q = q.trim(); if (!q) return []; const words = await allWords();
+  const cyr = /[а-яё]/i.test(q), hz = /\p{Script=Han}/u.test(q); const score = w => {
     if (hz) return w.hz === q ? 0 : w.hz.startsWith(q) ? 1 : w.hz.includes(q) ? 2 : 9;
     if (cyr) { const r = w.ru.toLowerCase(), ql = q.toLowerCase(); return r.split(/[;,] ?/).some(x => x.trim() === ql) ? 0 : r.startsWith(ql) ? 1 : new RegExp(`(^|[^а-яё])${ql.replace(/[.*+?^${}()|[\]\\]/g, "")}`).test(r) ? 2 : r.includes(ql) ? 3 : 9; }
-    const pp = plain(w.py); return pp === p ? 0 : pp.startsWith(p) ? 1 : 9; };
+    const pp = Dictionary.normalizePinyin(w.py), query = Dictionary.normalizePinyin(q); return !query ? 9 : pp === query ? 0 : pp.startsWith(query) ? 1 : 9; };
   return words.map(w => [score(w), w]).filter(x => x[0] < 9).sort((a, b) => a[0] - b[0] || a[1].lv - b[1].lv).slice(0, 60).map(x => x[1]);
+}
+async function searchWords(q) {
+  const local = await searchHskWords(q);
+  let extended;
+  try { extended = await Dictionary.search(q); }
+  catch (error) { return { words: local, error: error.message }; }
+  const merged = new Map(local.map(w => [w.hz, w]));
+  for (const w of extended) if (!merged.has(w.hz)) merged.set(w.hz, w);
+  const words = [...merged.values()];
+  if (/\p{Script=Han}/u.test(q)) words.sort((a, b) => (a.hz === q ? -1 : b.hz === q ? 1 : 0));
+  return { words: words.slice(0, 60), error: "" };
 }
 function pageDict() {
   const recent = (S.recent || []);
   app.innerHTML = `${topbar("Словарь", "#/home")}<label class="search">${ic("search")}<input id="q" placeholder="你好 · nihao · привет" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-    <p class="hint">Поиск по иероглифам, пиньиню (без тонов) и русскому переводу среди 5000 слов HSK 1–6.</p><div id="res">${recent.length ? `<div class="section"><h2>Недавние</h2><button class="muted" id="clr">Очистить</button></div><div class="chips">${recent.map(r => `<button class="chip" data-q="${esc(r)}"><b class="zh" style="font-size:15px">${esc(r)}</b></button>`).join("")}</div>` : ""}</div>`;
-  const q = $("#q"); let t = 0;
-  const run = async () => { const v = q.value; const r = await searchWords(v); if (q.value !== v) return;
-    $("#res").innerHTML = v.trim() ? (r.length ? r.map(w => wordRow(w).replace("</div><div>", `<span class="tag">HSK ${w.lv}</span></div><div>`)).join("") : `<div class="empty"><b>Ничего не найдено</b>Словарь охватывает лексику HSK 1–6.</div>`) : "";
+    <p class="hint" id="dict-count">Большой китайско-русский словарь · HSK 1–6 и 大БКРС</p>
+    <p class="hint">Китайское слово или его начало, пиньинь с тонами или без, русский перевод (от 3 букв). Нажмите на слово: полное объяснение, примеры, сведения об иероглифах.</p>
+    <p class="hint">Разделы загружаются по мере поиска. Для нового раздела нужен интернет; открытые разделы и сохранённые карточки доступны офлайн.</p><div id="res" aria-live="polite">${recent.length ? `<div class="section"><h2>Недавние</h2><button class="muted" id="clr">Очистить</button></div><div class="chips">${recent.map(r => `<button class="chip" data-q="${esc(r)}"><b class="zh" style="font-size:15px">${esc(r)}</b></button>`).join("")}</div>` : ""}</div>`;
+  const q = $("#q"), results = $("#res"), count = $("#dict-count"); let t = 0, serial = 0;
+  Dictionary.manifest().then(m => { if (count.isConnected) count.textContent = `${m.entries.toLocaleString("ru-RU")} статей 大БКРС · ${m.charactersWithRussian.toLocaleString("ru-RU")} отдельных иероглифов с русским объяснением · HSK 1–6`; }).catch(() => {});
+  const run = async () => { const v = q.value.trim(), token = ++serial;
+    if (!v) { results.innerHTML = ""; return; }
+    results.innerHTML = '<p class="hint">Ищем в словаре…</p>';
+    const result = await searchWords(v), r = result.words; if (token !== serial || !q.isConnected || q.value.trim() !== v) return;
+    results.innerHTML = (result.error ? `<div class="notice">${esc(result.error)}<button class="btn small ghost" id="retry-search">Повторить поиск</button></div>` : "") +
+      (r.length ? r.map(wordRow).join("") + (r.length === 60 ? '<p class="hint">Показаны первые 60 результатов. Уточните запрос.</p>' : "")
+      : `<div class="empty"><b>${result.error ? "Раздел недоступен" : "Ничего не найдено"}</b>Попробуйте другую форму или китайское написание.</div>`) +
+      ([...v].length === 1 && isHan(v) ? `<a class="btn ghost" href="#/word/${encodeURIComponent(v)}">Сведения об иероглифе ${esc(v)}</a>` : "");
+    const retry = $("#retry-search"); if (retry) retry.onclick = run;
     if (r[0] && v.trim()) { S.recent = [r[0].hz, ...(S.recent || []).filter(x => x !== r[0].hz)].slice(0, 12); save(); } };
   q.oninput = () => { clearTimeout(t); t = setTimeout(run, 220); };
+  onLeave(() => { clearTimeout(t); serial++; });
   $$("[data-q]").forEach(b => b.onclick = () => { q.value = b.dataset.q; run(); });
   const c = $("#clr"); if (c) c.onclick = () => { S.recent = []; save(); pageDict(); };
   const pre = sessionStorage.getItem("dictQ"); if (pre) { sessionStorage.removeItem("dictQ"); q.value = pre; run(); } else q.focus();
@@ -422,9 +460,9 @@ function pageDict() {
 async function pageBook() {
   const keys = Object.keys(S.book);
   app.innerHTML = `${topbar("Мой словарик", "#/review")}${keys.length ? "" : `<div class="empty"><b>Словарик пуст</b>Сюда попадают слова, в которых вы ошиблись, и слова со звёздочкой.<br><a class="btn small" href="#/level/${S.settings.level}">Открыть слова HSK ${S.settings.level}</a></div>`}<div id="wl"></div>`;
-  if (!keys.length) return; const words = await allWords(); const m = new Map(words.map(w => [w.hz, w]));
-  const list = keys.map(k => m.get(k)).filter(Boolean).sort((a, b) => S.book[b.hz].t - S.book[a.hz].t);
-  $("#wl").innerHTML = `<p class="sub" style="margin-top:-6px">${list.length} ${plural(list.length, "слово", "слова", "слов")}</p>${list.map(wordRow).join("")}<a class="btn" href="#/study/book">Повторить карточками ${ic("go")}</a>`;
+  if (!keys.length) return; const container = $("#wl");
+  const list = (await Promise.all(keys.map(findWord))).filter(Boolean).sort((a, b) => S.book[b.hz].t - S.book[a.hz].t);
+  if (container.isConnected) container.innerHTML = `<p class="sub" style="margin-top:-6px">${list.length} ${plural(list.length, "слово", "слова", "слов")}</p>${list.map(wordRow).join("")}<a class="btn" href="#/study/book">Повторить карточками ${ic("go")}</a>`;
 }
 
 /* ---------- уровни, статистика, план, настройки ---------- */
@@ -475,21 +513,25 @@ function sheetCode(exp) {
   };
 }
 function pageAbout() {
-  app.innerHTML = `${topbar("О приложении", "#/me")}<div style="width:96px;margin:0 auto">${PANDA}</div><h2 class="center" style="margin:6px 0 0">汉语熊猫 · ХаньюйТун</h2><p class="center muted">Китайский для русскоговорящих · версия 1.0</p>
+  app.innerHTML = `${topbar("О приложении", "#/me")}<div style="width:96px;margin:0 auto">${PANDA}</div><h2 class="center" style="margin:6px 0 0">汉语熊猫 · ХаньюйТун</h2><p class="center muted">Китайский для русскоговорящих · версия 1.1</p>
     <div class="box"><h3>Словарь</h3><p class="hint" style="margin:0">Список слов HSK 1–6, пиньинь и части речи — <a href="https://github.com/drkameleon/complete-hsk-vocabulary" style="text-decoration:underline">complete-hsk-vocabulary</a> (MIT), основан на данных CC-CEDICT (CC BY-SA 4.0). Русские переводы, диалоги, тексты и объяснения грамматики написаны для этого приложения; переводы краткие и не проверены носителем — сообщайте о неточностях.</p></div>
+    <div class="box"><h3>Большой словарь и иероглифы</h3><p class="hint">Полные русские толкования и словарные примеры: <a href="https://bkrs.info/p47">大БКРС</a>, снимок 5 ноября 2026 года. Источник разрешает свободное использование баз в любых целях. Сохраняются статьи с китайским написанием и русским толкованием. Это слова, иероглифы, имена, термины и словосочетания, а не исчерпывающий список всех слов китайского языка.</p><p class="hint">Ключи, число черт, чтения и варианты: <a href="https://www.unicode.org/reports/tr38/">Unicode Unihan 17.0.0</a>, <a href="data/UNICODE-LICENSE.txt">Unicode License v3</a>. Распаковка данных: fflate 0.8.2 (<a href="vendor/fflate-LICENSE.txt">MIT</a>). <a href="data/DICTIONARY-SOURCES.txt">Описание источников и преобразований</a>.</p><p class="hint">Пояснения простыми словами и ролевые ситуации написаны для приложения. Они не являются цитатами из словаря.</p></div>
     <div class="box"><h3>Порядок черт</h3><p class="hint" style="margin:0">Анимация и проверка черт — <a href="https://github.com/chanind/hanzi-writer" style="text-decoration:underline">Hanzi Writer</a> (MIT); данные черт — Make Me a Hanzi, Arphic Public License (текст лицензии: strokes/ARPHICPL.TXT).</p></div>
     <div class="box"><h3>Озвучивание</h3><p class="hint" style="margin:0">Используется встроенный китайский голос вашего устройства (zh-CN). Если звука нет, установите китайский голос в системных настройках речи.</p></div>
-    <div class="box"><h3>Данные</h3><p class="hint" style="margin:0">Аккаунт не нужен. Весь прогресс хранится в браузере на этом устройстве; для переноса используйте код в настройках. После первого открытия приложение работает без интернета.</p></div>`;
+    <div class="box"><h3>Данные</h3><p class="hint" style="margin:0">Аккаунт не нужен. Прогресс хранится в браузере; для переноса используйте код в настройках. Курс HSK доступен офлайн после первого открытия. Большой словарь загружается по разделам: офлайн доступны уже открытые разделы и сохранённые карточки. Браузер может освободить кеш при нехватке места.</p></div>`;
 }
 
 /* ---------- кнопка «Спросить панду» ---------- */
 function pandaSheet() {
   const sh = h(`<div class="sheet" role="dialog" aria-modal="true" aria-label="Спросить панду"><div class="in" style="position:relative"><button class="round x" aria-label="Закрыть">${ic("close")}</button>
-    <div style="display:flex;gap:12px;align-items:center"><span style="width:48px">${PANDA}</span><div><h2>Спросить панду</h2><div class="muted">Найду слово в словаре HSK</div></div></div>
+    <div style="display:flex;gap:12px;align-items:center"><span style="width:48px">${PANDA}</span><div><h2>Спросить панду</h2><div class="muted">Большой китайско-русский словарь</div></div></div>
     <label class="search mt">${ic("search")}<input id="pq" placeholder="Например: спасибо или xiexie" autocomplete="off"></label><div id="pr" style="max-height:46vh;overflow:auto"></div></div></div>`);
   document.body.append(sh); const close = () => sh.remove(); $(".x", sh).onclick = close; sh.onclick = e => { if (e.target === sh) close(); };
-  const q = $("#pq", sh); q.focus(); let t = 0;
-  q.oninput = () => { clearTimeout(t); t = setTimeout(async () => { const r = (await searchWords(q.value)).slice(0, 8); $("#pr", sh).innerHTML = q.value.trim() ? (r.length ? r.map(wordRow).join("") + `<a class="btn small ghost" href="#/dict" id="more">Открыть словарь</a>` : `<p class="hint mt">Такого слова нет в словаре HSK. Попробуйте другую форму слова.</p>`) : "";
+  const q = $("#pq", sh); q.focus(); let t = 0, serial = 0;
+  q.oninput = () => { clearTimeout(t); const token = ++serial; t = setTimeout(async () => {
+    const value = q.value; $("#pr", sh).textContent = value.trim() ? "Ищем…" : "";
+    const result = await searchWords(value), r = result.words.slice(0, 8); if (!sh.isConnected || token !== serial || q.value !== value) return;
+    $("#pr", sh).innerHTML = (result.error ? `<p class="notice">${esc(result.error)}</p>` : "") + (q.value.trim() ? (r.length ? r.map(wordRow).join("") + `<a class="btn small ghost" href="#/dict" id="more">Открыть словарь</a>` : `<p class="hint mt">Попробуйте другую форму слова или китайское написание.</p>`) : "");
     const m = $("#more", sh); if (m) m.onclick = () => { sessionStorage.setItem("dictQ", q.value); close(); }; }, 200); };
 }
 
@@ -498,30 +540,67 @@ let hwP = null;
 const loadHW = () => hwP || (hwP = new Promise((res, rej) => { if (window.HanziWriter) return res(); const s = document.createElement("script"); s.src = "vendor/hanzi-writer.min.js"; s.onload = res; s.onerror = () => { hwP = null; rej(Error("hw")); }; document.head.append(s); }));
 const charLoader = (c, onLoad, onErr) => fetch(`strokes/${encodeURIComponent(c)}.json`).then(r => { if (!r.ok) throw Error(r.status); return r.json(); }).then(onLoad).catch(onErr);
 const HW_OPTS = { padding: 6, strokeColor: "#18191a", radicalColor: "#536e94", outlineColor: "#e1e8f1", drawingColor: "#536e94", highlightColor: "#9ab6dd", strokeAnimationSpeed: 1.2, delayBetweenStrokes: 160, showCharacter: false, charDataLoader: charLoader };
-const isHan = c => /[一-鿿]/.test(c);
+const isHan = c => /^\p{Script=Han}$/u.test(c);
 const gridSVG = size => `<svg width="${size}" height="${size}" style="position:absolute;inset:0" aria-hidden="true"><g stroke="#e8eef6" stroke-dasharray="4 4"><line x1="0" y1="0" x2="${size}" y2="${size}"/><line x1="${size}" y1="0" x2="0" y2="${size}"/><line x1="${size / 2}" y1="0" x2="${size / 2}" y2="${size}"/><line x1="0" y1="${size / 2}" x2="${size}" y2="${size / 2}"/></g></svg>`;
 const charBox = (id, size) => `<div style="position:relative;width:${size}px;height:${size}px;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden">${gridSVG(size)}<div id="${id}" style="position:relative"></div></div>`;
 
-async function findWord(hz) { const all = await allWords(); return all.find(w => w.hz === hz); }
+async function findWord(hz) {
+  const all = await allWords(), hsk = all.find(w => w.hz === hz);
+  return hsk || S.book[hz]?.word || S.srs[hz]?.word || await Dictionary.lookup(hz);
+}
 async function pageWord(hz) {
-  hz = decodeURIComponent(hz || ""); let w = await findWord(hz);
-  if (!w && hz && [...hz].every(isHan)) { w = { hz, py: "", ru: "Нет в списке HSK 1–6", pos: "", lv: 0 }; }
-  if (!w) { app.innerHTML = `${topbar("Слово", "#/dict")}<div class="empty"><b>Слово не найдено</b>Его нет в словаре HSK 1–6.</div>`; return; }
-  const chars = [...w.hz].filter(isHan); const ex = SENTENCES.filter(s => s.zh.includes(w.hz)).slice(0, 4);
-  const parts = chars.length > 1 ? (await allWords()).filter(x => x.hz.length === 1 && chars.includes(x.hz)) : [];
-  const srs = S.srs[w.hz]; const size = chars.length > 2 ? 92 : chars.length === 2 ? 130 : 170;
-  app.innerHTML = `${topbar("Слово", history.length > 1 ? "javascript:history.back()" : "#/dict")}
-    <div class="center"><div style="display:flex;gap:10px;justify-content:center">${chars.map((c, i) => charBox(`hw${i}`, size)).join("")}</div>
-      <div class="py" style="font-size:22px;margin-top:14px">${esc(w.py)}</div><div style="font-size:17px;font-weight:600;margin-top:6px">${esc(w.ru)}</div>
-      <div class="muted" style="margin-top:6px">${w.lv ? "HSK " + w.lv : "вне HSK"}${w.pos ? " · " + esc(w.pos) : ""}${srs ? ` · ${srs.b >= 3 ? "хорошо знаю" : srs.b >= 1 ? "изучаю" : "трудное"}` : " · ещё не изучено"}</div>
-      <div style="display:flex;gap:10px;justify-content:center;margin-top:12px">${sayBtn(w.hz)}${w.lv ? starBtn(w) : ""}<button class="say" id="anim" aria-label="Показать порядок черт">${ic("pen")}</button></div></div>
-    <a class="btn" href="#/hanzi/w/${encodeURIComponent(w.hz)}">Написать иероглиф${chars.length > 1 ? "ы" : ""} ${ic("pen")}</a>
-    ${parts.length ? `<div class="section"><h2>Иероглифы в слове</h2></div>${parts.map(wordRow).join("")}` : ""}
-    <div class="section"><h2>Примеры</h2></div>${ex.length ? `<div class="dlg">${ex.map(s => `<div class="line" data-say="${esc(s.zh)}"><div><div class="zh">${esc(s.zh)}</div><div class="py">${esc(s.py)}</div><div class="ru">${esc(s.ru)}</div></div></div>`).join("")}</div>` : `<p class="hint">В учебных текстах пока нет примеров с этим словом.</p>`}`;
+  hz = decodeURIComponent(hz || ""); const routeHash = location.hash;
+  app.innerHTML = `${topbar("Слово", "#/dict")}<p class="empty">Загрузка статьи…</p>`;
+  let w = await findWord(hz), article = w?.source ? w : null, loadError = "";
+  if (!article) { try { article = await Dictionary.lookup(hz); } catch (e) { loadError = e.message; } }
+  if (!w && article) w = article;
+  if (!w && hz && [...hz].every(isHan)) w = { hz, py: "", ru: "Русское толкование пока отсутствует в подключённом словаре.", lv: 0, missing: true };
+  if (location.hash !== routeHash) return;
+  if (!w) { app.innerHTML = `${topbar("Слово", "#/dict")}<div class="empty"><b>Слово не найдено</b>Попробуйте другое написание.</div>`; return; }
+  const chars = [...new Set([...w.hz].filter(isHan))], ex = SENTENCES.filter(s => s.zh.includes(w.hz)).slice(0, 4);
+  let metadata = null, available = "";
+  try { const m = await Dictionary.manifest(); available = m.strokeCharacters; metadata = await Dictionary.character(w.hz); } catch (_) {}
+  if (location.hash !== routeHash) return;
+  const srs = S.srs[w.hz], scenario = WORD_SCENARIOS[w.hz];
+  const knownStrokes = chars.filter(c => available.includes(c));
+  const variantLinks = value => [...(value || "")].map(c => `<a class="chip zh" href="#/word/${encodeURIComponent(c)}">${esc(c)}</a>`).join(" ");
+  const radicals = metadata?.radical?.split(" ").map(r => { const match = r.match(/^(\d+)(\'*)\.(-?\d+)$/); return match ? `${String.fromCodePoint(0x2f00 + Number(match[1]) - 1)} (${match[1]}${match[2] ? ", упрощённая форма" : ""}; дополнительных черт: ${match[3]})` : r; }).join("; ");
+  app.innerHTML = `${topbar("Слово", "#/dict")}
+    <div class="center"><h2 class="entry-headword zh">${esc(w.hz)}</h2>
+      <div class="py" style="font-size:22px">${esc(w.py || article?.py || metadata?.py || "")}</div>
+      <div class="muted mt">${w.lv ? "HSK " + w.lv : "Вне HSK"}${srs ? ` · ${srs.b >= 3 ? "хорошо знаю" : "изучаю"}` : ""}</div>
+      <div class="entry-actions">${sayBtn(w.hz)}${w.missing ? "" : starBtn(w)}</div></div>
+    ${loadError ? `<p class="notice">${esc(loadError)}</p>` : ""}
+    ${scenario ? `<div class="box"><h3>Объяснение простыми словами</h3><p class="entry-definition">${esc(scenario.explanation)}</p><a class="btn ghost" href="#/scenario/${encodeURIComponent(w.hz)}">Разыграть ситуацию ${ic("chat")}</a></div>` : ""}
+    ${w.lv ? `<div class="box"><h3>Краткое значение · HSK</h3><p>${esc(w.ru)}</p></div>` : ""}
+    <div class="box"><h3>${article ? "Полное объяснение · 大БКРС" : "Значение"}</h3><div class="entry-definition">${esc(article?.ru || w.ru)}</div>
+      ${article ? '<p class="hint">Источник: <a href="https://bkrs.info/p47" target="_blank" rel="noopener">大БКРС</a>. Толкование и примеры сохранены из словарной статьи.</p>' : ""}</div>
+    ${metadata ? `<div class="box"><h3>Об иероглифе</h3><dl class="char-facts"><dt>Ключ (радикал)</dt><dd>${esc(radicals || "Не указан")}</dd><dt>Число черт</dt><dd>${esc(metadata.strokes || "Не указано")}</dd><dt>Чтение в Unihan</dt><dd>${esc(metadata.py || "Не указано")}</dd><dt>Код Unicode</dt><dd>U+${w.hz.codePointAt(0).toString(16).toUpperCase()}</dd></dl>
+      ${metadata.simplified ? `<p>Упрощённая форма: ${variantLinks(metadata.simplified)}</p>` : ""}${metadata.traditional ? `<p>Традиционная форма: ${variantLinks(metadata.traditional)}</p>` : ""}<p class="hint">Unicode Unihan 17.0.0. Возможны несколько нормативных вариантов подсчёта черт и ключей.</p></div>` : ""}
+    ${chars.length > 1 ? `<div class="section"><h2>Иероглифы в слове</h2></div><div class="chips">${chars.map(c => `<a class="chip zh" href="#/word/${encodeURIComponent(c)}"><b>${esc(c)}</b></a>`).join("")}</div>` : ""}
+    <div class="section"><h2>Примеры и употребление</h2></div>
+    ${ex.map(s => `<div class="sent"><div class="zh">${esc(s.zh)}</div><div class="py">${esc(s.py)}</div><div class="ru">${esc(s.ru)}</div>${sayBtn(s.zh)}</div>`).join("")}
+    ${(article?.examples || []).map(s => `<div class="box entry-definition">${esc(s)}</div>`).join("")}
+    ${!ex.length && !article?.examples?.length ? '<p class="hint">В этой статье пока нет отдельных примеров. Примеры внутри толкования, если они есть, показаны выше.</p>' : ""}
+    ${DIALOGUES.filter(d => d.lines.some(l => l[1].includes(w.hz))).map(d => `<a class="btn ghost" href="#/dialogue/${d.id}">${ic("chat")} ${esc(d.title)}</a>`).join("")}
+    <div class="section"><h2>Порядок черт</h2></div>
+    ${knownStrokes.length ? `<div class="stroke-grid">${knownStrokes.map((c, i) => `<div>${charBox(`hw${i}`, 130)}<a href="#/hanzi/w/${encodeURIComponent(c)}" class="btn small ghost">Написать ${esc(c)}</a></div>`).join("")}</div><button class="btn ghost" id="anim">Показать порядок черт</button>` : '<p class="hint">Для этих иероглифов анимация пока не подключена.</p>'}`;
+  if (!knownStrokes.length) return;
   try { await loadHW(); } catch (_) { return; }
-  const ws = chars.map((c, i) => HanziWriter.create(`hw${i}`, c, { ...HW_OPTS, width: size - 2, height: size - 2, showCharacter: true }));
-  const play = async () => { for (const x of ws) { x.hideCharacter(); } for (const x of ws) await x.animateCharacter(); };
-  $("#anim").onclick = play; setTimeout(play, 300);
+  if (location.hash !== routeHash) return;
+  const ws = knownStrokes.map((c, i) => HanziWriter.create(`hw${i}`, c, { ...HW_OPTS, width: 128, height: 128, showCharacter: true }));
+  let active = true; onLeave(() => { active = false; ws.forEach(x => x.cancelQuiz()); });
+  $("#anim").onclick = async () => { for (const x of ws) { if (!active) break; await x.animateCharacter(); } };
+}
+
+function pageScenario(arg) {
+  const hz = decodeURIComponent(arg || ""), scene = WORD_SCENARIOS[hz];
+  if (!scene) { location.hash = "#/dict"; return; }
+  const line = a => `<div class="sent"><div class="zh">${esc(a[0])}</div><div class="py">${esc(a[1])}</div><div class="ru">${esc(a[2])}</div>${sayBtn(a[0])}</div>`;
+  app.innerHTML = `${topbar("Ситуация · " + esc(hz), "#/word/" + encodeURIComponent(hz))}<div class="box"><h3>Ваша задача</h3><p>${esc(scene.situation)}</p></div><p class="kicker">Собеседник</p>${line(scene.partner)}
+    <label class="field"><span>Ваш ответ: произнесите вслух или напишите</span><textarea id="role-answer" rows="3" placeholder="Попробуйте ответить по-китайски…"></textarea></label>
+    <button class="btn" id="role-show">Показать пример ответа</button><div id="role-result"></div><p class="hint">Самостоятельная ролевая практика. Свой ответ сравните с образцом; автоматической оценки здесь нет.</p>`;
+  $("#role-show").onclick = () => { $("#role-result").innerHTML = `<p class="kicker mt">Один из возможных ответов</p>${line(scene.answer)}<div class="box"><h3>Почему так</h3><p>${esc(scene.note)}</p></div>`; $("#role-show").disabled = true; };
 }
 
 /* тренировка письма иероглифов */
@@ -697,7 +776,7 @@ const ROUTES = {
   welcome: pageWelcome, home: pageHome, learn: pageLearn, review: pageReview, me: pageMe,
   study: pageStudy, quiz: lv => pageQuiz(lv), listen: lv => pageQuiz(lv, "listen"), exam: lv => pageQuiz(lv, "exam"), write: pageWrite,
   pinyin: pagePinyin, tones: pageTones, grammar: pageGrammar, dialogues: () => pageDialogues(), dialogue: pageDialogues, reading: pageReading, shadow: pageShadow,
-  level: pageLevel, levels: pageLevels, word: pageWord, hanzi: pageHanzi, pairs: pagePairs, cloud: pageCloud, shelf: pageShelf, file: pageFile, dict: pageDict, book: pageBook, stats: pageStats, plan: pagePlan, settings: pageSettings, about: pageAbout,
+  level: pageLevel, levels: pageLevels, word: pageWord, scenario: pageScenario, hanzi: pageHanzi, pairs: pagePairs, cloud: pageCloud, shelf: pageShelf, file: pageFile, dict: pageDict, book: pageBook, stats: pageStats, plan: pagePlan, settings: pageSettings, about: pageAbout,
 };
 const TAB = { shelf: "learn", file: "learn", pairs: "review", cloud: "review", word: "home", home: "home", learn: "learn", review: "review", me: "me", study: "review", book: "review", quiz: "home", dict: "home", stats: "me", plan: "home", settings: "me", about: "me" };
 async function route() {

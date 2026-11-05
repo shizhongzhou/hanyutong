@@ -67,3 +67,16 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 .result{text-align:center;padding:30px 0}.result .score{font-size:56px;font-weight:750;letter-spacing:-2px}.result p{color:#6d7887}
 .chart{display:flex;align-items:flex-end;gap:6px;height:90px;margin-top:10px}.chart div{flex:1;background:var(--glaze);border-radius:6px 6px 2px 2px;position:relative;min-height:3px}.chart div.on{background:var(--blue3)}.chart span{position:absolute;bottom:-18px;left:0;right:0;text-align:center;font-size:10px;color:#8a94a2}
 @media(max-width:360px){#app{padding:0 16px 120px}.intro h1{font-size:25px}.flash .big{font-size:54px}}
+
+/* Large dictionary articles remain readable on a phone. */
+.word-summary{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;white-space:pre-line}
+.word .h{overflow-wrap:anywhere;max-width:100px}
+.word .m{min-width:0;overflow-wrap:anywhere}
+.entry-headword{font-size:clamp(32px,8vw,54px);line-height:1.5;overflow-wrap:anywhere;margin:12px 0}
+.entry-definition{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.85;font-size:16px}
+.entry-actions{display:flex;justify-content:center;gap:12px;margin:14px 0}
+.char-facts{display:grid;grid-template-columns:minmax(100px,1fr) 2fr;gap:10px;font-size:14px}
+.char-facts dt{color:var(--muted)}.char-facts dd{margin:0;overflow-wrap:anywhere}
+.stroke-grid{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
+.flash .ru{max-height:38vh;overflow:auto;white-space:pre-line;text-align:left;line-height:1.65}
+.field textarea{font:inherit;width:100%;box-sizing:border-box;padding:14px;border:1px solid var(--line);border-radius:14px;resize:vertical}

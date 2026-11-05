@@ -1,7 +1,7 @@
 /* 汉语熊猫 offline cache — only this app's scope and its own cache prefix. */
 const PREFIX = "hanyu-panda-";
-const CACHE = PREFIX + "v3";
-const CORE = ["./", "index.html", "css/app.css?v=3", "js/content.js?v=3", "js/app.js?v=3", "manifest.webmanifest", "vendor/hanzi-writer.min.js",
+const CACHE = PREFIX + "v4";
+const CORE = ["./", "index.html", "css/app.css?v=4", "js/content.js?v=4", "js/app.js?v=4", "js/dictionary.js?v=4", "js/scenarios.js?v=4", "vendor/fflate.min.js?v=4", "manifest.webmanifest", "vendor/hanzi-writer.min.js",
   "icons/panda-180.png", "icons/panda-192.png", "icons/panda-512.png",
   "data/hsk1.json", "data/hsk2.json", "data/hsk3.json", "data/hsk4.json", "data/hsk5.json", "data/hsk6.json"];
 
@@ -15,6 +15,16 @@ self.addEventListener("fetch", e => {
   const own = url.href.startsWith(self.registration.scope);
   const fonts = /fonts\.(googleapis|gstatic)\.com$/.test(url.hostname);
   if (!own && !fonts) return;
+  // Versioned dictionary shards are immutable and cached only after use.
+  if (own && url.pathname.includes("/data/dictionary/") && url.pathname.endsWith(".gz")) {
+    e.respondWith(caches.open(CACHE).then(async c => {
+      const cached = await c.match(req); if (cached) return cached;
+      const response = await fetch(req);
+      if (response.ok) { try { await c.put(req, response.clone()); } catch (_) {} }
+      return response;
+    }));
+    return;
+  }
   // network first for our files (fresh updates), cache fallback offline
   e.respondWith(fetch(req).then(res => { if (res.ok || res.type === "opaque") { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return res; })
     .catch(() => caches.match(req, { ignoreSearch: !fonts }).then(r => r || (req.mode === "navigate" ? caches.match("index.html") : Response.error()))));

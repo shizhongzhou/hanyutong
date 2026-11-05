@@ -1,0 +1,12 @@
+{
+  "bkrs": {
+    "url": "https://bkrs.info/downloads/daily/dabkrs_261105.gz",
+    "filename": "dabkrs_261105.gz",
+    "sha256": "9c209b555c654154e147ed76c23c95373832724e734e9d2b799713cc186c852c"
+  },
+  "unihan": {
+    "url": "https://www.unicode.org/Public/17.0.0/ucd/Unihan.zip",
+    "filename": "Unihan-17.0.0.zip",
+    "sha256": "f7a48b2b545acfaa77b2d607ae28747404ce02baefee16396c5d2d7a8ef34b5e"
+  }
+}

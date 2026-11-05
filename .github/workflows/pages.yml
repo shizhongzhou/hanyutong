@@ -24,11 +24,37 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Cache pinned dictionary snapshots
+        uses: actions/cache@v4
+        with:
+          path: |
+            .dictionary-cache/*.gz
+            .dictionary-cache/*.zip
+          key: dictionary-bkrs-${{ hashFiles('dictionary-sources.json') }}
+
+      - name: Build the full Russian dictionary
+        run: |
+          python3 scripts/fetch_dictionary.py
+          python3 scripts/build_dictionary.py --bkrs .dictionary-cache/dabkrs_261105.gz --unihan .dictionary-cache/Unihan-17.0.0.zip --scratch .dictionary-cache/build.sqlite
+
+      - name: Test dictionary and app
+        run: |
+          python3 -m unittest discover -s tests -p 'test_*.py'
+          node --test tests/*.test.cjs
+          node --check web/js/app.js
+          node --check web/js/dictionary.js
+          node --check web/js/scenarios.js
+
       - name: Check static app
         shell: bash
         run: |
           set -euo pipefail
-          for f in index.html .nojekyll manifest.webmanifest sw.js js/app.js js/content.js css/app.css; do test -s "web/$f" || test -f "web/$f"; done
+          for f in index.html .nojekyll manifest.webmanifest sw.js js/app.js js/content.js js/dictionary.js js/scenarios.js vendor/fflate.min.js data/dictionary/manifest.json css/app.css; do test -s "web/$f" || test -f "web/$f"; done
           for n in 1 2 3 4 5 6; do python3 -c "import json,sys; d=json.load(open('web/data/hsk$n.json')); assert len(d)>100" ; done
 
       - name: Configure Pages
