@@ -113,6 +113,24 @@ test('grammar scoring uses only its own two server criteria and returns canonica
   assert.deepEqual(result.criteria.map(item => item.id), ['accuracy', 'meaning']);
 });
 
+test('the full answer is graded while the corrected example stays within its separate Chinese, pinyin and Russian bounds', async () => {
+  const request = { ...input(), answer: '我学习中文。'.repeat(333) + '你好' };
+  assert.equal([...request.answer].length, 2000);
+  const { handler, calls } = fixture();
+  assert.equal((await handler(event(request))).statusCode, 200);
+  const messages = JSON.parse(calls[0].body).messages;
+  assert.equal(messages[1].content, request.answer);
+  assert.match(messages[0].content, /Оцени весь ответ ученика/);
+  assert.match(messages[0].content, /не более 200 китайских иероглифов/);
+  const value = assessment();
+  value.rewrite = { zh: '字'.repeat(200) + '，'.repeat(100), pinyin: 'a'.repeat(1400), ru: 'я'.repeat(1000) };
+  assert.deepEqual(validateAssessmentResult(value, task(input().taskId)).rewrite, value.rewrite);
+  for (const change of [{ zh: '字'.repeat(201) }, { zh: '字'.repeat(200) + '，'.repeat(101) }, { zh: 'no Chinese' },
+    { pinyin: 'a'.repeat(1401) }, { ru: 'я'.repeat(1001) }]) {
+    assert.throws(() => validateAssessmentResult({ ...value, rewrite: { ...value.rewrite, ...change } }, task(input().taskId)), /invalid_provider_result/);
+  }
+});
+
 test('provider totals, duplicate/unknown criteria, bad scores and extra pronunciation dimensions are rejected', async () => {
   const mutations = [data => { data.score = 9; }, data => { data.score = 10.5; }, data => { data.criteria[0].score = 5; },
     data => { data.criteria[0].score = -1; }, data => { data.criteria[0].score = 0.5; }, data => { data.criteria[0].id = 'pronunciation'; },
@@ -161,6 +179,45 @@ test('timeout and provider failures never automatically retry and never expose r
     const result = await handler(event()); assert.equal(result.statusCode, status === 429 ? 429 : 502); assert.equal(count, 1);
     assert.doesNotMatch(result.body, /test-only/);
   }
+});
+
+test('assessment gives Pro 55 seconds by default and never permits an unbounded override', async t => {
+  let timerCallback, scheduledMs, cleared = 0;
+  t.mock.method(global, 'setTimeout', (callback, ms) => { timerCallback = callback; scheduledMs = ms; return 123; });
+  t.mock.method(global, 'clearTimeout', () => { cleared++; });
+  for (const providerTimeoutMs of [undefined, 120000, NaN]) {
+    let calls = 0, signal;
+    const { handler, reservations } = fixture({ providerTimeoutMs, fetcher: (_url, options) => {
+      calls++; signal = options.signal; return new Promise(() => {});
+    } });
+    const pending = handler(event()); await Promise.resolve();
+    assert.equal(scheduledMs, 55000); assert.equal(signal.aborted, false);
+    timerCallback();
+    const result = await pending;
+    assert.equal(result.statusCode, 504); assert.equal(json(result).error, 'request_timeout'); assert.equal(signal.aborted, true);
+    assert.equal(calls, 1); assert.equal(reservations.length, 1);
+  }
+  assert.equal(cleared, 3);
+});
+
+test('a provider body that sends only keepalive whitespace cannot outlive the assessment deadline', async () => {
+  let cancelled = false, calls = 0;
+  const { handler } = fixture({ providerTimeoutMs: 5, fetcher: async () => {
+    calls++;
+    return new Response(new ReadableStream({ start(controller) { controller.enqueue(Buffer.from('\n  \n')); }, cancel() { cancelled = true; } }),
+      { headers: { 'Content-Type': 'application/json' } });
+  } });
+  const result = await handler(event());
+  assert.equal(result.statusCode, 504); assert.equal(json(result).error, 'request_timeout'); assert.equal(calls, 1); assert.equal(cancelled, true);
+});
+
+test('exhausted thinking/output tokens are distinguished from timeout without exposing a score or retrying', async () => {
+  const value = provider(assessment()); value.choices[0].finish_reason = 'length';
+  let calls = 0;
+  const { handler, reservations } = fixture({ fetcher: async () => { calls++; return Response.json(value); } });
+  const result = await handler(event());
+  assert.equal(result.statusCode, 502); assert.deepEqual(json(result), { error: 'assessment_incomplete' });
+  assert.equal(calls, 1); assert.equal(reservations.length, 1); assert.doesNotMatch(result.body, /score|reasoning|test-only/);
 });
 
 test('incomplete, blank, malformed JSON or reasoning-only provider responses do not produce scores', async () => {

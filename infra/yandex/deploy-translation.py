@@ -319,7 +319,7 @@ def main(argv=None):
            '--role', role, '--subject', 'serviceAccount:' + SERVICE_ACCOUNT)
     deployed = yc('serverless', 'function', 'version', 'create', '--function-id', FUNCTION,
         '--runtime', 'nodejs22', '--entrypoint', 'index.handler', '--memory', '128m',
-        '--execution-timeout', '60s', '--concurrency', '4', '--service-account-id', SERVICE_ACCOUNT,
+        '--execution-timeout', '90s', '--concurrency', '4', '--service-account-id', SERVICE_ACCOUNT,
         '--source-path', str(ROOT / 'function'),
         '--environment', ','.join(key + '=' + str(value) for key, value in environment.items()))
     print('AI and translation function version:', deployed['id'], flush=True)

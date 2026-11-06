@@ -142,7 +142,7 @@ function requester(fetcher, now) {
     if (attempted.has(operation)) fail('duplicate_attempt_blocked', operation);
     attempted.add(operation);
     const remaining = deadline - now(); if (!Number.isFinite(remaining) || remaining <= 0) fail('run_deadline', operation);
-    const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), Math.min(operation === 'config' ? 10000 : 45000, remaining));
+    const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), Math.min(operation === 'config' ? 10000 : operation === 'assessment' ? 75000 : 45000, remaining));
     try {
       const response = await fetcher(API + route, { method: body === undefined ? 'GET' : 'POST', redirect: 'error', credentials: 'omit', cache: 'no-store',
         signal: controller.signal, headers: { Origin: ORIGIN, Accept: 'application/json', ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },

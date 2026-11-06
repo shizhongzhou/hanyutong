@@ -251,7 +251,7 @@ class AIDeployTest(unittest.TestCase):
         self.assertEqual(environment['AI_VISION_ENABLED'], 'true')
         self.assertEqual(environment['QWEN_TTS_ENABLED'], 'true')
         self.assertEqual(environment['QWEN_ASR_ENABLED'], 'true')
-        for option, expected in [('--memory', '128m'), ('--execution-timeout', '60s'), ('--concurrency', '4'), ('--runtime', 'nodejs22')]:
+        for option, expected in [('--memory', '128m'), ('--execution-timeout', '90s'), ('--concurrency', '4'), ('--runtime', 'nodejs22')]:
             self.assertEqual(create[create.index(option) + 1], expected)
         scaling = next(args for args in calls if args[:3] == ('serverless', 'function', 'set-scaling-policy'))
         self.assertEqual(scaling[scaling.index('--zone-instances-limit') + 1], '1')
