@@ -98,6 +98,71 @@ test('AI screen loads only configuration, respects independent capabilities and 
   assert.equal(h.timers.size, 0); assert.doesNotMatch(source, /localStorage|sessionStorage|indexedDB/);
 });
 
+test('home AI sends the actual input inline, retains dialogue history, and uses no draft redirect', async () => {
+  const h = harness();
+  await h.page('home');
+  assert.match(h.one('tutor').className, /\bai-home\b/);
+  assert.ok(h.app.innerHTML.includes('href="#/home"'));
+  assert.ok(h.app.innerHTML.includes('href="#/home/ai" aria-current="page"'));
+  assert.doesNotMatch(h.app.innerHTML, /<h1>|panda|熊猫|Купить|Подписаться/);
+  assert.equal(h.requests.length, 1); assert.match(h.requests[0].url, /\/ai\/config$/);
+  h.input('请用俄语解释：我想学好中文。');
+  assert.equal(h.requests.length, 1);
+  await h.one('send').onclick();
+  assert.match(h.requests[1].url, /\/ai\/chat$/);
+  assert.deepEqual(JSON.parse(h.requests[1].options.body), { messages: [{ role: 'user', content: '请用俄语解释：我想学好中文。' }], mode: 'dialogue', level: 1 });
+  assert.equal(h.messages()[0], '请用俄语解释：我想学好中文。');
+  assert.equal(h.one('features').hidden, true); assert.equal(h.one('empty').hidden, true);
+  assert.match(h.one('tutor').className, /\bai-home\b.*\bhas-history\b/);
+  assert.equal(h.elements('ai-feedback-toggle').length, 1);
+  h.input('请再举一个例子。'); await h.one('send').onclick();
+  assert.equal(JSON.parse(h.requests[2].options.body).messages.length, 3);
+  assert.equal(h.messages().length, 4);
+  h.leave(); await h.page('home'); assert.deepEqual(h.messages(), []);
+});
+
+test('home AI explanation and HSK controls use the same service only after explicit Send', async () => {
+  const h = harness(); await h.page('home');
+  h.one('explain').onclick(); h.one('level').value = '6'; h.one('level').onchange();
+  assert.equal(h.one('options-label').textContent, 'Объяснение · HSK 6');
+  h.one('starter-1').onclick(); assert.equal(h.requests.length, 1);
+  const draft = h.one('input').value; await h.one('send').onclick();
+  const body = JSON.parse(h.requests[1].options.body);
+  assert.equal(body.mode, 'explain'); assert.equal(body.level, 6); assert.equal(body.messages[0].content, draft);
+  assert.match(h.one('tutor').className, /\bai-home\b/);
+  h.one('reset').onclick(); assert.equal(h.one('empty').hidden, false); assert.equal(h.one('features').hidden, false);
+  assert.equal(h.one('options-label').textContent, 'Объяснение · HSK 6');
+});
+
+test('home AI voice stays on the page and requires separate recognition and Send actions', async () => {
+  const h = harness(); await h.page('home');
+  assert.equal(h.one('mic-controls').hidden, false); assert.equal(h.one('mic-panel').hidden, true);
+  await h.one('record').onclick();
+  assert.equal(h.requests.length, 1); assert.equal(h.one('mic-panel').hidden, false);
+  assert.match(h.one('tutor').className, /\bis-capturing\b/);
+  h.one('stop').onclick(); await h.until(() => !h.one('recording').hidden);
+  assert.equal(h.requests.length, 1);
+  await h.one('recognize').onclick(); assert.match(h.requests[1].url, /\/ai\/transcribe$/);
+  assert.equal(h.one('input').value, '你好，我想喝茶。'); assert.equal(h.messages().length, 0);
+  h.input('你好，我想喝咖啡。'); await h.one('send').onclick();
+  assert.match(h.requests[2].url, /\/ai\/chat$/);
+  assert.equal(JSON.parse(h.requests[2].options.body).messages[0].content, '你好，我想喝咖啡。');
+  await h.playButtons()[0].onclick(); assert.match(h.requests[3].url, /\/ai\/speech$/);
+  h.leave(); assert.ok(h.tracks.every(track => track.stops > 0)); assert.equal(h.timers.size, 0);
+});
+
+test('home AI reserves the measured floating composer height and stops observing on navigation', async () => {
+  const h = harness(); let observer, observed, disconnected = false, callback;
+  h.context.ResizeObserver = class { constructor(fn) { callback = fn; observer = this; } observe(node) { observed = node; } disconnect() { disconnected = true; } };
+  await h.page('home'); assert.ok(observer); assert.equal(observed, h.one('compose-dock'));
+  const values = {}; h.one('tutor').style = { setProperty: (key, value) => { values[key] = value; } };
+  callback([{ target: { getBoundingClientRect: () => ({ height: 168.4 }) } }]);
+  assert.equal(values['--ai-dock-height'], '169px');
+  h.leave(); assert.equal(disconnected, true);
+  callback([{ target: { getBoundingClientRect: () => ({ height: 300 }) } }]);
+  assert.equal(values['--ai-dock-height'], '169px');
+});
+
 test('history trims whole old pairs by character and message limits, never truncating current Unicode input', () => {
   const h = harness(), history = Array.from({ length: 9 }, (_, i) => [{ role: 'user', content: String(i) }, { role: 'assistant', content: '回' }]).flat();
   const latest = h.core.contextMessages(history, '  𠀀你好  '); assert.equal(latest.length, 11);
@@ -261,6 +326,19 @@ test('request timeouts and manual cancellation clean timers without treating can
   const h = harness({ fetcher: (url, options) => new Promise((resolve, reject) => options.signal.addEventListener('abort', () => reject(Error('AbortError')))) });
   const timed = h.core.request('/chat', {}); h.fire(75000); await assert.rejects(timed, e => e.code === 'timeout'); assert.equal(h.timers.size, 0);
   const c = new AbortController(), manual = h.core.request('/chat', {}, c.signal); c.abort(); await assert.rejects(manual, e => e.code === 'aborted'); assert.equal(h.timers.size, 0);
+});
+
+test('assessment alone waits 200 seconds and manual cancellation still cleans its request', async () => {
+  const h = harness({ fetcher: (url, options) => new Promise((resolve, reject) => options.signal.addEventListener('abort', () => reject(Error('AbortError')))) });
+  const pending = h.core.request('/assess', {});
+  assert.equal([...h.timers.values()][0].ms, 200000);
+  h.fire(75000); assert.equal(h.requests[0].options.signal.aborted, false);
+  h.fire(200000); await assert.rejects(pending, e => e.code === 'timeout'); assert.equal(h.timers.size, 0);
+  const controller = new AbortController(), cancelled = h.core.request('/assess', {}, controller.signal);
+  controller.abort(); await assert.rejects(cancelled, e => e.code === 'aborted'); assert.equal(h.timers.size, 0);
+  const config = h.core.request('/config');
+  assert.equal([...h.timers.values()][0].ms, 10000);
+  h.fire(10000); await assert.rejects(config, e => e.code === 'timeout'); assert.equal(h.timers.size, 0);
 });
 
 const richReply = {

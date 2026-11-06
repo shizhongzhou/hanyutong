@@ -167,7 +167,7 @@ test('new registrations and public entry points use the unified HSK stages', asy
   h.run('S.settings.hsk3Level = "7-9"');
   await h.run('pageHome()');
   assert.ok(h.node('#app').innerHTML.includes('#/hsk3/7-9/study'));
-  assert.ok(h.node('#app').innerHTML.includes('HSK · 7–9'));
+  h.run('pageFeatures()');
   assert.ok(h.node('#app').innerHTML.includes('#/stages'));
   h.run('pageMe()');
   assert.ok(h.node('#app').innerHTML.includes('HSK · 7–9'));

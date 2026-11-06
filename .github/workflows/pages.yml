@@ -77,7 +77,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for f in index.html .nojekyll manifest.webmanifest sw.js js/translate.js css/translate.css js/ai.js css/ai.css js/ai-learning.js js/ai-pronunciation.js css/ai-pronunciation.css js/app.js js/hsk3.js js/study.js js/wordwall.js css/study.css data/hsk3/legacy-bridge.json data/hsk3/manifest.json data/hsk3/exams.json js/content.js js/dictionary.js js/scenarios.js js/library.js data/library-catalog.json vendor/pdfjs/legacy/build/pdf.min.mjs vendor/pdfjs/legacy/build/pdf.worker.min.mjs vendor/fflate.min.js data/dictionary/manifest.json css/app.css; do test -s "web/$f" || test -f "web/$f"; done
+          for f in index.html .nojekyll manifest.webmanifest sw.js js/translate.js css/translate.css js/ai.js css/ai.css js/ai-learning.js js/ai-pronunciation.js css/ai-pronunciation.css js/app.js js/hsk3.js js/study.js js/wordwall.js css/study.css data/hsk3/legacy-bridge.json data/hsk3/manifest.json data/hsk3/exams.json js/content.js js/dictionary.js js/scenarios.js js/library.js data/library-catalog.json vendor/pdfjs/legacy/build/pdf.min.mjs vendor/pdfjs/legacy/build/pdf.worker.min.mjs vendor/fflate.min.js data/dictionary/manifest.json css/app.css css/home.css css/navigation.css; do test -s "web/$f" || test -f "web/$f"; done
           for n in 1 2 3 4 5 6; do python3 -c "import json,sys; d=json.load(open('web/data/hsk$n.json')); assert len(d)>100" ; done
 
       - name: Configure Pages

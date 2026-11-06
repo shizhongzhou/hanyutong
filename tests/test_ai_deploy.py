@@ -251,12 +251,13 @@ class AIDeployTest(unittest.TestCase):
         self.assertEqual(environment['AI_VISION_ENABLED'], 'true')
         self.assertEqual(environment['QWEN_TTS_ENABLED'], 'true')
         self.assertEqual(environment['QWEN_ASR_ENABLED'], 'true')
-        for option, expected in [('--memory', '128m'), ('--execution-timeout', '90s'), ('--concurrency', '4'), ('--runtime', 'nodejs22')]:
+        for option, expected in [('--memory', '128m'), ('--execution-timeout', '210s'), ('--concurrency', '4'), ('--runtime', 'nodejs22')]:
             self.assertEqual(create[create.index(option) + 1], expected)
         scaling = next(args for args in calls if args[:3] == ('serverless', 'function', 'set-scaling-policy'))
         self.assertEqual(scaling[scaling.index('--zone-instances-limit') + 1], '1')
         self.assertEqual(scaling[scaling.index('--provisioned-instances-count') + 1], '0')
         self.assertEqual(calls[-1][:3], ('serverless', 'api-gateway', 'update'))
+        self.assertEqual(calls[-1][calls[-1].index('--execution-timeout') + 1], '300s')
         for name in ('DEEPSEEK_API_KEY', 'QWEN_API_KEY', 'LIBRARY_SESSION_SECRET'):
             self.assertNotIn(previous[name], captured.getvalue())
         self.assertIn('AI and translation function version: new-version', captured.getvalue())

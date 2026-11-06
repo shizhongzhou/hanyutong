@@ -181,23 +181,44 @@ test('timeout and provider failures never automatically retry and never expose r
   }
 });
 
-test('assessment gives Pro 55 seconds by default and never permits an unbounded override', async t => {
+test('assessment gives Pro 180 seconds by default and never permits an unbounded override', async t => {
   let timerCallback, scheduledMs, cleared = 0;
   t.mock.method(global, 'setTimeout', (callback, ms) => { timerCallback = callback; scheduledMs = ms; return 123; });
   t.mock.method(global, 'clearTimeout', () => { cleared++; });
-  for (const providerTimeoutMs of [undefined, 120000, NaN]) {
+  for (const providerTimeoutMs of [undefined, 300000, NaN]) {
     let calls = 0, signal;
     const { handler, reservations } = fixture({ providerTimeoutMs, fetcher: (_url, options) => {
       calls++; signal = options.signal; return new Promise(() => {});
     } });
     const pending = handler(event()); await Promise.resolve();
-    assert.equal(scheduledMs, 55000); assert.equal(signal.aborted, false);
+    assert.equal(scheduledMs, 180000); assert.equal(signal.aborted, false);
     timerCallback();
     const result = await pending;
     assert.equal(result.statusCode, 504); assert.equal(json(result).error, 'request_timeout'); assert.equal(signal.aborted, true);
     assert.equal(calls, 1); assert.equal(reservations.length, 1);
   }
   assert.equal(cleared, 3);
+});
+
+test('one Pro assessment may finish after two minutes without retrying or extending its token reservation', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  let calls = 0, signal;
+  const { handler, reservations } = fixture({ fetcher: (_url, options) => {
+    calls++; signal = options.signal;
+    return new Promise(resolve => setTimeout(() => resolve(Response.json(provider(assessment()))), 120000));
+  } });
+  let complete = false;
+  const pending = handler(event()).then(value => { complete = true; return value; });
+  await Promise.resolve();
+  t.mock.timers.tick(119999); await Promise.resolve();
+  assert.equal(complete, false); assert.equal(signal.aborted, false);
+  t.mock.timers.tick(1);
+  const result = await pending;
+  assert.equal(result.statusCode, 200); assert.equal(json(result).score, 10);
+  assert.equal(calls, 1); assert.equal(reservations.length, 1);
+  const messages = [{ role: 'system', content: assessmentPrompt(task(input().taskId)) }, { role: 'user', content: input().answer }];
+  assert.equal(reservations[0].usage.costMicroRubles, quoteAICost('assessment', { inputBytes: Buffer.byteLength(JSON.stringify(messages)), outputTokens: 2000 }));
+  t.mock.timers.tick(60001); assert.equal(signal.aborted, false, 'successful completion clears the deadline');
 });
 
 test('a provider body that sends only keepalive whitespace cannot outlive the assessment deadline', async () => {

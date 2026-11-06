@@ -1,5 +1,5 @@
 "use strict";
-/* ========== ХаньюйТун · 汉语熊猫 — китайский для русскоговорящих ========== */
+/* ========== ХаньюйТун · 汉语熊 — китайский для русскоговорящих ========== */
 
 const APP_KEY = "hanyutong-v2";
 const $ = (s, r = document) => r.querySelector(s);
@@ -36,13 +36,11 @@ const ICON = {
 };
 const ic = (name, cls = "i") => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON[name] || ""}</svg>`;
 
-/* ---------- оригинальный маскот: панда ---------- */
-const PANDA = `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="15" cy="15" r="9" fill="#1d1f23"/><circle cx="49" cy="15" r="9" fill="#1d1f23"/><circle cx="32" cy="35" r="23" fill="#fff" stroke="#1d1f23" stroke-width="2.4"/><ellipse cx="22.5" cy="33" rx="6" ry="7.5" transform="rotate(-25 22.5 33)" fill="#1d1f23"/><ellipse cx="41.5" cy="33" rx="6" ry="7.5" transform="rotate(25 41.5 33)" fill="#1d1f23"/><circle cx="23.5" cy="32.5" r="2.2" fill="#fff"/><circle cx="40.5" cy="32.5" r="2.2" fill="#fff"/><ellipse cx="32" cy="42" rx="3.6" ry="2.6" fill="#1d1f23"/><path d="M28.5 46.5q3.5 3 7 0" fill="none" stroke="#1d1f23" stroke-width="2" stroke-linecap="round"/><circle cx="17" cy="42" r="3" fill="#f6c9cf" opacity=".8"/><circle cx="47" cy="42" r="3" fill="#f6c9cf" opacity=".8"/></svg>`;
-const ART_READ = `<svg viewBox="0 0 160 130" fill="none" stroke="#18191a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="58" cy="30" r="9" fill="#18191a"/><circle cx="96" cy="30" r="9" fill="#18191a"/><circle cx="77" cy="48" r="25" fill="#fff"/><ellipse cx="67" cy="47" rx="5.5" ry="7" transform="rotate(-25 67 47)" fill="#18191a"/><ellipse cx="87" cy="47" rx="5.5" ry="7" transform="rotate(25 87 47)" fill="#18191a"/><path d="M73 58q4 3 8 0"/><path d="M40 112c2-22 15-34 37-34s35 12 37 34" fill="#fff"/><path d="M44 96h66l-8 22H52z" fill="#fff"/><path d="M77 96v22M58 103h12M84 103h12M58 109h9M84 109h9"/><path d="M20 120h120"/><text x="124" y="40" font-family="Noto Sans SC,sans-serif" font-size="17" fill="#18191a" stroke="none">你</text><text x="20" y="60" font-family="Noto Sans SC,sans-serif" font-size="15" fill="#18191a" stroke="none">好</text><path d="M118 52l8-4M26 34l7 3M133 62l6 2"/></svg>`;
+/* ---------- иллюстрация знакомства ---------- */
 const ART_WELCOME = `<svg viewBox="0 0 280 225" fill="none" stroke="#202226" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M33 91C44 49 93 36 137 43c53-18 112 18 113 68 19 49-33 83-81 81-58 16-122-3-138-42-10-21-7-42 2-59Z" fill="#EDF4FD" stroke="none"/><path d="M70 105c22-8 46-8 70 4v84c-24-12-48-12-70-4z" fill="#fff"/><path d="M210 105c-22-8-46-8-70 4v84c24-12 48-12 70-4z" fill="#fff"/><path d="M86 128c14-4 28-3 40 2M86 145c14-4 28-3 40 2M154 130c12-5 26-6 40-2M154 147c12-5 26-6 40-2" stroke="#8aa3c4"/><path d="M96 38h88a10 10 0 0 1 10 10v28a10 10 0 0 1-10 10h-56l-14 12V86H96a10 10 0 0 1-10-10V48a10 10 0 0 1 10-10Z" fill="#fff"/><text x="140" y="72" text-anchor="middle" font-family="Noto Sans SC,sans-serif" font-size="25" font-weight="700" fill="#202226" stroke="none">你好！</text><path d="M60 46l8 7M54 70h11M218 44l-8 8M224 66h-11"/><path d="M228 170l18-48 7 3-18 48-8 5z" fill="#fff"/></svg>`;
 
 /* ---------- состояние ---------- */
-const DEFAULT = { v: 2, profile: null, settings: { level: 1, curriculum: "hsk2", hsk3Level: "1", goal: 20, newPerDay: 10, pinyin: true, rate: 0.85 }, srs: {}, book: {}, stats: { answered: 0, correct: 0, days: {} }, day: null, history: [] };
+const DEFAULT = { v: 2, profile: null, settings: { level: 1, curriculum: "hsk2", hsk3Level: "1", goal: 20, newPerDay: 10, pinyin: true, rate: 0.85, homeFeatures: null }, srs: {}, book: {}, stats: { answered: 0, correct: 0, days: {} }, day: null, history: [] };
 const S = (() => { try { const s = JSON.parse(localStorage.getItem(APP_KEY)); if (s && s.v === 2) return Object.assign(structuredClone(DEFAULT), s, { settings: Object.assign({}, DEFAULT.settings, s.settings) }); } catch (_) {} return structuredClone(DEFAULT); })();
 let saveT = 0;
 function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(APP_KEY, JSON.stringify(S)); } catch (_) { toast("Не удалось сохранить прогресс на устройстве"); } }, 120); }
@@ -238,27 +236,139 @@ function pageWelcome() {
   $("#go").onclick = () => { S.profile = { nick: $("#nick").value.trim() || "друг", created: Date.now() }; S.settings.curriculum = "hsk3"; S.settings.hsk3Level = lv; save(); location.hash = "#/home"; };
 }
 
-async function pageHome() {
-  const lv = S.settings.level, d = D(), due = dueList().length, goal = S.settings.goal, pct = Math.min(100, d.correct / goal * 100);
-  const wk = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"], now = new Date(), mon = new Date(now); mon.setDate(now.getDate() - (now.getDay() + 6) % 7);
-  const week = wk.map((n, i) => { const x = new Date(mon); x.setDate(mon.getDate() + i); const t = today(x.getTime()); return `<span class="${t === today() ? "today" : ""} ${S.stats.days[t] ? "done" : ""}">${n}<b>${x.getDate()}</b></span>`; }).join("");
-  app.innerHTML = `<section class="page"><div class="greet intro"><div><p class="kicker">${greeting()}</p><h1>${esc(S.profile.nick)},<br>сегодня тоже немного <span class="zh">中文</span>.</h1></div><a class="pill" href="#/stages">${currentCourseName()} ${ic("go")}</a></div>
-    <div class="week">${week}</div>
-    <div class="card-blue"><p class="kicker">每天一点</p><h2>Понемногу каждый день.</h2><p class="sub">${currentCourseName()}</p><div class="art">${ART_READ}</div>
-      <div class="prog"><div class="row"><span>Цель на сегодня — верных ответов</span><b>${d.correct} / ${goal}</b></div><div class="bar"><i style="width:${pct}%"></i></div></div>
-      <a class="btn" href="${coursePath("study")}">${d.correct >= goal ? "Цель выполнена — ещё немного" : "Продолжить"} ${ic("go")}</a></div>
-    <div class="section"><h2>План на сегодня</h2><a href="#/plan">Настроить ›</a></div>
-    <div class="list">${row("#/review", "review", "Повторить знакомое", due ? `${due} ${plural(due, "слово ждёт", "слова ждут", "слов ждут")} повторения` : "Повторение и мой словарик")}
-    ${row(coursePath("study"), "book", "Выучить новое", `${currentCourseName()} · новые слова карточками`)}
-    ${row(coursePath("quiz"), "check", "Ежедневный тест", `Сегодня верных ответов: ${d.correct}`)}
-    ${row("#/stages", "layers", "Выбрать этап", "Единый курс HSK · уровни 1–6 и 7–9")}</div>
-    <div class="tiles"><a href="#/dict">${ic("search")}Словарь</a><a href="#/translate">${ic("translate")}Переводчик</a><a href="#/translate/photo">${ic("camera")}Перевод по фото</a></div>
-    <div class="list">${row("#/ai", "chat", "AI-собеседник", "Разговор по-китайски и объяснения по-русски")}${row("#/book", "bookmark", "Мой словарик", "Сохранённые слова")}${row("#/stats", "chart", "Статистика", "Ваш прогресс")}</div>
-    <div class="section"><h2>Понемногу, но регулярно.</h2></div>
-    <div class="stats"><div><b>${studyDays()}</b><small>дней учёбы</small></div><div><b>${accuracy()}%</b><small>точность</small></div><div><b>${S.stats.correct}</b><small>верных ответов</small></div></div>
-    <div class="section"><h2>Фраза дня</h2><a href="#/dialogues">Все диалоги ›</a></div><div id="pod"></div></section>`;
-  const pool = SENTENCES.filter(s => s.lv <= Math.max(lv, 1)); const s = pool[(new Date().getDate() * 7) % pool.length];
-  $("#pod").innerHTML = `<div class="sent"><div class="zh">${esc(s.zh)}</div><div class="py">${esc(s.py)}</div><div class="ru">${esc(s.ru)}</div><button class="btn small ghost" data-say="${esc(s.zh)}">${ic("speaker")} Прослушать</button></div>`;
+/* Home shortcuts point only to features that already exist. IDs, not URLs, are saved. */
+const HOME_FEATURE_GROUPS = [
+  ["translate", "Понять и перевести"], ["ai", "Практика с AI"],
+  ["words", "Слова и HSK"], ["practice", "Навыки языка"], ["personal", "Моя учёба"]
+];
+const HOME_FEATURES = [
+  { id: "translate", group: "translate", label: "Перевод", detail: "Китайский ↔ русский", icon: "translate", tone: "blue", href: "#/translate" },
+  { id: "photo", group: "translate", label: "По фото", detail: "Распознать и перевести", icon: "camera", tone: "violet", href: "#/translate/photo" },
+  { id: "dict", group: "translate", label: "Словарь", detail: "Слова и значения", icon: "search", tone: "mint", href: "#/dict" },
+  { id: "ai-chat", group: "ai", label: "AI-диалог", detail: "Поговорить по-китайски", icon: "chat", tone: "blue", href: "#/ai" },
+  { id: "ai-explain", group: "ai", label: "Разбор с AI", detail: "Объяснения по-русски", icon: "book", tone: "violet", href: "#/ai/explain" },
+  { id: "writing", group: "ai", label: "Письмо", detail: "Разбор письменного ответа", icon: "pen", tone: "peach", href: "#/assess/writing" },
+  { id: "speaking", group: "ai", label: "Устный ответ", detail: "Разбор содержания ответа", icon: "mic", tone: "mint", href: "#/assess/speaking" },
+  { id: "grammar-check", group: "ai", label: "Проверка грамматики", detail: "Задание и исправления", icon: "check", tone: "blue", href: "#/assess/grammar" },
+  { id: "pronunciation", group: "ai", label: "Мои тоны", detail: "Мелодика отдельного слога", icon: "wave", tone: "rose", href: "#/pronunciation" },
+  { id: "study", group: "words", label: "Карточки", detail: "Учить слова своего этапа", icon: "cards", tone: "peach", href: () => coursePath("study") },
+  { id: "vocab", group: "words", label: "Слова HSK", detail: "Словарь выбранного этапа", icon: "book", tone: "blue", href: () => coursePath("vocab") },
+  { id: "stages", group: "words", label: "Этапы HSK", detail: "Выбрать уровень курса", icon: "layers", tone: "violet", href: "#/stages" },
+  { id: "review", group: "words", label: "Повторение", detail: "Вернуться к знакомому", icon: "review", tone: "mint", href: "#/review" },
+  { id: "book", group: "words", label: "Мой словарик", detail: "Сохранённые слова", icon: "bookmark", tone: "rose", href: "#/book" },
+  { id: "quiz", group: "words", label: "Тест слов", detail: "Проверить значения", icon: "check", tone: "peach", href: () => coursePath("quiz") },
+  { id: "exam", group: "words", label: "Задания HSK", detail: "Форматы и упражнения", icon: "trophy", tone: "blue", href: () => coursePath("exam") },
+  { id: "pinyin", group: "practice", label: "Пиньинь", detail: "Звуки и четыре тона", icon: "wave", tone: "violet", href: "#/pinyin" },
+  { id: "tones", group: "practice", label: "Слушать тоны", detail: "Различать их на слух", icon: "ear", tone: "mint", href: "#/tones" },
+  { id: "grammar", group: "practice", label: "Грамматика", detail: "Правила и примеры", icon: "pen", tone: "peach", href: "#/grammar" },
+  { id: "dialogues", group: "practice", label: "Диалоги", detail: "Ситуации из жизни", icon: "chat", tone: "rose", href: "#/dialogues" },
+  { id: "reading", group: "practice", label: "Чтение", detail: "Короткие тексты", icon: "read", tone: "blue", href: "#/reading" },
+  { id: "shadow", group: "practice", label: "Повторять вслух", detail: "Слушать, записывать, сравнивать", icon: "mic", tone: "violet", href: "#/shadow" },
+  { id: "listen", group: "practice", label: "Аудирование", detail: "Узнавать слова на слух", icon: "ear", tone: "peach", href: () => `#/listen/${S.settings.level}` },
+  { id: "write", group: "practice", label: "Написать слово", detail: "Тренировка по памяти", icon: "read", tone: "mint", href: () => `#/write/${S.settings.level}` },
+  { id: "hanzi", group: "practice", label: "Порядок черт", detail: "Как пишутся иероглифы", icon: "pen", tone: "rose", href: () => `#/hanzi/${S.settings.level}` },
+  { id: "pairs", group: "practice", label: "Найди пару", detail: "Слова и их значения", icon: "layers", tone: "blue", href: () => `#/pairs/${S.settings.level}` },
+  { id: "library", group: "personal", label: "Учебники", detail: "«Путь к успеху» и аудио", icon: "book", tone: "mint", href: "#/library" },
+  { id: "shelf", group: "personal", label: "Моя полка", detail: "Книги на устройстве", icon: "read", tone: "peach", href: "#/shelf" },
+  { id: "ai-profile", group: "personal", label: "Мои подсказки", detail: "Что повторить с AI", icon: "target", tone: "violet", href: "#/ai-profile" },
+  { id: "stats", group: "personal", label: "Прогресс", detail: "Мои занятия и результаты", icon: "chart", tone: "blue", href: "#/stats" },
+  { id: "plan", group: "personal", label: "План занятий", detail: "Выбрать цель на день", icon: "clock", tone: "rose", href: "#/plan" }
+];
+const HOME_DEFAULT_FEATURES = ["translate", "photo", "dict", "study", "ai-chat", "ai-explain", "pronunciation", "writing", "library"];
+const HOME_FEATURE_INDEX = new Map(HOME_FEATURES.map(feature => [feature.id, feature]));
+function normalizeHomeFeatures(ids) {
+  return [...new Set(Array.isArray(ids) ? ids : HOME_DEFAULT_FEATURES)].filter(id => typeof id === "string" && HOME_FEATURE_INDEX.has(id)).slice(0, 9);
+}
+const homeFeatureIDs = () => normalizeHomeFeatures(S.settings.homeFeatures);
+const homeFeatureHref = feature => typeof feature.href === "function" ? feature.href() : feature.href;
+const homeFeatureIcon = feature => `<span class="home-feature-icon home-tone-${feature.tone}">${ic(feature.icon)}</span>`;
+const homeShortcut = feature => `<a class="home-shortcut" href="${esc(homeFeatureHref(feature))}">${homeFeatureIcon(feature)}<span>${esc(feature.label)}</span></a>`;
+
+function pageHome(mode) {
+  if (mode === "ai") return pageAI("home");
+  app.innerHTML = `<section class="page home-page">
+    <nav class="home-switch" aria-label="Режим главной страницы"><a href="#/home" aria-current="page">Классический</a><a href="#/home/ai">С AI <span aria-hidden="true">✦</span></a></nav>
+    <div class="home-hero">
+      <h1 class="home-hero-title zh">汉语熊</h1></div>
+    <div class="home-composer-shell"><div id="home-pet" class="home-pet" role="group" aria-label="Питомец — красная панда"></div>
+    <form class="home-composer" id="home-composer"><label class="home-composer-label" for="home-input">中文 ⇄ Русский</label>
+      <textarea id="home-input" rows="1" maxlength="4000" aria-describedby="home-input-help home-input-error" placeholder="Введите слово или фразу"></textarea>
+      <div class="home-composer-tools"><div class="home-input-options"><a href="#/translate/photo" aria-label="Перевести по фото" title="Перевести по фото">${ic("camera")}</a><a href="#/ai" aria-label="Открыть диалог с записью голоса" title="Открыть диалог с записью голоса">${ic("mic")}</a></div>
+        <button type="submit" class="home-submit">Перевести<span>${ic("go")}</span></button></div></form>
+    <div class="home-composer-note"><span id="home-input-help">Можно проверить текст перед отправкой.</span><span id="home-input-count">0 / 2000</span></div>
+    <p class="home-input-error" id="home-input-error" role="status" hidden></p></div>
+    <nav class="home-shortcuts" aria-label="Быстрый доступ">${homeFeatureIDs().map(id => homeShortcut(HOME_FEATURE_INDEX.get(id))).join("")}<a class="home-shortcut home-all-features" href="#/features"><span class="home-feature-icon home-tone-neutral"><span class="home-grid-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span><span>Все функции</span></a></nav>
+    </section>`;
+  const input = $("#home-input"), error = $("#home-input-error");
+  const updateInput = () => {
+    const count = [...input.value.trim()].length;
+    $("#home-input-count").textContent = `${count} / 2000`;
+    input.setAttribute("aria-invalid", String(count > 2000));
+    error.hidden = count <= 2000;
+    error.textContent = count > 2000 ? "До 2000 знаков за один раз. Сократите текст." : "";
+  };
+  input.oninput = updateInput;
+  $("#home-composer").onsubmit = event => {
+    event.preventDefault();
+    const text = input.value.trim();
+    if (!text || [...text].length > 2000) {
+      error.hidden = false; error.textContent = text ? "До 2000 знаков за один раз. Сократите текст." : "Сначала введите слово или фразу.";
+      input.setAttribute("aria-invalid", "true"); input.focus(); return;
+    }
+    try {
+      HanyuTranslate.setDraft(text); location.hash = "#/translate";
+    } catch (_) { error.hidden = false; error.textContent = "Не удалось открыть текст. Обновите страницу и попробуйте снова."; }
+  };
+  if (typeof HomePet !== "undefined" && typeof HomePet.mount === "function") {
+    try { HomePet.mount({ container: $("#home-pet"), boundary: $("#home-composer") }); } catch (_) {}
+  }
+}
+
+function pageFeatures(mode) {
+  const editing = mode === "edit";
+  let selected = homeFeatureIDs();
+  const render = (message = "") => {
+    const favoriteMarkup = selected.map((id, index) => {
+      const feature = HOME_FEATURE_INDEX.get(id);
+      return `<li id="feature-favorite-${id}">${homeFeatureIcon(feature)}<span class="feature-favorite-label">${esc(feature.label)}</span><div class="feature-order-actions"><button type="button" data-feature-move="${id}" data-direction="up" ${index === 0 ? "disabled" : ""} aria-label="${esc(feature.label)}: переместить раньше">↑</button><button type="button" data-feature-move="${id}" data-direction="down" ${index === selected.length - 1 ? "disabled" : ""} aria-label="${esc(feature.label)}: переместить позже">↓</button><button type="button" data-feature-toggle="${id}" aria-label="Убрать ${esc(feature.label)} с главной">${ic("close")}</button></div></li>`;
+    }).join("");
+    app.innerHTML = `<section class="page features-page" id="features-page">${topbar(editing ? "Моя главная" : "Все функции", editing ? "#/features" : "#/home")}
+      <p class="features-intro">${editing ? "Выберите до 9 функций. Стрелками можно изменить их порядок на главной." : "Всё для вашего китайского — выберите, чем заняться."}</p>
+      <section class="features-favorites"><div class="home-shortcut-heading"><h2>На главной <span class="features-count">${selected.length} / 9</span></h2>${editing ? "" : '<a href="#/features/edit">Изменить</a>'}</div>
+        ${selected.length ? editing ? `<ol class="feature-favorites-list">${favoriteMarkup}</ol>` : `<nav class="features-grid features-favorite-grid" aria-label="На главной">${selected.map(id => homeShortcut(HOME_FEATURE_INDEX.get(id))).join("")}</nav>` : '<p class="features-empty">Пока нет ярлыков. Добавьте нужные функции из списка ниже.</p>'}
+        ${editing ? '<div class="features-edit-actions"><a href="#/features" class="features-cancel">Отмена</a><button type="button" id="features-done">Готово</button></div>' : ""}
+      </section><p class="feature-edit-message" role="status" id="feature-edit-message" ${message ? "" : "hidden"}>${esc(message)}</p>
+      ${HOME_FEATURE_GROUPS.map(([group, title]) => `<section class="feature-group"><h2>${title}</h2><div class="features-grid">${HOME_FEATURES.filter(feature => feature.group === group).map(feature => {
+        const content = `${homeFeatureIcon(feature)}<b>${esc(feature.label)}</b><small>${esc(feature.detail)}</small>`;
+        return editing ? `<button type="button" class="feature-catalog-card" data-feature-toggle="${feature.id}" aria-pressed="${selected.includes(feature.id)}" aria-label="${selected.includes(feature.id) ? "Убрать" : "Добавить"} ${esc(feature.label)} ${selected.includes(feature.id) ? "с главной" : "на главную"}"><span class="feature-selection" aria-hidden="true">${selected.includes(feature.id) ? ic("check") : "+"}</span>${content}</button>` : `<a class="feature-catalog-card" href="${esc(homeFeatureHref(feature))}">${content}</a>`;
+      }).join("")}</div></section>`).join("")}</section>`;
+    if (!editing) return;
+    $("#features-done").onclick = () => { S.settings.homeFeatures = normalizeHomeFeatures(selected); save(); location.hash = "#/features"; };
+    $("#features-page").onclick = event => {
+      const toggle = event.target.closest("[data-feature-toggle]"), move = event.target.closest("[data-feature-move]");
+      if (toggle) {
+        const id = toggle.dataset.featureToggle;
+        if (!HOME_FEATURE_INDEX.has(id)) return;
+        const fromFavorites = !!event.target.closest(".feature-favorites-list"), previousIndex = selected.indexOf(id);
+        if (selected.includes(id)) selected = selected.filter(value => value !== id);
+        else if (selected.length >= 9) { $("#feature-edit-message").hidden = false; $("#feature-edit-message").textContent = "Можно выбрать до 9 функций. Сначала уберите одну из выбранных."; return; }
+        else selected.push(id);
+        render();
+        if (fromFavorites) {
+          const nextID = selected[Math.min(Math.max(previousIndex, 0), selected.length - 1)];
+          (nextID ? $(`#feature-favorite-${nextID} [data-feature-toggle]`) : $("#features-done"))?.focus();
+        } else $(`.feature-catalog-card[data-feature-toggle="${id}"]`)?.focus();
+      } else if (move && !move.disabled) {
+        const index = selected.indexOf(move.dataset.featureMove), next = index + (move.dataset.direction === "up" ? -1 : 1);
+        if (index < 0 || next < 0 || next >= selected.length) return;
+        [selected[index], selected[next]] = [selected[next], selected[index]];
+        render();
+        const direction = next === 0 ? "down" : next === selected.length - 1 ? "up" : move.dataset.direction;
+        $(`[data-feature-move="${move.dataset.featureMove}"][data-direction="${direction}"]`)?.focus();
+      }
+    };
+  };
+  render();
 }
 
 function pageLearn() {
@@ -292,7 +402,7 @@ function pageReview() {
 
 function pageMe() {
   const days = studyDays(), bk = bookmarkKeys().length;
-  app.innerHTML = `<section class="page"><div style="display:flex;align-items:center;gap:16px;margin:4px 0 8px"><span style="width:84px;height:84px;border-radius:50%;background:var(--glaze);display:flex;align-items:center;justify-content:center">${PANDA.replace("<svg", '<svg style="width:64px;height:64px"')}</span>
+  app.innerHTML = `<section class="page"><div class="profile-heading" style="margin:4px 0 14px">
       <div style="flex:1"><div style="font-size:23px;font-weight:750">${esc(S.profile.nick)}</div><div class="muted">${currentCourseName()}</div><a class="muted" href="#/settings">Настройки ›</a></div></div>
     <div class="box"><h3>Мои данные</h3><div class="stats"><div><b>${days}</b><small>дней учёбы</small></div><div><b>${accuracy()}%</b><small>точность</small></div><div><b>${streak()}</b><small>дней подряд</small></div></div></div>
     <div class="box list" style="padding:4px 20px">${row("#/ai-profile", "chart", "Учебный профиль AI", "Изученные слова и частые ошибки")}${row("#/stats", "clock", "История занятий", "Последние 14 дней")}${row("#/book", "bookmark", "Мой словарик", `${bk} ${plural(bk, "слово", "слова", "слов")}`)}${row("#/plan", "target", "Учебный план", `Цель: ${S.settings.goal} ответов в день`)}${row("#/stages", "layers", "Этап курса", "Единый курс HSK · уровни 1–6 и 7–9")}${row("#/shelf", "book", "Мои учебники", "Книги и аудио на устройстве")}</div>
@@ -458,7 +568,7 @@ function pageShadow(id) {
   let k = 0, rec = null, chunks = [], url = null; const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   onLeave(() => { try { rec && rec.state === "recording" && rec.stop(); } catch (_) {} });
   function draw() {
-    const s = src[k]; if (!s) { app.innerHTML = `${topbar("Повторение вслух", "#/learn")}<div class="result"><div style="width:110px;margin:0 auto">${PANDA}</div><p>Все фразы пройдены. 说得很好！</p><a class="btn" href="#/learn">Готово</a></div>`; return; }
+    const s = src[k]; if (!s) { app.innerHTML = `${topbar("Повторение вслух", "#/learn")}<div class="result"><p>Все фразы пройдены. 说得很好！</p><a class="btn" href="#/learn">Готово</a></div>`; return; }
     app.innerHTML = `${topbar("Повторение вслух", id ? `#/dialogue/${id}` : "#/learn")}<div class="qhead"><div class="bar"><i style="width:${k / src.length * 100}%"></i></div><span class="muted">${k + 1}/${src.length}</span></div>
       <div class="sent"><div class="zh">${esc(s.zh)}</div><div class="py">${esc(s.py)}</div><div class="ru">${esc(s.ru)}</div><button class="btn small ghost" data-say="${esc(s.zh)}">${ic("speaker")} Оригинал</button></div>
       <button class="rec" id="rec" aria-label="Записать">${ic("mic")}</button><p class="center muted" id="st">Послушайте и нажмите, чтобы повторить</p><div id="res" class="center"></div>
@@ -612,7 +722,7 @@ function sheetCode(exp) {
   };
 }
 function pageAbout() {
-  app.innerHTML = `${topbar("О приложении", "#/me")}<div style="width:96px;margin:0 auto">${PANDA}</div><h2 class="center" style="margin:6px 0 0">汉语熊猫 · ХаньюйТун</h2><p class="center muted">Китайский для русскоговорящих · версия 1.5</p>
+  app.innerHTML = `${topbar("О приложении", "#/me")}<h2 class="center" style="margin:6px 0 0">汉语熊</h2><p class="center muted">Китайский для русскоговорящих · версия 1.5</p>
     <div class="box"><h3>Словарь</h3><p class="hint" style="margin:0">Дополнительные учебные слова, пиньинь и части речи — <a href="https://github.com/drkameleon/complete-hsk-vocabulary" style="text-decoration:underline">complete-hsk-vocabulary</a> (MIT), основан на данных CC-CEDICT (CC BY-SA 4.0). Русские переводы, диалоги, тексты и объяснения грамматики написаны для этого приложения; переводы краткие и не проверены носителем — сообщайте о неточностях.</p></div>
     <div class="box"><h3>Большой словарь и иероглифы</h3><p class="hint">Полные русские толкования и словарные примеры: <a href="https://bkrs.info/p47">大БКРС</a>, снимок 5 ноября 2026 года. Источник разрешает свободное использование баз в любых целях. Сохраняются статьи с китайским написанием и русским толкованием. Это слова, иероглифы, имена, термины и словосочетания, а не исчерпывающий список всех слов китайского языка.</p><p class="hint">Ключи, число черт, чтения и варианты: <a href="https://www.unicode.org/reports/tr38/">Unicode Unihan 17.0.0</a>, <a href="data/UNICODE-LICENSE.txt">Unicode License v3</a>. Распаковка данных: fflate 0.8.2 (<a href="vendor/fflate-LICENSE.txt">MIT</a>). <a href="data/DICTIONARY-SOURCES.txt">Описание источников и преобразований</a>.</p><p class="hint">Пояснения простыми словами и ролевые ситуации написаны для приложения. Они не являются цитатами из словаря.</p></div>
     <div class="box"><h3>Порядок черт</h3><p class="hint" style="margin:0">Анимация и проверка черт — <a href="https://github.com/chanind/hanzi-writer" style="text-decoration:underline">Hanzi Writer</a> (MIT); данные черт — Make Me a Hanzi, Arphic Public License (текст лицензии: strokes/ARPHICPL.TXT).</p></div>
@@ -620,22 +730,6 @@ function pageAbout() {
     <div class="box"><h3>Учебная оценка</h3><p class="hint">Проверка письма и устного ответа — приблизительная учебная оценка по критериям задания, а не официальный балл HSK. Устный ответ оценивается по тексту. Тренажёр тонов сравнивает движение голоса в одном слоге на устройстве; он не проверяет полное произношение или беглость.</p></div><div class="box"><h3>AI и перевод</h3><p class="hint">Сообщения и предыдущие реплики текущего разговора отправляются в DeepSeek после нажатия «Отправить». Фотографии отправляются в Yandex AI Studio для распознавания после нажатия «Распознать текст»; перевод текста выполняет Yandex Translate. При распознавании записи и озвучивании выбранной фразы звук или текст обрабатывает Qwen в Alibaba Cloud.</p><p class="hint">Разговор доступен только пока открыт его экран; переводы, фотографии и записи не сохраняются. На устройстве остаются выбранные вами новые слова и категории исправлений. До 40 изученных слов и короткие записи об ошибках передаются с новым сообщением, чтобы подобрать сложность. Только с отдельного согласия выбранный фрагмент плохого ответа и вопрос отправляются разработчику в частное хранилище Yandex. Эти функции требуют интернета. Ответы AI могут содержать ошибки — проверяйте важные сведения.</p></div>
     <div class="box"><h3>HSK 3.0</h3><p class="hint" style="margin:0">Новый словарь, структура уровней и форматы заданий доступны в <a href="#/hsk3" style="text-decoration:underline">разделе HSK 3.0</a>. Источники и границы покрытия указаны там. Учебные упражнения не выдают официальный результат экзамена.</p></div>
     <div class="box"><h3>Данные</h3><p class="hint" style="margin:0">Аккаунт не нужен. Прогресс хранится в браузере; для переноса используйте код в настройках. Курс HSK доступен офлайн после первого открытия. Большой словарь загружается по разделам: офлайн доступны уже открытые разделы и сохранённые карточки. Браузер может освободить кеш при нехватке места.</p></div>`;
-}
-
-/* ---------- кнопка «Спросить панду» ---------- */
-function pandaSheet() {
-  const sh = h(`<div class="sheet" role="dialog" aria-modal="true" aria-label="Спросить панду"><div class="in" style="position:relative"><button class="round x" aria-label="Закрыть">${ic("close")}</button>
-    <div style="display:flex;gap:12px;align-items:center"><span style="width:48px">${PANDA}</span><div><h2>Спросить панду</h2><div class="muted">Большой китайско-русский словарь</div></div></div>
-    <a class="btn small" id="panda-ai" href="#/ai">${ic("chat")} Поговорить с AI</a><p class="hint">Китайский диалог и объяснения по-русски. Для поиска слова используйте словарь ниже.</p>
-    <label class="search mt">${ic("search")}<input id="pq" placeholder="Например: спасибо или xiexie" autocomplete="off"></label><div id="pr" style="max-height:46vh;overflow:auto"></div></div></div>`);
-  document.body.append(sh); const close = () => sh.remove(); $(".x", sh).onclick = close; sh.onclick = e => { if (e.target === sh) close(); };
-  $("#panda-ai", sh).onclick = close;
-  const q = $("#pq", sh); q.focus(); let t = 0, serial = 0;
-  q.oninput = () => { clearTimeout(t); const token = ++serial; t = setTimeout(async () => {
-    const value = q.value; $("#pr", sh).textContent = value.trim() ? "Ищем…" : "";
-    const result = await searchWords(value), r = result.words.slice(0, 8); if (!sh.isConnected || token !== serial || q.value !== value) return;
-    $("#pr", sh).innerHTML = (result.error ? `<p class="notice">${esc(result.error)}</p>` : "") + (q.value.trim() ? (r.length ? r.map(wordRow).join("") + `<a class="btn small ghost" href="#/dict" id="more">Открыть словарь</a>` : `<p class="hint mt">Попробуйте другую форму слова или китайское написание.</p>`) : "");
-    const m = $("#more", sh); if (m) m.onclick = () => { sessionStorage.setItem("dictQ", q.value); close(); }; }, 200); };
 }
 
 /* ---------- иероглифы: порядок черт (Hanzi Writer, данные Make Me a Hanzi / Arphic PL) ---------- */
@@ -754,7 +848,7 @@ async function pageHanzi(arg, hzArg) {
     $("#hint").onclick = () => { hint = !hint; hint ? writer.showOutline() : writer.hideOutline(); $("#hint").textContent = hint ? "Скрыть контур" : "Показать контур"; };
     $("#demo").onclick = async () => { writer.cancelQuiz(); await writer.animateCharacter(); writer.hideCharacter(); start(); };
   }
-  function finish() { app.innerHTML = `${topbar("Пишем иероглифы", back)}<div class="result"><div style="width:110px;margin:0 auto">${PANDA}</div><div class="score">${total}</div><p>${plural(total, "иероглиф написан", "иероглифа написано", "иероглифов написано")} · ошибок в чертах: ${mistakes}</p>
+  function finish() { app.innerHTML = `${topbar("Пишем иероглифы", back)}<div class="result"><div class="score">${total}</div><p>${plural(total, "иероглиф написан", "иероглифа написано", "иероглифов написано")} · ошибок в чертах: ${mistakes}</p>
       ${arg === "w" ? `<a class="btn" href="${back}">К слову</a>` : `<button class="btn" id="again">Ещё 6 слов</button>`}<a class="btn ghost" href="#/learn">Готово</a></div>`; const a = $("#again"); if (a) a.onclick = () => pageHanzi(arg); }
   onLeave(() => { try { writer && writer.cancelQuiz(); } catch (_) {} });
   draw();
@@ -870,7 +964,7 @@ async function pageFile(idArg) {
   } else if (meta.kind === "audio" || meta.kind === "video") {
     const tag = meta.kind === "audio" ? "audio" : "video";
     app.innerHTML = `${topbar(title, back)}<p class="muted" style="margin-top:-8px">${esc(meta.book)}${meta.sub ? " · " + esc(meta.sub) : ""}</p>
-      ${tag === "audio" ? `<div class="card-blue center" style="padding:26px 18px"><div style="width:96px;margin:0 auto 10px">${PANDA}</div><b style="word-break:break-word">${title}</b></div>` : ""}
+      ${tag === "audio" ? `<div class="card-blue center" style="padding:26px 18px"><b style="word-break:break-word">${title}</b></div>` : ""}
       <${tag} id="pl" src="${url}" controls controlsList="nodownload noremoteplayback" disableRemotePlayback preload="metadata" style="width:100%;margin-top:16px;${tag === "video" ? "border-radius:18px;background:#000" : ""}"></${tag}>
       <div class="seg mt">${[0.75, 1, 1.25].map(r => `<button data-r="${r}" aria-pressed="${r === 1}">${r}×</button>`).join("")}<button id="rw">−5 с</button><button id="loop" aria-pressed="false">Повтор</button></div>
       <label class="setrow"><span>Автоматически следующий трек</span><button class="toggle" id="auto" aria-pressed="${S.settings.autoNext !== false}"></button></label>${nav}`;
@@ -896,13 +990,14 @@ const ROUTES = {
   hsk3: (lv, view) => pageHSK3(lv, view), stages: pageStages,
   library: id => pageLibrary(id), libfile: id => pageLibraryFile(id),
   ai: arg => pageAI(arg), assess: arg => pageAIAssessment(arg), pronunciation: arg => pageAIPronunciation(arg), "ai-profile": () => pageAILearning(),
-  translate: arg => pageTranslate(arg), welcome: pageWelcome, home: pageHome, learn: pageLearn, review: pageReview, me: pageMe,
+  translate: arg => pageTranslate(arg), welcome: pageWelcome, home: arg => pageHome(arg), features: arg => pageFeatures(arg), learn: pageLearn, review: pageReview, me: pageMe,
   study: pageStudy, quiz: lv => pageQuiz(lv), listen: lv => pageQuiz(lv, "listen"), exam: lv => pageQuiz(lv, "exam"), write: pageWrite,
   pinyin: pagePinyin, tones: pageTones, grammar: pageGrammar, dialogues: () => pageDialogues(), dialogue: pageDialogues, reading: pageReading, shadow: pageShadow,
   level: pageLevel, levels: pageLevels, word: pageWord, scenario: pageScenario, hanzi: pageHanzi, pairs: pagePairs, cloud: pageCloud, shelf: pageShelf, file: pageFile, dict: pageDict, book: pageBook, stats: pageStats, plan: pagePlan, settings: pageSettings, about: pageAbout,
 };
-const TAB = { ai: "learn", assess: "learn", pronunciation: "learn", "ai-profile": "me", translate: "learn", shelf: "learn", file: "learn", pairs: "review", cloud: "review", word: "home", home: "home", learn: "learn", review: "review", me: "me", study: "review", book: "review", quiz: "home", dict: "home", stats: "me", plan: "home", settings: "me", about: "me" };
+const TAB = { ai: "learn", assess: "learn", pronunciation: "learn", "ai-profile": "me", translate: "translate", shelf: "learn", file: "learn", pairs: "learn", cloud: "learn", word: "home", home: "home", features: "home", learn: "learn", review: "learn", me: "me", study: "learn", book: "learn", quiz: "home", dict: "search", stats: "me", plan: "home", settings: "me", about: "me" };
 async function route() {
+  if (typeof HomePet !== "undefined" && typeof HomePet.unmount === "function") { try { HomePet.unmount(); } catch (_) {} }
   leaveFns.forEach(f => { try { f(); } catch (_) {} }); leaveFns = []; if ("speechSynthesis" in window) speechSynthesis.cancel();
   $$(".sheet").forEach(s => s.remove());
   let [name, arg, arg2] = (location.hash.replace(/^#\/?/, "") || "home").split("/");
@@ -912,14 +1007,17 @@ async function route() {
   if (S.profile) await ensureUnifiedCourse();
   if (location.hash !== routeHash) return;
   const fn = ROUTES[name] || pageHome; const bare = name === "welcome";
-  $("#appbar").hidden = bare; $("#tabbar").hidden = bare; $("#fab").hidden = bare || ["ai", "assess", "pronunciation", "translate", "study", "quiz", "listen", "exam", "write", "tones", "shadow", "hanzi", "pairs", "file", "libfile"].includes(name) || (name === "hsk3" && ["study", "quiz", "exam"].includes(arg2));
-  const tab = TAB[name] || "learn"; $$("#tabbar a").forEach(a => a.toggleAttribute("aria-current", a.dataset.tab === tab));
+  $("#appbar").hidden = bare || name === "home"; $("#tabbar").hidden = bare;
+  const legacyFab = $("#fab"); if (legacyFab) legacyFab.hidden = true;
+  const tab = TAB[name] || "learn"; $$("#tabbar a").forEach(a => {
+    if (a.dataset.tab === tab) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
+  });
   window.scrollTo(0, 0);
   try { await fn(arg, arg2); } catch (e) { console.error(e); app.innerHTML = `${topbar("Ошибка")}<div class="empty"><b>Не удалось загрузить</b>Проверьте подключение к интернету и попробуйте снова.<br><button class="btn small" onclick="location.reload()">Обновить</button></div>`; }
-  document.title = name === "home" ? "汉语熊猫 · Китайский каждый день" : `${$("h1")?.textContent || "汉语熊猫"} · 汉语熊猫`;
+  document.title = name === "home" ? "汉语熊 · Китайский каждый день" : `${$("h1")?.textContent || "汉语熊"} · 汉语熊`;
 }
 window.addEventListener("hashchange", route);
-$("#fab").onclick = pandaSheet;
-$("#brand-mark").innerHTML = PANDA; $("#fab .face").innerHTML = PANDA;
+const legacyFab = $("#fab"); if (legacyFab) { legacyFab.hidden = true; legacyFab.innerHTML = ""; }
 route();
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});

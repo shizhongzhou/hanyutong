@@ -16,6 +16,12 @@ const { visionCost, MAX_VISION_DIMENSION } = require('../infra/yandex/function/a
 const API = 'https://d5du0ehkavrgcuf0765l.3rspsmhh.apigw.yandexcloud.net';
 const ORIGIN = 'https://shizhongzhou.github.io';
 const FLAGS = ['enabled', 'visionEnabled', 'ttsEnabled', 'asrEnabled', 'assessmentEnabled', 'feedbackEnabled'];
+// Only known application codes may reach diagnostics; never print arbitrary
+// gateway/provider messages, request IDs, response bodies, or credentials.
+const SAFE_ERROR_CODES = new Set(['request_timeout', 'assessment_incomplete', 'assessment_unavailable', 'assessment_disabled',
+  'daily_limit', 'monthly_limit', 'rate_limit', 'provider_busy', 'usage_unavailable', 'credentials_unavailable',
+  'origin_not_allowed', 'app_origin_required', 'ai_disabled', 'chat_disabled', 'tts_disabled', 'asr_disabled',
+  'not_configured', 'vision_disabled', 'invalid_input', 'invalid_task', 'body_too_large', 'method_not_allowed']);
 const HAN = /\p{Script=Han}/u, CYRILLIC = /[а-яё]/iu, TONE = /[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]/u;
 const CHAT = Object.freeze({ messages: [{ role: 'user', content: 'Коротко объясни 你好 и дай один пример.' }], mode: 'explain', level: 1 });
 const ASSESSMENT = Object.freeze({ mode: 'writing', taskId: 'writing-hsk1-01', answer: '我叫小安。我来自俄罗斯。我喜欢中文，也喜欢喝茶。' });
@@ -137,17 +143,24 @@ async function boundedJSON(response, maximum, signal, operation) {
   finally { signal.removeEventListener('abort', onAbort); reader.releaseLock(); }
 }
 function requester(fetcher, now) {
-  const deadline = now() + 180000, attempted = new Set();
+  const deadline = now() + 240000, attempted = new Set();
   return async (operation, route, body, maximum = 128 * 1024) => {
     if (attempted.has(operation)) fail('duplicate_attempt_blocked', operation);
     attempted.add(operation);
     const remaining = deadline - now(); if (!Number.isFinite(remaining) || remaining <= 0) fail('run_deadline', operation);
-    const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), Math.min(operation === 'config' ? 10000 : operation === 'assessment' ? 75000 : 45000, remaining));
+    const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), Math.min(operation === 'config' ? 10000 : operation === 'assessment' ? 200000 : 45000, remaining));
     try {
       const response = await fetcher(API + route, { method: body === undefined ? 'GET' : 'POST', redirect: 'error', credentials: 'omit', cache: 'no-store',
         signal: controller.signal, headers: { Origin: ORIGIN, Accept: 'application/json', ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
-      if (response.status !== 200) { response.body?.cancel?.().catch(() => {}); fail('http_error', operation, response.status); }
+      if (response.status !== 200) {
+        const failure = new VerificationError('http_error', operation, response.status);
+        try {
+          const data = await boundedJSON(response, 4096, controller.signal, operation);
+          if (plain(data) && SAFE_ERROR_CODES.has(data.error)) failure.serverCode = data.error;
+        } catch (_) { /* An unknown/malformed error body must never enter diagnostics. */ }
+        throw failure;
+      }
       const result = await boundedJSON(response, maximum, controller.signal, operation);
       if (controller.signal.aborted) fail('request_timeout', operation);
       return result;
@@ -253,7 +266,8 @@ export async function main(argv = process.argv.slice(2), { fetcher = fetch, emit
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch(error => {
-    const failure = error instanceof VerificationError ? { operation: error.operation, error: error.code, ...(error.status ? { status: error.status } : {}) }
+    const failure = error instanceof VerificationError ? { operation: error.operation, error: error.code, ...(error.status ? { status: error.status } : {}),
+      ...(SAFE_ERROR_CODES.has(error.serverCode) ? { serverCode: error.serverCode } : {}) }
       : { operation: 'setup', error: 'verification_failed' };
     const mayHaveCharged = !['setup', 'config'].includes(failure.operation) && !['feature_unavailable', 'invalid_vision_fixture'].includes(failure.error);
     process.stderr.write(JSON.stringify({ check: 'failed', ...failure, noAutomaticRetry: true, reservationMayRemainCharged: mayHaveCharged }) + '\n'); process.exitCode = 1;

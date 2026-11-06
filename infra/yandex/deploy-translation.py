@@ -319,13 +319,14 @@ def main(argv=None):
            '--role', role, '--subject', 'serviceAccount:' + SERVICE_ACCOUNT)
     deployed = yc('serverless', 'function', 'version', 'create', '--function-id', FUNCTION,
         '--runtime', 'nodejs22', '--entrypoint', 'index.handler', '--memory', '128m',
-        '--execution-timeout', '90s', '--concurrency', '4', '--service-account-id', SERVICE_ACCOUNT,
+        '--execution-timeout', '210s', '--concurrency', '4', '--service-account-id', SERVICE_ACCOUNT,
         '--source-path', str(ROOT / 'function'),
         '--environment', ','.join(key + '=' + str(value) for key, value in environment.items()))
     print('AI and translation function version:', deployed['id'], flush=True)
     yc('serverless', 'function', 'set-scaling-policy', '--id', FUNCTION, '--tag', '$latest',
        '--zone-instances-limit', '1', '--zone-requests-limit', '4', '--provisioned-instances-count', '0')
-    yc('serverless', 'api-gateway', 'update', '--id', GATEWAY, '--spec', str(ROOT / 'gateway.yaml'))
+    yc('serverless', 'api-gateway', 'update', '--id', GATEWAY,
+       '--execution-timeout', '300s', '--spec', str(ROOT / 'gateway.yaml'))
     print('AI and translation routes ready; existing reader secret preserved', flush=True)
 
 

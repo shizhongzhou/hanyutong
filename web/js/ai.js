@@ -47,6 +47,7 @@ const HanyuAI = (() => {
     feedback_limit: 'Лимит замечаний пока исчерпан. Попробуйте позже.',
     consent_required: 'Подтвердите отправку выбранного вопроса и ответа.',
     assessment_disabled: 'Проверка пока недоступна. Попробуйте позже.',
+    assessment_incomplete: 'Проверка не завершена: AI не успел подготовить полный разбор. Балл не выставлен. Ваш ответ сохранён в поле ввода.',
     timeout: 'Ответ занимает слишком много времени. Попробуйте ещё раз.',
     request_timeout: 'Ответ занимает слишком много времени. Попробуйте ещё раз.',
     offline: 'Нет связи с сервисом. Проверьте интернет и попробуйте ещё раз.'
@@ -57,7 +58,7 @@ const HanyuAI = (() => {
     const controller = new AbortController(), abort = () => controller.abort();
     let timedOut = false;
     signal?.addEventListener('abort', abort, { once: true });
-    const timer = setTimeout(() => { timedOut = true; controller.abort(); }, path === '/config' ? 10000 : 75000);
+    const timer = setTimeout(() => { timedOut = true; controller.abort(); }, path === '/config' ? 10000 : path === '/assess' ? 200000 : 75000);
     try {
       const response = await fetcher(api + path, { method: body === undefined ? 'GET' : 'POST',
         credentials: 'omit', cache: 'no-store', headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
@@ -258,6 +259,7 @@ const HanyuAI = (() => {
 })();
 
 async function pageAI(initialMode) {
+  const homePage = initialMode === 'home';
   const assessmentPage = ['writing', 'speaking', 'grammar', 'oral'].includes(initialMode);
   const draft = assessmentPage ? null : HanyuAI.takeDraft();
   let active = true, mode = assessmentPage ? (initialMode === 'oral' ? 'speaking' : initialMode) : (draft?.mode || (initialMode === 'explain' ? 'explain' : 'dialogue')), settings = { ...HanyuAI.defaults };
@@ -268,35 +270,39 @@ async function pageAI(initialMode) {
   const controllers = new Set(), chineseReplies = [];
   const starters = {
     dialogue: [
-      ['Знакомство', 'Давай познакомимся по-китайски. Задавай по одному вопросу, дождись моего ответа и мягко исправляй ошибки.'],
-      ['В кафе', 'Давай разыграем заказ напитка в китайском кафе. Ты бариста, а я покупатель. Начни с короткой китайской реплики.'],
-      ['Путешествие', 'Потренируем диалог: я спрашиваю дорогу в Китае. Ты прохожий. Говори коротко, по уровню HSK.']
+      ['Как познакомиться по-китайски?', 'Давай познакомимся по-китайски. Задавай по одному вопросу, дождись моего ответа и мягко исправляй ошибки.'],
+      ['Закажем чай в кафе?', 'Давай разыграем заказ напитка в китайском кафе. Ты бариста, а я покупатель. Начни с короткой китайской реплики.'],
+      ['Как спросить дорогу?', 'Потренируем диалог: я спрашиваю дорогу в Китае. Ты прохожий. Говори коротко, по уровню HSK.']
     ],
     explain: [
-      ['Разобрать фразу', 'Объясни по-русски фразу 我想学好中文: значения слов, грамматику и когда её можно сказать. Добавь пиньинь и примеры.'],
-      ['Похожие слова', 'Объясни по-русски разницу между 会、能 и 可以. Дай понятные примеры с пиньинем и маленькую ситуацию для практики.'],
-      ['Проверить фразу', 'Я написал: 我是学习汉语。Объясни по-русски, что здесь исправить и почему. Покажи правильную фразу с пиньинем.']
+      ['Что значит 我想学好中文?', 'Объясни по-русски фразу 我想学好中文: значения слов, грамматику и когда её можно сказать. Добавь пиньинь и примеры.'],
+      ['Чем отличаются 会、能 и 可以?', 'Объясни по-русски разницу между 会、能 и 可以. Дай понятные примеры с пиньинем и маленькую ситуацию для практики.'],
+      ['Можно сказать 我是学习汉语?', 'Я написал: 我是学习汉语。Объясни по-русски, что здесь исправить и почему. Покажи правильную фразу с пиньинем.']
     ]
   };
-  app.innerHTML = `${topbar(assessmentPage ? 'Проверка заданий' : 'AI-собеседник', '#/learn')}<section class="ai-tutor">
-    <p class="sub ai-intro">${assessmentPage ? 'Выполните учебное задание и получите разбор по понятным критериям.' : 'Практикуйте китайский: знакомые слова, немного нового и объяснения по-русски.'}</p>
-    <nav class="ai-feature-links" aria-label="Практика с AI"><a href="#/assess/writing">Письмо<small>Проверить текст</small></a><a href="#/assess/speaking">Устный ответ<small>Разобрать содержание</small></a><a href="#/pronunciation">Произношение<small>Потренировать тоны</small></a></nav>
-    <div class="seg ai-tabs" aria-label="Режим собеседника" ${assessmentPage ? 'hidden' : ''}><button id="ai-dialogue" aria-pressed="${mode === 'dialogue'}">Диалог</button><button id="ai-explain" aria-pressed="${mode === 'explain'}">Объяснение</button></div>
+  const controlsMarkup = `<div class="seg ai-tabs" aria-label="Режим собеседника" ${assessmentPage ? 'hidden' : ''}><button id="ai-dialogue" aria-pressed="${mode === 'dialogue'}">Диалог</button><button id="ai-explain" aria-pressed="${mode === 'explain'}">Объяснение</button></div>
     <div class="seg ai-tabs" aria-label="Вид задания" ${assessmentPage ? '' : 'hidden'}><button id="ai-assess-writing">Письмо</button><button id="ai-assess-speaking">Устный ответ</button><button id="ai-assess-grammar">Грамматика</button></div>
-    <div class="ai-settings"><label for="ai-level">Мой уровень <select id="ai-level" aria-label="Уровень китайского">${Array.from({ length: 9 }, (_, i) => `<option value="${i + 1}">HSK ${i + 1}</option>`).join('')}</select></label><button id="ai-reset">Новый разговор</button></div>
+    <div class="ai-settings"><label for="ai-level">Мой уровень <select id="ai-level" aria-label="Уровень китайского">${Array.from({ length: 9 }, (_, i) => `<option value="${i + 1}">HSK ${i + 1}</option>`).join('')}</select></label><button id="ai-reset">Новый разговор</button></div>`;
+  app.innerHTML = `${homePage ? '' : topbar(assessmentPage ? 'Проверка заданий' : '汉语熊 · AI', '#/learn')}<section id="ai-tutor" class="ai-tutor${homePage ? ' ai-home' : ''}${assessmentPage ? ' is-assessment' : ''}">
+    ${homePage ? '<nav class="home-switch" aria-label="Режим главной страницы"><a href="#/home">Классический</a><a href="#/home/ai" aria-current="page">С AI <span aria-hidden="true">✦</span></a></nav>' : ''}
+    ${assessmentPage ? '<p class="sub ai-intro">Выполните учебное задание и получите разбор по понятным критериям.</p>' : ''}
+    ${homePage ? '' : controlsMarkup}
     <div id="ai-task-panel" class="ai-task-panel" ${assessmentPage ? '' : 'hidden'}><label for="ai-task">Учебное задание</label><select id="ai-task" aria-label="Выберите задание"></select><div id="ai-task-details"></div><p id="ai-assessment-notice" class="hint"></p></div>
     <div id="ai-service" class="ai-service" role="status">Подключаем собеседника…</div><button id="ai-reconnect" class="ai-reconnect" hidden>Попробовать подключиться снова</button>
-    <div id="ai-empty" class="ai-welcome"><span class="ai-welcome-icon">${ic('chat')}</span><h2 id="ai-welcome-title">Начнём разговор?</h2><p id="ai-welcome-note">Выберите ситуацию или напишите свою первую реплику.</p></div>
+    <div id="ai-empty" class="ai-welcome"><span class="ai-welcome-hello" lang="zh">你好<span aria-hidden="true">!</span></span><h2 id="ai-welcome-title">Что изучим сегодня?</h2><p id="ai-welcome-note">Поговорим по-китайски, разберём непонятное.</p></div>
+    <nav id="ai-features" class="ai-feature-links" aria-label="Практика с AI"><a href="#/assess/writing"><span class="ai-feature-icon" aria-hidden="true">${ic('pen')}</span><span>Письмо</span><small>Проверить текст</small></a><a href="#/assess/speaking"><span class="ai-feature-icon" aria-hidden="true">${ic('mic')}</span><span>Устный ответ</span><small>Разобрать содержание</small></a><a href="#/pronunciation"><span class="ai-feature-icon" aria-hidden="true">${ic('ear')}</span><span>Произношение</span><small>Потренировать тоны</small></a></nav>
     <div id="ai-starters" class="ai-starters" aria-label="С чего начать">${[0, 1, 2].map(i => `<button id="ai-starter-${i}"></button>`).join('')}</div>
     <div id="ai-messages" class="ai-messages" role="log" aria-label="Разговор" aria-live="polite" aria-relevant="additions"></div>
-    <div class="ai-composer"><label id="ai-input-label" for="ai-input">Ваше сообщение</label><textarea id="ai-input" placeholder="Напишите по-китайски или по-русски…" aria-describedby="ai-count ai-privacy" spellcheck="false"></textarea><div class="ai-composer-bottom"><span>中文 ↔ Русский</span><span id="ai-count">0 / 2 000</span></div></div>
-    <div id="ai-mic-panel" class="ai-mic-panel" hidden><div class="ai-mic-actions"><button id="ai-record" class="btn ghost">${ic('mic')} Записать голос</button><button id="ai-stop" class="btn ghost" hidden>Остановить</button><span id="ai-record-time" aria-live="off"></span></div><p class="hint ai-mic-note">До 30 секунд. Запись отправляется в Qwen (Alibaba Cloud) только после нажатия «Распознать запись».</p><div id="ai-recording" class="ai-recording" hidden><audio id="ai-recording-player" controls controlsList="nodownload noremoteplayback" disableRemotePlayback preload="metadata"></audio><div class="ai-recording-actions"><button id="ai-recognize" class="btn ghost">Распознать запись</button><button id="ai-discard">Убрать запись</button></div></div></div>
-    <p id="ai-voice-note" class="hint ai-voice-note" hidden>Голосовой ввод пока недоступен. Можно написать сообщение.</p>
-    <button id="ai-send" class="btn" disabled>Отправить</button><div id="ai-status" class="ai-status" role="status" aria-live="polite"></div>
+    <div id="ai-compose-dock" class="ai-compose-dock"><div class="ai-composer">${homePage ? `<details class="ai-home-options"><summary id="ai-options-label">Диалог · HSK 1</summary>${controlsMarkup}</details>` : ''}<div class="ai-composer-heading"><label id="ai-input-label" for="ai-input">Ваше сообщение</label><span id="ai-count">0 / 2 000</span></div><textarea id="ai-input" rows="1" placeholder="Напишите или запишите голосом…" aria-describedby="ai-count ai-privacy" spellcheck="false"></textarea>
+    <div class="ai-composer-actions"><div id="ai-mic-controls" class="ai-mic-actions" hidden><button id="ai-record" class="ai-record-button" aria-label="Записать голос" title="Записать голос">${ic('mic')}<span>Голос</span></button><button id="ai-stop" class="ai-stop-button" hidden>Остановить</button><span id="ai-record-time" aria-live="off"></span></div><button id="ai-send" class="btn ai-send-button" aria-label="Отправить" title="Отправить" disabled>Отправить</button></div>
+    <div id="ai-mic-panel" class="ai-mic-panel" hidden><p class="hint ai-mic-note">До 30 секунд. В Qwen (Alibaba Cloud) — только по нажатию «Распознать запись».</p><div id="ai-recording" class="ai-recording" hidden><audio id="ai-recording-player" controls controlsList="nodownload noremoteplayback" disableRemotePlayback preload="metadata"></audio><div class="ai-recording-actions"><button id="ai-recognize" class="btn ghost">Распознать запись</button><button id="ai-discard">Убрать запись</button></div></div></div>
+    <p id="ai-voice-note" class="hint ai-voice-note" hidden>Голосовой ввод пока недоступен. Можно написать сообщение.</p>${homePage ? '<p class="ai-home-send-note">В DeepSeek — только по нажатию «Отправить».</p>' : ''}</div><div id="ai-status" class="ai-status" role="status" aria-live="polite"></div></div>
+    ${homePage ? '<details class="ai-data-notice"><summary>О данных и ответах AI</summary><p class="hint ai-privacy">Голос записывается на устройстве. Запись передаётся в Qwen (Alibaba Cloud) только после отдельного нажатия «Распознать запись».</p>' : ''}
     <p id="ai-privacy" class="hint ai-privacy">${assessmentPage ? 'Задание и ваш ответ отправляются в DeepSeek только после нажатия «Проверить ответ». Ответ и разбор хранятся только пока открыт этот экран.' : 'Сообщения отправляются в DeepSeek только после нажатия «Отправить». Вместе с ними передаются до 40 изученных слов и короткие записи об ошибках из учебного профиля на этом устройстве. Новые слова добавляются по вашему выбору; исправления сохраняются в учебном профиле устройства. Сам разговор хранится только пока открыт этот экран.'} Ответы AI могут содержать ошибки.</p>
     <p id="ai-speech-note" class="hint ai-privacy" hidden>Китайские фразы отправляются в Qwen (Alibaba Cloud) для озвучивания только по нажатию на кнопку прослушивания.</p>
     ${assessmentPage ? '' : '<p class="hint ai-privacy">Первое объяснение может оставаться в памяти приложения до 15 минут для повторного обращения. На устройство и в облачную историю оно не записывается.</p>'}
     <p class="hint ai-privacy">Если вы решите сообщить об ошибке AI, выбранные вопрос, ответ и причина будут сохранены в облаке только после отдельного согласия и нажатия «Отправить замечание».</p>
+    ${homePage ? '</details>' : ''}
   </section>`;
   const el = id => $('#ai-' + id), input = el('input'), level = el('level'), log = el('messages');
   const status = (text = '', failed = false) => { el('status').textContent = text; el('status').className = 'ai-status' + (failed ? ' is-error' : ''); };
@@ -321,18 +327,25 @@ async function pageAI(initialMode) {
     if (clipUrl) URL.revokeObjectURL(clipUrl); clipUrl = ''; el('recording').hidden = true;
   }
   function refresh() {
+    const capturing = !!recording || ['record', 'microphone', 'prepare', 'asr'].includes(busy);
     const length = HanyuAI.count(input.value.trim()), valid = length > 0 && length <= settings.maxInputChars;
     el('count').textContent = `${length.toLocaleString('ru-RU')} / ${settings.maxInputChars.toLocaleString('ru-RU')}`;
     el('count').className = length > settings.maxInputChars ? 'is-over-limit' : '';
     el('send').disabled = loading || !!busy || !(assessmentPage ? settings.assessmentEnabled && selectedTask : settings.enabled) || !valid;
     el('send').textContent = busy === 'chat' ? (assessmentPage ? 'Проверяем ответ…' : 'Собеседник отвечает…') : assessmentPage ? 'Проверить ответ' : 'Отправить';
+    el('send').setAttribute('aria-label', el('send').textContent); el('send').setAttribute('title', el('send').textContent);
+    el('send').setAttribute('aria-busy', String(busy === 'chat'));
     el('record').disabled = loading || !!busy || !settings.asrEnabled; el('record').hidden = busy === 'record'; el('stop').hidden = busy !== 'record';
     el('recognize').disabled = loading || !!busy || !settings.asrEnabled || !recording; el('recognize').textContent = busy === 'asr' ? 'Распознаём…' : 'Распознать запись';
     for (const { button } of chineseReplies) button.disabled = !!busy || !settings.ttsEnabled;
-    el('mic-panel').hidden = !settings.asrEnabled || !micSupported(); el('voice-note').hidden = loading || (settings.asrEnabled && micSupported());
+    el('mic-controls').hidden = !settings.asrEnabled || !micSupported();
+    el('mic-panel').hidden = el('mic-controls').hidden || (homePage && !capturing); el('voice-note').hidden = loading || (settings.asrEnabled && micSupported());
     el('voice-note').textContent = settings.asrEnabled && !micSupported() ? HanyuAI.message({ code: 'audio_unsupported' }) : 'Голосовой ввод пока недоступен. Можно написать сообщение.';
     el('speech-note').hidden = !settings.ttsEnabled;
     el('empty').hidden = assessmentPage || history.length > 0 || busy === 'chat'; el('starters').hidden = assessmentPage || history.length > 0 || busy === 'chat';
+    el('features').hidden = !assessmentPage && (history.length > 0 || busy === 'chat');
+    el('tutor').className = 'ai-tutor' + (homePage ? ' ai-home' : '') + (assessmentPage ? ' is-assessment' : '') + (history.length > 0 || busy === 'chat' ? ' has-history' : '') + (capturing ? ' is-capturing' : '');
+    if (homePage) el('options-label').textContent = `${mode === 'explain' ? 'Объяснение' : 'Диалог'} · HSK ${Number(level.value) || 1}`;
     for (let i = 0; i < 3; i++) el('starter-' + i).disabled = !!busy;
   }
   function service() {
@@ -349,8 +362,8 @@ async function pageAI(initialMode) {
       el('assessment-notice').textContent = mode === 'speaking' ? 'Проверяем содержание распознанного или введённого текста. Произношение, беглость и тоны здесь не оцениваются. Это учебная практика, не официальный балл HSK.' : 'Это учебная проверка по критериям задания, не официальный балл экзамена HSK.';
       return;
     }
-    el('welcome-title').textContent = mode === 'explain' ? 'Разберём по шагам' : 'Начнём разговор?';
-    el('welcome-note').textContent = mode === 'explain' ? 'Спросите о слове, грамматике или ситуации. Объяснение будет по-русски, с китайскими примерами.' : 'Выберите ситуацию или напишите свою первую реплику.';
+    el('welcome-title').textContent = mode === 'explain' ? 'Разберём по шагам' : 'Что изучим сегодня?';
+    el('welcome-note').textContent = mode === 'explain' ? 'Слова и грамматика — по-русски, с китайскими примерами.' : 'Поговорим по-китайски, разберём непонятное.';
     el('input-label').textContent = mode === 'explain' ? 'Что объяснить?' : 'Ваше сообщение';
     for (let i = 0; i < 3; i++) el('starter-' + i).textContent = starters[mode][i][0];
   }
@@ -435,7 +448,7 @@ async function pageAI(initialMode) {
     const criteria = node('div', 'ai-assessment-criteria');
     for (const criterion of result.criteria) { const row = node('section', 'ai-assessment-criterion'); row.append(node('h3', 'ai-reply-label', `${criterion.labelRu} · ${criterion.score} / ${criterion.maxScore}`), node('p', 'ai-message-text', criterion.feedbackRu)); criteria.append(row); }
     article.append(criteria); section(article, 'Что улучшить', result.feedbackRu);
-    for (const [key, title] of [['rewrite', 'Исправленный вариант'], ['sample', 'Пример ответа']]) {
+    for (const [key, title] of [['rewrite', 'Исправленный вариант: пример ответа/фрагмента'], ['sample', 'Пример ответа']]) {
       const part = result[key]; if (!part.zh && !part.ru) continue;
       const block = node('section', 'ai-assessment-example'); block.append(node('h3', 'ai-reply-label', title));
       if (part.zh) block.append(node('p', 'ai-message-text is-chinese', part.zh)); if (part.pinyin) block.append(node('p', 'ai-word-pinyin', part.pinyin)); if (part.ru) block.append(node('p', 'ai-message-text', part.ru)); article.append(block);
@@ -476,7 +489,7 @@ async function pageAI(initialMode) {
     const visible = pendingText ? [...history, { role: 'user', content: pendingText }] : history;
     for (const item of visible) {
       const article = document.createElement('article'); article.className = 'ai-message is-' + item.role;
-      const who = document.createElement('div'); who.className = 'ai-message-who'; who.textContent = item.role === 'user' ? 'Вы' : 'Собеседник';
+      const who = document.createElement('div'); who.className = 'ai-message-who'; who.textContent = item.role === 'user' ? 'Вы' : '汉语熊';
       article.append(who);
       if (item.assessment) renderAssessment(article, item.assessment);
       else if (item.reply) renderStructured(article, item);
@@ -518,7 +531,8 @@ async function pageAI(initialMode) {
     if (!active || busy || !(assessmentPage ? settings.assessmentEnabled && selectedTask : settings.enabled)) return;
     const text = input.value.trim();
     try { HanyuAI.contextMessages(history, text, settings.maxInputChars); } catch (err) { return status(HanyuAI.message(err), true); }
-    cancel(); const token = revision, c = controller(); busy = 'chat'; renderHistory(text); status('Собеседник готовит ответ…'); refresh();
+    cancel(); const token = revision, c = controller(); busy = 'chat'; renderHistory(text); status(assessmentPage ? 'Проверяем ответ. Проверка может занять около 3 минут.' : 'Собеседник готовит ответ…'); refresh();
+    if (homePage) { input.blur?.(); log.scrollIntoView?.({ block: 'start' }); }
     try {
       if (assessmentPage) {
         const result = await HanyuAI.assess(selectedTask, text, c.signal); if (!active || token !== revision) return;
@@ -585,7 +599,15 @@ async function pageAI(initialMode) {
     } catch (err) { if (active && token === revision) status(HanyuAI.message(err), true); }
     finally { controllers.delete(c); if (active && token === revision) { busy = ''; refresh(); } }
   };
-  onLeave(() => { active = false; configRevision++; configController?.abort(); cancel(); stopMicrophone(true); discardRecording(); history = []; chineseReplies.length = 0; });
+  // Reserve the floating composer's actual height, including service errors and larger text.
+  let dockObserver = null;
+  if (homePage && typeof ResizeObserver !== 'undefined') {
+    dockObserver = new ResizeObserver(entries => {
+      if (active && entries[0]) el('tutor').style.setProperty('--ai-dock-height', `${Math.ceil(entries[0].target.getBoundingClientRect().height)}px`);
+    });
+    dockObserver.observe(el('compose-dock'));
+  }
+  onLeave(() => { active = false; dockObserver?.disconnect(); configRevision++; configController?.abort(); cancel(); stopMicrophone(true); discardRecording(); history = []; chineseReplies.length = 0; });
   if (draft) { input.value = draft.text; status('Текст перенесён. Проверьте его и нажмите «Отправить» для объяснения.'); }
   modeLabels(); refresh(); await loadConfig();
 }

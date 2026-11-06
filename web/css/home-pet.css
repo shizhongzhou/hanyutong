@@ -1,0 +1,6 @@
+.home-pet{position:absolute;left:0;bottom:100%;width:100%;height:120px;z-index:2;pointer-events:none;overflow:visible;contain:layout style}
+.home-pet-actor{position:absolute;left:0;bottom:0;width:180px;height:120px;pointer-events:none;will-change:transform}
+.home-pet-actor[hidden]{display:none}
+.home-pet-frame{display:block;border:0!important;outline:none!important;box-shadow:none!important;width:100%;height:100%;background:transparent;pointer-events:auto;opacity:0;transition:opacity .2s}
+.home-pet[data-pet-state="ready"] .home-pet-frame{opacity:1}
+@media(prefers-reduced-motion:reduce){.home-pet-frame{transition:none}.home-pet-actor{will-change:auto}}

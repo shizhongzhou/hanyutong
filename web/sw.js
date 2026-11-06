@@ -1,7 +1,7 @@
-/* 汉语熊猫 offline cache — only this app's scope and its own cache prefix. */
+/* 汉语熊 offline cache — only this app's scope and its own cache prefix. */
 const PREFIX = "hanyu-panda-";
-const CACHE = PREFIX + "v9";
-const CORE = ["./", "index.html", "css/app.css?v=9", "css/study.css?v=9", "css/translate.css?v=9", "js/translate.js?v=9", "css/ai.css?v=9", "js/ai.js?v=9", "js/ai-learning.js?v=9", "js/ai-pronunciation.js?v=9", "css/ai-pronunciation.css?v=9", "js/wordwall.js?v=9", "js/study.js?v=9", "data/hsk3/legacy-bridge.json", "js/content.js?v=9", "js/app.js?v=9", "js/hsk3.js?v=9", "data/hsk3/manifest.json", "data/hsk3/exams.json", "data/hsk3/vocabulary-1-01.json", "js/dictionary.js?v=9", "js/scenarios.js?v=9", "vendor/fflate.min.js?v=9", "js/library.js?v=9", "data/library-catalog.json", "vendor/pdfjs/legacy/build/pdf.min.mjs", "vendor/pdfjs/legacy/build/pdf.worker.min.mjs", "manifest.webmanifest", "vendor/hanzi-writer.min.js",
+const CACHE = PREFIX + "v13";
+const CORE = ["./", "index.html", "css/app.css?v=13", "css/home.css?v=13", "css/home-pet.css?v=13", "js/home-pet.js?v=13", "css/navigation.css?v=13", "css/study.css?v=13", "css/translate.css?v=13", "js/translate.js?v=13", "css/ai.css?v=13", "js/ai.js?v=13", "js/ai-learning.js?v=13", "js/ai-pronunciation.js?v=13", "css/ai-pronunciation.css?v=13", "js/wordwall.js?v=13", "js/study.js?v=13", "data/hsk3/legacy-bridge.json", "js/content.js?v=13", "js/app.js?v=13", "js/hsk3.js?v=13", "data/hsk3/manifest.json", "data/hsk3/exams.json", "data/hsk3/vocabulary-1-01.json", "js/dictionary.js?v=13", "js/scenarios.js?v=13", "vendor/fflate.min.js?v=13", "js/library.js?v=13", "data/library-catalog.json", "vendor/pdfjs/legacy/build/pdf.min.mjs", "vendor/pdfjs/legacy/build/pdf.worker.min.mjs", "manifest.webmanifest", "vendor/hanzi-writer.min.js",
   "icons/panda-180.png", "icons/panda-192.png", "icons/panda-512.png",
   "data/hsk1.json", "data/hsk2.json", "data/hsk3.json", "data/hsk4.json", "data/hsk5.json", "data/hsk6.json"];
 
@@ -15,6 +15,15 @@ self.addEventListener("fetch", e => {
   const own = url.href.startsWith(self.registration.scope);
   const fonts = /fonts\.(googleapis|gstatic)\.com$/.test(url.hostname);
   if (!own && !fonts) return;
+  // The 3D pet loads only after entering the classic home. Never substitute
+  // index.html for its iframe offline: that would mount the app inside itself.
+  if (own && url.pathname.includes("/assets/red-panda/")) {
+    e.respondWith(fetch(req).then(async res => {
+      if (res.ok) { try { const cache = await caches.open(CACHE); await cache.put(req, res.clone()); } catch (_) {} }
+      return res;
+    }).catch(async () => (await caches.match(req)) || Response.error()));
+    return;
+  }
   // Versioned dictionary shards are immutable and cached only after use.
   if (own && url.pathname.includes("/data/dictionary/") && url.pathname.endsWith(".gz")) {
     e.respondWith(caches.open(CACHE).then(async c => {

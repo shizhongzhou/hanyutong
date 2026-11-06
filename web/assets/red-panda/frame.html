@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self' blob:; img-src 'self' blob: data:; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Красная панда</title>
+  <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}#pet-canvas{display:block;width:100%;height:100%;touch-action:pan-y;cursor:pointer}html,body,#pet-canvas,#pet-canvas:focus,#pet-canvas:focus-visible{outline:none!important;border:0!important;box-shadow:none!important}#pet-bubble{display:none}</style>
+</head>
+<body>
+  <canvas id="pet-canvas" tabindex="0" role="button" aria-label="Поиграть с красной пандой"></canvas>
+  <div id="pet-bubble" hidden></div>
+  <script src="frame.js?v=4"></script>
+  <script src="pet.bundle.js?v=4"></script>
+</body>
+</html>

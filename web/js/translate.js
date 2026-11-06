@@ -5,6 +5,12 @@ const HanyuTranslate = (() => {
   const api = 'https://d5du0ehkavrgcuf0765l.3rspsmhh.apigw.yandexcloud.net';
   const defaults = { enabled: false, ocrEnabled: false, maxTextChars: 2000, maxImageBytes: 1572864 };
   const count = text => [...String(text || '')].length;
+  let draft = '';
+  function setDraft(text) {
+    if (typeof text !== 'string' || !text.trim() || count(text.trim()) > defaults.maxTextChars) return false;
+    draft = text.trim(); return true;
+  }
+  function takeDraft() { const value = draft; draft = ''; return value; }
   function error(code, status = 0) { return Object.assign(new Error(code), { code, status }); }
   const messages = {
     empty_text: 'Введите текст или распознайте его на фотографии.',
@@ -139,7 +145,7 @@ const HanyuTranslate = (() => {
     } catch (err) { throw err?.code ? err : error('invalid_image'); }
     finally { URL.revokeObjectURL(url); image.onload = image.onerror = null; if (canvas) canvas.width = canvas.height = 0; }
   }
-  return { defaults, count, message, config, translate, recognize, validateFile, imageSize, preparePhoto, request };
+  return { defaults, count, message, config, translate, recognize, validateFile, imageSize, preparePhoto, request, setDraft, takeDraft };
 })();
 
 async function pageTranslate(initialMode) {
@@ -166,13 +172,14 @@ async function pageTranslate(initialMode) {
     <div class="translate-source-box"><div class="translate-box-top"><label id="tr-source-label" for="tr-input">Исходный текст</label><button id="tr-clear" aria-label="Очистить текст">${ic('close')}</button></div><textarea id="tr-input" placeholder="Введите китайский или русский текст…" aria-describedby="tr-count tr-input-note" spellcheck="false"></textarea><div class="translate-box-bottom"><span id="tr-detected"></span><span id="tr-count">0 / 2 000</span></div></div>
     <p id="tr-input-note" class="hint translate-edit-note">Можно вставить текст из сообщения или учебника.</p>
     <button class="btn translate-go" id="tr-submit" disabled>Перевести</button>
-    <button class="btn ghost mt" id="tr-explain" disabled>Объяснить с пандой</button>
+    <button class="btn ghost mt" id="tr-explain" disabled>Объяснить с ИИ</button>
     <div id="tr-status" class="translate-status" role="status" aria-live="polite"></div>
     <section id="tr-result-panel" class="translate-result" aria-label="Результат перевода" hidden><div class="translate-result-top"><span id="tr-result-language">Перевод</span><span class="translate-machine">Машинный перевод</span></div><p id="tr-result-text" dir="auto"></p><div class="translate-result-actions"><button id="tr-copy">${ic('layers')} Копировать</button><button id="tr-speak">${ic('speaker')} Прослушать</button></div></section>
     <p class="hint translate-bottom-note">Перевод требует интернета. Текст отправляется в Yandex только по вашей команде; история переводов здесь не сохраняется.</p>
   </section>`;
   const el = id => $('#tr-' + id);
   const input = el('input'), source = el('source'), target = el('target');
+  input.value = HanyuTranslate.takeDraft();
   function stopSpeech() { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); }
   function clearResult() { result = null; detectedSource = ''; el('result-panel').hidden = true; el('detected').textContent = ''; stopSpeech(); }
   function cancel() { revision++; photoRevision++; controllers.forEach(controller => controller.abort()); controllers.clear(); busy = ''; }

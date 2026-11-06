@@ -1,0 +1,16 @@
+/* One floating navigation surface and a separate, always reachable search. */
+#app{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+.tabbar.floating-navigation{position:fixed;inset:auto 12px calc(14px + env(safe-area-inset-bottom));transform:none;width:auto;max-width:620px;margin:0 auto;padding:0;border:0;background:transparent;display:flex;align-items:center;gap:10px;box-shadow:none;z-index:40;pointer-events:none;height:72px;backdrop-filter:none}
+.floating-navigation[hidden]{display:none!important}
+.navigation-pill{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));flex:1;min-width:0;height:72px;padding:5px;border:1px solid #fff;border-radius:40px;background:#f8faff;box-shadow:none;backdrop-filter:none;pointer-events:auto}
+.floating-navigation .navigation-pill a{min-width:0;padding:7px 2px;gap:3px;display:flex;flex-direction:column;justify-content:center;align-items:center;color:#555e6b;font-size:10px;font-weight:600;line-height:1.2;border-radius:32px;min-height:0;transition:background .18s,color .18s}
+.floating-navigation .navigation-pill a .i{width:24px;height:24px;stroke-width:1.8}
+.floating-navigation .navigation-pill a[aria-current]{background:#e4ebf7;color:#536e9a}
+.floating-navigation a:after{display:none}
+.floating-navigation .navigation-search{display:grid;place-items:center;flex:0 0 70px;width:70px;height:70px;padding:0;border:2px solid #fff;border-radius:50%;color:#191b1e;background:#f8faff;box-shadow:none;backdrop-filter:none;pointer-events:auto}
+.floating-navigation .navigation-search .i{width:28px;height:28px;stroke-width:1.8}
+.floating-navigation .navigation-search[aria-current]{background:#e4ebf7;color:#536e9a}
+.floating-navigation a:focus-visible{outline:3px solid #76a8ec;outline-offset:3px}
+.panda-fab{display:none!important}
+@media(max-width:359px){.tabbar.floating-navigation{inset-inline:8px;gap:7px;height:66px}.navigation-pill{height:66px;padding:4px}.floating-navigation .navigation-search{width:60px;height:60px;flex-basis:60px}.floating-navigation .navigation-pill a{font-size:9px}.floating-navigation .navigation-pill a .i{width:22px;height:22px}}
+@media(prefers-reduced-motion:reduce){.floating-navigation .navigation-pill a{transition:none}}

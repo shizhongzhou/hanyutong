@@ -5,9 +5,15 @@ clips: Happy, Idle, Sleep, TailWag, Tap, Walk; textures and buffers are embedded
 pet.bundle.js contains the source package's Three.js/glTF runtime and pet
 controller. Local integration changes: exact-origin parent messages; manual
 animation scheduling; initially paused rendering; pause, single-frame rendering,
-side-facing orthographic composition, skinned-sole grounding, a 30fps rendering
-limit and explicit GPU resource disposal methods. Walk displacement follows the
-actual animation clock at the measured planted-foot speed (0.1455 world units/s).
+a 65-degree whole-model view, read-only skinned-sole grounding, a 30fps rendering
+limit and explicit GPU resource disposal methods. The six original GLB clips and
+all bone poses are unmodified; custom head/face turning and leg amplification are
+not used. Whole-model screen travel follows the support paws' original animation.
+The camera uses horizontal span 1.50, centered at zero. All 256 original keyframes
+and 42398 skinned vertices were measured: maximum horizontal radius across any
+body yaw is 0.644441; Y range is -0.027504 to 0.722090. The camera includes margin
+around the entire animated tail. There is no rendered floor, shadow or background;
+alpha remains zero outside the model. Rendering pixel ratio is 2.5 to 3.
 The host frame fixes the model path and permits only same-origin plus local blob
 connections (required for embedded textures), with no audio. Original materials
 and textures are preserved; missing base-color maps fail instead of showing white.

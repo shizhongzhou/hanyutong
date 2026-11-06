@@ -6,8 +6,9 @@ const sourceBank = require('./assessment-tasks.json');
 const DEFAULT_ASSESSMENT_MODEL = 'deepseek-v4-pro';
 const MAX_ANSWER_CHARS = 2000, MAX_ASSESSMENT_TOKENS = 2000;
 // Reserve storage may take up to 10s before inference. The deployment allows
-// 90s overall; clients need at least 75s for this bounded 55s provider request.
-const ASSESSMENT_TIMEOUT_MS = 55000;
+// 210s overall; clients allow 200s for this bounded 180s provider request.
+// Keepalive whitespace must not restart the deadline or trigger another call.
+const ASSESSMENT_TIMEOUT_MS = 180000;
 const ORIGINS = new Set(['https://shizhongzhou.github.io', 'http://127.0.0.1:8765', 'http://localhost:8765']);
 const MODES = new Set(['writing', 'speaking', 'grammar']);
 const readOption = value => typeof value === 'function' ? value() : value;
