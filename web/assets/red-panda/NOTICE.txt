@@ -1,0 +1,35 @@
+Source: user-provided RedPanda_Pet_App.zip, received 2026-11-06.
+red_panda.glb is copied without modification. It contains six actual animation
+clips: Happy, Idle, Sleep, TailWag, Tap, Walk; textures and buffers are embedded.
+
+pet.bundle.js contains the source package's Three.js/glTF runtime and pet
+controller. Local integration changes: exact-origin parent messages; manual
+animation scheduling; initially paused rendering; pause, single-frame rendering,
+side-facing orthographic composition, skinned-sole grounding, a 30fps rendering
+limit and explicit GPU resource disposal methods. Walk displacement follows the
+actual animation clock at the measured planted-foot speed (0.1455 world units/s).
+The host frame fixes the model path and permits only same-origin plus local blob
+connections (required for embedded textures), with no audio. Original materials
+and textures are preserved; missing base-color maps fail instead of showing white.
+The standalone HTML and
+platform integration examples are intentionally not included.
+
+Bundled Three.js license: MIT, copyright 2010-2026 Three.js Authors.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
