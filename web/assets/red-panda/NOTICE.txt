@@ -1,24 +1,33 @@
 Source: user-provided RedPanda_Pet_App.zip, received 2026-11-06.
-red_panda.glb is copied without modification. It contains six actual animation
-clips: Happy, Idle, Sleep, TailWag, Tap, Walk; textures and buffers are embedded.
+The original red_panda.glb is copied byte-for-byte (git blob SHA
+8aeb766f7ceb3218cd1358e6adaa2769c6e84b2c). It contains Happy, Idle, Sleep,
+TailWag, Tap and Walk clips; embedded textures and animation tracks are retained.
 
-pet.bundle.js contains the source package's Three.js/glTF runtime and pet
-controller. Local integration changes: exact-origin parent messages; manual
-animation scheduling; initially paused rendering; pause, single-frame rendering,
-a 65-degree whole-model view, read-only skinned-sole grounding, a 30fps rendering
-limit and explicit GPU resource disposal methods. The six original GLB clips and
-all bone poses are unmodified; custom head/face turning and leg amplification are
-not used. Whole-model screen travel follows the support paws' original animation.
-The camera uses horizontal span 1.50, centered at zero. All 256 original keyframes
-and 42398 skinned vertices were measured: maximum horizontal radius across any
-body yaw is 0.644441; Y range is -0.027504 to 0.722090. The camera includes margin
-around the entire animated tail. There is no rendered floor, shadow or background;
-alpha remains zero outside the model. Rendering pixel ratio is 2.5 to 3.
-The host frame fixes the model path and permits only same-origin plus local blob
-connections (required for embedded textures), with no audio. Original materials
-and textures are preserved; missing base-color maps fail instead of showing white.
-The standalone HTML and
-platform integration examples are intentionally not included.
+Verified local mesh repairs in pet-runtime.js apply only after the original
+vertex count, joint names and index fingerprint match. Twenty-two whisker-tip
+vertices (9741-9762), erroneously bound entirely to a front toe, inherit the
+existing chin/jaw/lip weights of their whisker root (9763). Exactly 280 triangles
+belonging to a dangling central under-tail fur flap and its attached tiny edges
+are omitted from the draw index. This is a bounded repair of the loaded mesh;
+the original GLB, all vertex positions, all four paw surfaces, textures and six
+animation clips remain unchanged. No head, face or leg bone angles are rewritten.
+
+pet-runtime.js also blends the original clip actions through the same frozen
+Idle frame before and after reactions. Sleep remains in its original breathing
+loop until interrupted; waking and stopping Walk settle back through Idle.
+Walking screen travel uses only the active native gait, not transition motion.
+
+The frame uses exact-origin parent messages, local asset loading, transparent
+background, no visible floor/shadow/control/outline, no audio, 30fps rendering
+and pixel ratio2.5-3. The orthographic camera has horizontal span1.50, ground at
+its bottom border. Grounding reads the complete sole samples; during Sleep a
+small whole-model local pitch (-2.65 degrees at full Sleep weight) aligns the
+original unequal fore/hind paw planes. This display correction fades with the
+Sleep blend and never changes a bone. Happy retains its native airborne motion.
+Missing base-color textures fail quietly; embedded JPEG blob connections are
+permitted by CSP. Hidden-page pause, static reduced-motion display, resource
+cleanup and bounded same-origin commands are provided by the frame adapter.
+The standalone HTML, preview images and platform examples are not included.
 
 Bundled Three.js license: MIT, copyright 2010-2026 Three.js Authors.
 

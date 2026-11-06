@@ -6,8 +6,8 @@ const vm = require('node:vm');
 const ROOT = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(ROOT, 'web/js/home-pet.js'), 'utf8');
 
-function fixture({ reduced = false, saveData = false, hidden = false } = {}) {
-  const timers = new Map(), frames = new Map(), intersections = [], resizes = []; let id = 0;
+function fixture({ reduced = false, saveData = false, hidden = false, random = () => 0 } = {}) {
+  const timers = new Map(), frames = new Map(), intersections = [], resizes = []; let id = 0, now = 1000;
   class Element extends EventTarget {
     constructor(tag = 'div') { super(); this.tagName = tag; this.children = []; this.dataset = {}; this.style = {}; this.attrs = {}; this.width = 344; this.hidden = false;
       if (tag === 'iframe') this.contentWindow = { messages: [], postMessage(value, origin) { this.messages.push({ value, origin }); } };
@@ -23,27 +23,37 @@ function fixture({ reduced = false, saveData = false, hidden = false } = {}) {
   class IntersectionObserver { constructor(callback) { this.callback = callback; this.disconnected = false; intersections.push(this); } observe() {} disconnect() { this.disconnected = true; } }
   class ResizeObserver { constructor(callback) { this.callback = callback; this.disconnected = false; resizes.push(this); } observe() {} disconnect() { this.disconnected = true; } }
   const window = Object.assign(new EventTarget(), { matchMedia: () => motion, IntersectionObserver, ResizeObserver });
-  const stableMath = Object.create(Math); stableMath.random = () => 0;
+  const stableMath = Object.create(Math); stableMath.random = random;
   const context = { window, document, navigator: { connection: { saveData } }, URL, AbortController, IntersectionObserver, ResizeObserver, Math: stableMath,
-    performance: { now: () => 1000 }, setTimeout: (fn, ms) => { timers.set(++id, { fn, ms }); return id; }, clearTimeout: id => timers.delete(id),
+    performance: { now: () => now }, setTimeout: (fn, ms) => { timers.set(++id, { fn, ms, due: now + ms }); return id; }, clearTimeout: id => timers.delete(id),
     requestAnimationFrame: fn => { frames.set(++id, fn); return id; }, cancelAnimationFrame: id => frames.delete(id), console };
   vm.runInNewContext(source, context);
   const container = new Element(), boundary = new Element('form'); boundary.value = 'keep my text';
   const mount = () => window.HomePet.mount({ container, boundary });
   const dispatch = (target, type, props = {}) => target.dispatchEvent(Object.assign(new Event(type), props));
   const visible = value => intersections.at(-1).callback([{ isIntersecting: value }]);
-  const run = ms => { for (const [key, timer] of [...timers]) if (timer.ms === ms) { timers.delete(key); timer.fn(); } };
+  const run = ms => { for (const [key, timer] of [...timers]) if (timer.ms === ms) { timers.delete(key); now = Math.max(now, timer.due); timer.fn(); } };
+  const advance = ms => {
+    const until = now + ms; let iterations = 0;
+    while (true) {
+      const next = [...timers].filter(([, timer]) => timer.due <= until).sort((a, b) => a[1].due - b[1].due)[0];
+      if (!next) break;
+      assert.ok(++iterations < 1000, 'timer loop must be bounded');
+      const [key, timer] = next; timers.delete(key); now = timer.due; timer.fn();
+    }
+    now = until;
+  };
   const frame = () => container.children[0]?.children.find(node => node.tagName === 'iframe');
   const message = (data, overrides = {}) => dispatch(window, 'message', { data, origin: 'https://app.test', source: frame()?.contentWindow, ...overrides });
   const load = () => { visible(true); run(120); message(JSON.stringify({ type: 'ready' })); return frame(); };
-  return { window, document, container, boundary, motion, mount, dispatch, visible, run, frame, message, load, timers, frames, intersections, resizes };
+  return { window, document, container, boundary, motion, mount, dispatch, visible, run, advance, frame, message, load, timers, frames, intersections, resizes };
 }
 
 test('3D resources load lazily only when the composer becomes visible and stay local with media permissions disabled', async () => {
   const f = fixture(), api = f.mount();
   assert.equal(f.frame(), undefined); assert.equal(f.container.dataset.petState, 'waiting');
   f.visible(true); assert.equal(f.frame(), undefined); f.run(120);
-  const frame = f.frame(); assert.equal(frame.src, 'https://app.test/hanyutong/assets/red-panda/frame.html?v=4');
+  const frame = f.frame(); assert.equal(frame.src, 'https://app.test/hanyutong/assets/red-panda/frame.html?v=6');
   assert.equal(new URL('red_panda.glb', frame.src).href, 'https://app.test/hanyutong/assets/red-panda/red_panda.glb');
   assert.match(frame.attrs.allow, /autoplay 'none'/); assert.match(frame.attrs.allow, /microphone 'none'/);
   assert.equal(frame.tabIndex, 0); assert.deepEqual(f.container.children[0].children.map(child => child.tagName), ['iframe']);
@@ -123,7 +133,7 @@ test('resize clamps the pet within the input edge and unknown actions do not rea
 
 test('horizontal travel follows only trusted animation-clock steps and ends exactly at its destination', async () => {
   const f = fixture(), api = f.mount(), frame = f.load(); await api.ready;
-  f.run(9000);
+  assert.equal(api.play('Walk'), true);
   assert.equal(frame.contentWindow.messages.at(-1).value.name, 'Walk');
   assert.equal(f.container.children[0].style.transform, 'translateX(152px)', 'starting an animation does not independently slide the actor');
   for (const pixels of [-1, 100, NaN]) f.message({ type: 'walk-step', pixels });
@@ -136,10 +146,105 @@ test('horizontal travel follows only trusted animation-clock steps and ends exac
   api.destroy();
 });
 
+test('every random bag uses all six original actions once without starving any action', async () => {
+  const f = fixture(), api = f.mount(), frame = f.load(); await api.ready;
+  const expected = ['Happy', 'Idle', 'Sleep', 'TailWag', 'Tap', 'Walk'];
+  const rounds = [];
+  for (let round = 0; round < 3; round++) {
+    const bag = [];
+    for (let i = 0; i < 6; i++) {
+      f.run(9000);
+      const action = frame.contentWindow.messages.at(-1).value.name; bag.push(action);
+      assert.ok(expected.includes(action));
+      if (action === 'Walk') f.run(20000);
+      if (action === 'Sleep') {
+        assert.equal([...f.timers.values()].length, 1);
+        assert.equal([...f.timers.values()][0].ms, 60000);
+        f.run(60000);
+        assert.equal(frame.contentWindow.messages.at(-1).value.name, 'Tap');
+      }
+    }
+    assert.deepEqual([...bag].sort(), expected); rounds.push(bag);
+  }
+  for (let i = 1; i < rounds.length; i++) assert.notEqual(rounds[i][0], rounds[i - 1].at(-1));
+  assert.equal(f.timers.size, 1); api.destroy(); assert.equal(f.timers.size, 0);
+});
+
+test('sleep lasts 60 to 120 seconds then wakes once using the native Tap reaction', async () => {
+  for (const random of [() => 0, () => 0.999999]) {
+    const f = fixture({ random }), api = f.mount(), frame = f.load(); await api.ready;
+    api.play('Sleep');
+    const delay = [...f.timers.values()][0].ms;
+    assert.ok(delay >= 60000 && delay <= 120000);
+    const before = frame.contentWindow.messages.length;
+    f.advance(delay - 1); assert.equal(frame.contentWindow.messages.length, before);
+    f.advance(1);
+    assert.equal(frame.contentWindow.messages.at(-1).value.name, 'Tap');
+    assert.equal(frame.contentWindow.messages.filter(message => message.value.type === 'play' && message.value.name === 'Tap').length, 1);
+    assert.equal(f.timers.size, 1); api.destroy();
+  }
+});
+
+test('sleep preserves remaining visible time across background, manual pause and BFCache', async () => {
+  const f = fixture(), api = f.mount(), frame = f.load(); await api.ready; api.play('Sleep');
+  f.advance(20000);
+  f.document.hidden = true; f.dispatch(f.document, 'visibilitychange');
+  assert.equal(f.timers.size, 0); f.advance(300000);
+  f.document.hidden = false; f.dispatch(f.document, 'visibilitychange');
+  assert.equal([...f.timers.values()][0].ms, 40000);
+  f.advance(10000); api.pause(); assert.equal(f.timers.size, 0); f.advance(100000); api.resume();
+  assert.equal([...f.timers.values()][0].ms, 30000);
+  f.advance(5000); f.dispatch(f.window, 'pagehide', { persisted: true }); f.advance(100000);
+  f.dispatch(f.window, 'pageshow', { persisted: true });
+  assert.equal([...f.timers.values()][0].ms, 25000);
+  assert.equal(frame.contentWindow.messages.filter(message => message.value.type === 'play' && message.value.name === 'Sleep').length, 1, 'resume must not restart sleep animation');
+  f.advance(24999); assert.equal(frame.contentWindow.messages.at(-1).value.type, 'resume');
+  f.advance(1); assert.equal(frame.contentWindow.messages.at(-1).value.name, 'Tap'); api.destroy();
+});
+
+test('a native click wakes sleep early, cancels its old deadline and keeps one future action', async () => {
+  const f = fixture(), api = f.mount(), frame = f.load(); await api.ready; api.play('Sleep');
+  f.advance(10000); const before = frame.contentWindow.messages.length;
+  f.message({ type: 'wake' }); f.message({ type: 'tap' });
+  assert.equal(frame.contentWindow.messages.length, before, 'native frame owns the immediate tap animation');
+  assert.equal(f.timers.size, 1); assert.equal([...f.timers.values()][0].ms, 9000);
+  f.advance(9000); assert.equal(frame.contentWindow.messages.at(-1).value.name, 'TailWag');
+  api.destroy(); f.advance(200000); assert.equal(f.timers.size, 0);
+});
+
+test('reduced motion suspends sleep without timer buildup and resumes its remaining duration', async () => {
+  const f = fixture(), api = f.mount(), frame = f.load(); await api.ready; api.play('Sleep'); f.advance(10000);
+  f.dispatch(f.motion, 'change', { matches: true });
+  assert.equal(f.timers.size, 0); assert.equal(frame.contentWindow.messages.at(-1).value.type, 'still');
+  // The real v4 frame implements still with pet.play('Idle'), whose native
+  // wake() emits this notification even though the user did not click.
+  f.message({ type: 'wake' });
+  f.advance(200000);
+  for (let i = 0; i < 5; i++) { f.visible(false); f.visible(true); }
+  assert.equal(f.timers.size, 0);
+  f.dispatch(f.motion, 'change', { matches: false });
+  assert.equal([...f.timers.values()][0].ms, 50000);
+  assert.equal(frame.contentWindow.messages.at(-2).value.name, 'Sleep');
+  f.message({ type: 'wake' }); // A delayed programmatic message is harmless too.
+  assert.equal([...f.timers.values()][0].ms, 50000);
+  f.advance(50000); assert.equal(frame.contentWindow.messages.at(-1).value.name, 'Tap'); api.destroy();
+});
+
+test('pausing a walk preserves its destination and rejects queued movement until resumed', async () => {
+  const f = fixture(), api = f.mount(), frame = f.load(); await api.ready; api.play('Walk');
+  f.message({ type: 'walk-step', pixels: 5 }); const position = f.container.children[0].style.transform;
+  f.advance(5000); api.pause(); f.message({ type: 'walk-step', pixels: 5 });
+  assert.equal(f.container.children[0].style.transform, position); assert.equal(f.timers.size, 0);
+  f.advance(100000); api.resume(); assert.equal([...f.timers.values()][0].ms, 15000);
+  assert.equal(frame.contentWindow.messages.filter(message => message.value.name === 'Walk').length, 1);
+  f.message({ type: 'walk-step', pixels: 5 }); assert.notEqual(f.container.children[0].style.transform, position);
+  api.destroy(); assert.equal(f.timers.size, 0);
+});
+
 test('direct canvas interaction stays bounded in reduced motion and resets a cancelled drag', () => {
   const canvas = new EventTarget(), window = new EventTarget(), parent = {}, calls = [], timers = new Map(); let id = 0;
   let blurred = false; canvas.blur = () => { blurred = true; };
-  Object.assign(window, { parent, pet: { setPaused(value) { calls.push(['paused', value]); }, play(name) { calls.push(['play', name]); }, renderOnce() {},
+  Object.assign(window, { parent, pet: { setPaused(value) { calls.push(['paused', value]); }, play(name) { calls.push(['play', name]); }, resetToBase() { calls.push(['base']); }, renderOnce() {},
     lookAt(value) { calls.push(['look', value]); }, setFacing(value) { calls.push(['facing', value]); }, happy() { calls.push(['happy']); } } });
   parent.postMessage = () => {};
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'web/assets/red-panda/frame.js'), 'utf8'), {

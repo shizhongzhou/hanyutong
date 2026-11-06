@@ -12,7 +12,7 @@ window.PET_CONFIG = Object.freeze({ modelUrl: 'red_panda.glb', sleepAfter: 90, w
   function interact() {
     if (destroyed || document.hidden || !window.pet) return;
     clearTimeout(timer); window.pet.setPaused(false);
-    if (reduced || paused) timer = setTimeout(() => { window.pet.play('Idle', true); window.pet.setPaused(true); window.pet.renderOnce(); }, 1450);
+    if (reduced || paused) timer = setTimeout(() => { window.pet.resetToBase(); window.pet.setPaused(true); window.pet.renderOnce(); }, 1450);
   }
   canvas.addEventListener('pointerup', interact);
   for (const type of ['pointercancel', 'pointerleave']) canvas.addEventListener(type, () => { window.pet?.cancelPointer?.(); window.pet?.lookAt(null); });
@@ -27,7 +27,7 @@ window.PET_CONFIG = Object.freeze({ modelUrl: 'red_panda.glb', sleepAfter: 90, w
     if (message.type === 'destroy') { destroyed = true; clearTimeout(timer); pet.destroy(); return; }
     if (message.type === 'pause') { paused = true; clearTimeout(timer); pet.setPaused(true); return; }
     if (message.type === 'resume') { paused = false; reduced = false; pet.setPaused(false); return; }
-    if (message.type === 'still') { paused = true; reduced = true; clearTimeout(timer); pet.play('Idle', true); pet.setPaused(true); pet.renderOnce(); return; }
+    if (message.type === 'still') { paused = true; reduced = true; clearTimeout(timer); pet.resetToBase(); pet.setPaused(true); pet.renderOnce(); return; }
     if (message.type === 'look-reset') { pet.lookAt(null); return; }
     if (message.type === 'look' && Number.isFinite(message.x) && Number.isFinite(message.y)) {
       if (!paused) pet.lookAt(Math.max(0, Math.min(1, message.x)), Math.max(0, Math.min(1, message.y)));
@@ -42,7 +42,7 @@ window.PET_CONFIG = Object.freeze({ modelUrl: 'red_panda.glb', sleepAfter: 90, w
       pet.setPaused(false);
       if (limited || message.name === 'Walk') {
         const duration = limited ? 1450 : Math.max(300, Math.min(20000, Number(message.duration) || 1200));
-        timer = setTimeout(() => { pet.play('Idle', true); pet.setPaused(paused || limited); pet.renderOnce(); }, duration);
+        timer = setTimeout(() => { pet.resetToBase(); pet.setPaused(paused || limited); pet.renderOnce(); }, duration);
       }
     }
   });

@@ -3,9 +3,10 @@
 // visible classic composer. Reduced-motion/save-data keeps the loaded model still.
 window.HomePet = (() => {
   const scriptURL = document.currentScript?.src || new URL('js/home-pet.js', document.baseURI).href;
-  const FRAME_URL = new URL('../assets/red-panda/frame.html?v=4', scriptURL).href;
+  const FRAME_URL = new URL('../assets/red-panda/frame.html?v=6', scriptURL).href;
   const ORIGIN = new URL(FRAME_URL).origin, WIDTH = 180;
   const actions = ['Tap', 'TailWag', 'Happy', 'Sleep'];
+  const automaticActions = ['Idle', 'TailWag', 'Walk', 'Happy', 'Tap', 'Sleep'];
   let current = null;
   function mount({ container, boundary = container } = {}) {
     unmount();
@@ -14,7 +15,8 @@ window.HomePet = (() => {
     const controller = new AbortController(), signal = controller.signal;
     let destroyed = false, loaded = false, failed = false, suspended = false, frame = null, visible = !window.IntersectionObserver;
     let userPaused = false, saveData = !!navigator.connection?.saveData, reduced = !!motion?.matches || saveData;
-    let loadTimer = null, idleTimer = null, actionTimer = null, walk = null, lastInteraction = performance.now();
+    let loadTimer = null, idleTimer = null, actionTimer = null, scheduled = null, walk = null;
+    let actionBag = [], lastAutomatic = null, currentAction = 'Idle', restorePose = false;
     let x = 0, maxX = 0, positioned = false, clickCount = 0, pendingAction = null, observer = null, resizeObserver = null;
     let resolveReady;
     const ready = new Promise(resolve => { resolveReady = resolve; });
@@ -30,33 +32,79 @@ window.HomePet = (() => {
       setPosition();
     }
     function stopWalk() { walk = null; }
-    function scheduleAction() {
-      clearTimeout(actionTimer); actionTimer = null;
-      if (!active() || reduced) return;
+    function clearSchedule() { clearTimeout(actionTimer); actionTimer = null; scheduled = null; }
+    function suspendSchedule() {
+      if (actionTimer !== null) {
+        clearTimeout(actionTimer); actionTimer = null;
+        if (scheduled) scheduled.remaining = Math.max(0, scheduled.deadline - performance.now());
+      }
+    }
+    function armSchedule() {
+      if (!scheduled || actionTimer !== null || !active() || reduced) return;
+      scheduled.deadline = performance.now() + scheduled.remaining;
       actionTimer = setTimeout(() => {
-        if (!active() || reduced) return;
-        if (performance.now() - lastInteraction > 90000) { post('play', { name: 'Sleep' }); return; }
-        if (maxX > 65 && Math.random() < .45) {
-          const target = x > maxX / 2 ? Math.max(5, x - 40 - Math.random() * 35) : Math.min(maxX - 5, x + 40 + Math.random() * 35);
-          stopWalk(); walk = { target };
-          // The frame cancels the animated support paw's backward displacement.
-          // Leg amplitude and screen travel therefore remain coupled.
-          post('play', { name: 'Walk', direction: Math.sign(target - x), duration: 20000 });
-          actionTimer = setTimeout(() => { stopWalk(); post('play', { name: 'Idle' }); scheduleAction(); }, 20000);
-        } else { post('play', { name: Math.random() < .7 ? 'TailWag' : 'Happy' }); scheduleAction(); }
-      }, 9000 + Math.random() * 6000);
+        actionTimer = null;
+        if (!scheduled) return;
+        if (!active() || reduced) { scheduled.remaining = 0; return; }
+        const kind = scheduled.kind; scheduled = null;
+        if (kind === 'wake') perform('Tap');
+        else if (kind === 'walk-end') finishWalk();
+        else perform(nextAutomatic());
+      }, scheduled.remaining);
+    }
+    function schedule(kind, delay) {
+      clearSchedule(); scheduled = { kind, remaining: delay }; armSchedule();
+    }
+    function scheduleAction() { schedule('next', 9000 + Math.random() * 6000); }
+    function nextAutomatic() {
+      if (!actionBag.length) {
+        actionBag = [...automaticActions];
+        for (let i = actionBag.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [actionBag[i], actionBag[j]] = [actionBag[j], actionBag[i]];
+        }
+        if (actionBag[0] === lastAutomatic) [actionBag[0], actionBag[1]] = [actionBag[1], actionBag[0]];
+      }
+      lastAutomatic = actionBag.shift(); return lastAutomatic;
+    }
+    function finishWalk() {
+      stopWalk(); clearSchedule(); currentAction = 'Idle';
+      post('play', { name: 'Idle' }); scheduleAction();
+    }
+    function perform(name) {
+      stopWalk(); clearSchedule(); currentAction = name;
+      if (name === 'Walk' && maxX > 10 && !reduced && !userPaused) {
+        const padding = Math.min(5, maxX / 4);
+        const target = x > maxX / 2 ? Math.max(padding, x - 40 - Math.random() * 35) : Math.min(maxX - padding, x + 40 + Math.random() * 35);
+        walk = { target };
+        // The frame's planted-paw motion is the only source of horizontal travel.
+        post('play', { name: 'Walk', direction: Math.sign(target - x), duration: 20000 });
+        schedule('walk-end', 20000);
+      } else {
+        if (name === 'Walk') currentAction = name = 'Idle'; // Too little edge space: no sliding in place.
+        post('play', { name, reduced: reduced || userPaused });
+        if (name === 'Sleep') schedule('wake', 60000 + Math.floor(Math.random() * 60001));
+        else scheduleAction();
+      }
     }
     function sync() {
-      clearTimeout(actionTimer); actionTimer = null;
       post('look-reset');
-      if (!active()) { stopWalk(); post('pause'); }
-      else if (reduced) { stopWalk(); post('still'); }
-      else { post('play', { name: 'Idle' }); post('resume'); scheduleAction(); }
+      if (!active()) { suspendSchedule(); post('pause'); }
+      else if (reduced) { suspendSchedule(); restorePose = true; post('still'); }
+      else {
+        if (restorePose) {
+          restorePose = false;
+          if (walk) post('play', { name: 'Walk', direction: Math.sign(walk.target - x), duration: 20000 });
+          else post('play', { name: currentAction });
+        }
+        post('resume');
+        if (scheduled) armSchedule(); else scheduleAction();
+      }
       if (!loaded && !failed && !suspended && visible && !document.hidden) deferLoad();
     }
     function fail() {
       if (destroyed || failed) return;
-      failed = true; loaded = false; clearTimeout(loadTimer); clearTimeout(actionTimer); stopWalk(); post('destroy');
+      failed = true; loaded = false; clearTimeout(loadTimer); clearSchedule(); stopWalk(); post('destroy');
       frame?.remove(); frame = null; container.dataset.petState = 'unavailable';
       actor.hidden = true;
       resolveReady(false);
@@ -73,20 +121,17 @@ window.HomePet = (() => {
     }
     function deferLoad() { if (idleTimer !== null || frame || failed || destroyed) return; idleTimer = setTimeout(load, 120); }
     function play(name = actions[clickCount++ % actions.length]) {
-      if (destroyed || failed || !['Idle', 'Tap', 'TailWag', 'Happy', 'Sleep'].includes(name)) return false;
-      lastInteraction = performance.now();
+      if (destroyed || failed || !automaticActions.includes(name)) return false;
       if (!loaded) { pendingAction = name; deferLoad(); return true; }
       if (!visible || document.hidden) return false;
-      stopWalk(); clearTimeout(actionTimer); actionTimer = null;
-      post('play', { name, reduced: reduced || userPaused });
-      if (!reduced && !userPaused && name !== 'Sleep') scheduleAction();
+      perform(name);
       return true;
     }
     function pause() { userPaused = true; sync(); }
     function resume() { userPaused = false; sync(); }
     function destroy() {
       if (destroyed) return;
-      post('destroy'); destroyed = true; controller.abort(); clearTimeout(loadTimer); clearTimeout(idleTimer); clearTimeout(actionTimer); stopWalk();
+      post('destroy'); destroyed = true; controller.abort(); clearTimeout(loadTimer); clearTimeout(idleTimer); clearSchedule(); stopWalk();
       observer?.disconnect(); resizeObserver?.disconnect(); motion?.removeEventListener?.('change', onMotion);
       frame?.remove(); frame = null; actor.remove(); delete container.dataset.petState; resolveReady(false);
       if (current === api) current = null;
@@ -100,10 +145,14 @@ window.HomePet = (() => {
       if (value.type === 'walk-step' && walk && active() && !reduced && Number.isFinite(value.pixels) && value.pixels > 0 && value.pixels <= 5) {
         const distance = walk.target - x;
         x = Math.max(0, Math.min(maxX, x + Math.sign(distance) * Math.min(Math.abs(distance), value.pixels))); setPosition();
-        if (Math.abs(walk.target - x) < .05) { stopWalk(); clearTimeout(actionTimer); post('play', { name: 'Idle' }); scheduleAction(); }
+        if (Math.abs(walk.target - x) < .05) finishWalk();
       }
       if (['tap', 'doubleTap', 'interact'].includes(value.type)) {
-        lastInteraction = performance.now(); stopWalk(); clearTimeout(actionTimer); scheduleAction();
+        // The original frame already plays the native tap/wake reaction.
+        // Standalone wake also comes from programmatic still/Idle changes, so
+        // only explicit input messages cancel a saved sleep deadline.
+        currentAction = value.type === 'doubleTap' || value.type === 'interact' ? 'Happy' : 'Tap';
+        stopWalk(); clearSchedule(); scheduleAction();
       }
       if (value.type === 'ready' && !loaded) {
         clearTimeout(loadTimer); loaded = true; container.dataset.petState = 'ready'; resolveReady(true); sync();
