@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Hanyutong development API
-  version: 3.0.0
+  version: 5.0.0
 paths:
   /health:
     get:
@@ -172,3 +172,150 @@ paths:
       responses:
         '200':
           description: Translation service response
+  /ai/config:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: AI learning service response
+    options:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: AI learning service response
+  /ai/chat:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: AI learning service response
+    options:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: AI learning service response
+  /ai/speech:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: AI learning service response
+    options:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: AI learning service response
+  /ai/transcribe:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: AI learning service response
+    options:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: AI learning service response
+  /ai/tasks:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: Original practice tasks and scoring criteria
+    options:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '204':
+          description: Practice task preflight
+  /ai/assess:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: Practice assessment within the shared usage budget
+    options:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '204':
+          description: Practice assessment preflight
+  /ai/feedback:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '200':
+          description: Explicitly consented private feedback receipt
+    options:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        payload_format_version: "1.0"
+        function_id: d4echa2sl4p7hg71dle1
+        tag: $latest
+        service_account_id: ajee4et21v76el2nki70
+      responses:
+        '204':
+          description: Feedback preflight

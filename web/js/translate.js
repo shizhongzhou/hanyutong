@@ -158,7 +158,7 @@ async function pageTranslate(initialMode) {
       <input id="tr-camera-file" class="translate-file" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="environment" tabindex="-1" aria-label="Сделать фотографию">
       <input id="tr-gallery-file" class="translate-file" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" tabindex="-1" aria-label="Выбрать фотографию">
       <div id="tr-photo-preview" class="translate-photo-preview" hidden><img id="tr-photo-image" alt="Выбранная фотография для распознавания"><button id="tr-remove-photo" aria-label="Убрать фотографию">${ic('close')}</button><span id="tr-photo-size"></span></div>
-      <p class="hint translate-photo-notice">После нажатия «Распознать текст» фотография отправится в Yandex для распознавания. Фото не сохраняется в вашей библиотеке.</p>
+      <p class="hint translate-photo-notice">После нажатия «Распознать текст» фотография отправится в Yandex AI Studio (Qwen) для распознавания. Фото не сохраняется в вашей библиотеке.</p>
       <button class="btn ghost" id="tr-recognize" disabled>Распознать текст</button>
     </div>
     <div id="tr-service" class="translate-service" role="status">Подключаем переводчик…</div>
@@ -166,6 +166,7 @@ async function pageTranslate(initialMode) {
     <div class="translate-source-box"><div class="translate-box-top"><label id="tr-source-label" for="tr-input">Исходный текст</label><button id="tr-clear" aria-label="Очистить текст">${ic('close')}</button></div><textarea id="tr-input" placeholder="Введите китайский или русский текст…" aria-describedby="tr-count tr-input-note" spellcheck="false"></textarea><div class="translate-box-bottom"><span id="tr-detected"></span><span id="tr-count">0 / 2 000</span></div></div>
     <p id="tr-input-note" class="hint translate-edit-note">Можно вставить текст из сообщения или учебника.</p>
     <button class="btn translate-go" id="tr-submit" disabled>Перевести</button>
+    <button class="btn ghost mt" id="tr-explain" disabled>Объяснить с пандой</button>
     <div id="tr-status" class="translate-status" role="status" aria-live="polite"></div>
     <section id="tr-result-panel" class="translate-result" aria-label="Результат перевода" hidden><div class="translate-result-top"><span id="tr-result-language">Перевод</span><span class="translate-machine">Машинный перевод</span></div><p id="tr-result-text" dir="auto"></p><div class="translate-result-actions"><button id="tr-copy">${ic('layers')} Копировать</button><button id="tr-speak">${ic('speaker')} Прослушать</button></div></section>
     <p class="hint translate-bottom-note">Перевод требует интернета. Текст отправляется в Yandex только по вашей команде; история переводов здесь не сохраняется.</p>
@@ -182,6 +183,7 @@ async function pageTranslate(initialMode) {
     el('count').textContent = `${length.toLocaleString('ru-RU')} / ${settings.maxTextChars.toLocaleString('ru-RU')}`;
     el('count').className = length > settings.maxTextChars ? 'is-over-limit' : '';
     el('submit').disabled = configuring || !!busy || !settings.enabled || !valid;
+    el('explain').disabled = !!busy || !valid || typeof HanyuAI === 'undefined';
     el('submit').textContent = busy === 'translate' ? 'Переводим…' : 'Перевести';
     el('recognize').disabled = configuring || !!busy || !settings.ocrEnabled || !photo;
     el('recognize').textContent = busy === 'recognize' ? 'Распознаём…' : 'Распознать текст';
@@ -216,6 +218,11 @@ async function pageTranslate(initialMode) {
     if (oldResult) input.value = oldResult; changed(); input.focus();
   };
   el('clear').onclick = () => { input.value = ''; changed(); input.focus(); };
+  el('explain').onclick = () => {
+    const text = input.value.trim();
+    if (!text || HanyuTranslate.count(text) > settings.maxTextChars || typeof HanyuAI === 'undefined') return;
+    HanyuAI.setDraft(text, 'explain'); location.hash = '#/ai/explain';
+  };
   el('reconnect').onclick = loadConfig;
   function removePhoto() {
     photoRevision++; if (previewUrl) URL.revokeObjectURL(previewUrl); previewUrl = ''; photo = null;

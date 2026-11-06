@@ -132,6 +132,8 @@ function createTranslationHandler({
   fetcher = fetch,
   enabled = () => process.env.TRANSLATION_ENABLED === 'true',
   ocrEnabled = () => process.env.OCR_ENABLED === 'true',
+  recognizeImage,
+  maxImageDimension = 0,
   reserveUsage,
   now = () => Date.now(),
   providerTimeoutMs = 25000
@@ -167,6 +169,10 @@ function createTranslationHandler({
     try {
       const body = readBody(event, incoming);
       input = photo ? validatePhoto(body) : validateText(body);
+      if (photo && maxImageDimension > 0) {
+        const size = imageDimensions(Buffer.from(input.image, 'base64'), input.mimeType);
+        if (Math.max(size.width, size.height) > maxImageDimension) throw new RequestError(413, 'image_too_large');
+      }
     } catch (error) {
       return response(error instanceof RequestError ? error.status : 400, { error: error instanceof RequestError ? error.code : 'invalid_input' });
     }
@@ -185,6 +191,9 @@ function createTranslationHandler({
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
     try {
+      if (photo && typeof recognizeImage === 'function') {
+        return response(200, await recognizeImage(input, { token, signal: controller.signal }));
+      }
       const payload = photo
         ? { content: input.image, mimeType: input.mimeType === 'image/jpeg' ? 'JPEG' : 'PNG', languageCodes: input.language === 'ru' ? ['ru'] : ['zh', 'en', 'ru'], model: 'page' }
         : { texts: [input.text], targetLanguageCode: input.target, format: 'PLAIN_TEXT', ...(input.source === 'auto' ? {} : { sourceLanguageCode: input.source }) };
@@ -211,4 +220,4 @@ function createTranslationHandler({
 }
 
 module.exports = { createTranslationHandler, validateText, validatePhoto, imageDimensions, extractRecognizedText,
-  MAX_TEXT_CHARS, MAX_IMAGE_BYTES, MAX_BODY_BYTES, MAX_PROVIDER_BYTES, TEXT_URL, OCR_URL };
+  boundedJSON, RequestError, MAX_TEXT_CHARS, MAX_IMAGE_BYTES, MAX_BODY_BYTES, MAX_PROVIDER_BYTES, TEXT_URL, OCR_URL };

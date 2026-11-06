@@ -73,7 +73,7 @@ const allWords = () => Promise.all([1, 2, 3, 4, 5, 6].map(level)).then(a => a.fl
 const legacyAliases = new Map(Object.entries(S.unifiedLegacyAliases || {})), legacyMetadata = new Map(), canonicalWords = new Map();
 let unifiedCourseLoading = null;
 const canonicalKey = key => legacyAliases.get(key) || key;
-const wordKey = w => w.curriculum === "hsk3" ? w.id : canonicalKey(w.hz);
+const wordKey = w => w.curriculum === "hsk3" || (w.source === "ai" && /^ai:/.test(w.id)) ? w.id : canonicalKey(w.hz);
 function progressRecord(key) {
   key = canonicalKey(key);
   if (S.srs[key]) return S.srs[key];
@@ -97,6 +97,7 @@ function progressEntries() {
   return [...entries.values()];
 }
 function studyWord(word) {
+  if (word.source === "ai" && /^ai:/.test(word.id)) return word;
   if (word.curriculum === "hsk3") { canonicalWords.set(word.id, word); return word; }
   const key = canonicalKey(word.hz), meta = legacyMetadata.get(word.hz);
   if (key === word.hz) return word;
@@ -156,7 +157,7 @@ const hsk3Level = () => {
   return ["1", "2", "3", "4", "5", "6", "7-9"].includes(String(value)) ? String(value) : "1";
 };
 const levelLabel = lv => String(lv).replace("7-9", "7–9");
-const wordLabel = word => { const w = studyWord(word); return w.curriculum === "hsk3" ? `${w.isSupplement || w.official === false ? "Дополнительно · этап" : "HSK ·"} ${levelLabel(w.level ?? w.lv)}` : w.lv ? "Учебное слово" : "Большой словарь"; };
+const wordLabel = word => { const w = studyWord(word); return w.source === "ai" ? "Из диалога с AI" : w.curriculum === "hsk3" ? `${w.isSupplement || w.official === false ? "Дополнительно · этап" : "HSK ·"} ${levelLabel(w.level ?? w.lv)}` : w.lv ? "Учебное слово" : "Большой словарь"; };
 const currentCourseName = () => `HSK · ${levelLabel(hsk3Level())}`;
 const coursePath = view => `#/hsk3/${hsk3Level()}/${view}`;
 const short = ru => ru.split(/[;\n]/)[0].trim();
@@ -252,7 +253,7 @@ async function pageHome() {
     ${row(coursePath("quiz"), "check", "Ежедневный тест", `Сегодня верных ответов: ${d.correct}`)}
     ${row("#/stages", "layers", "Выбрать этап", "Единый курс HSK · уровни 1–6 и 7–9")}</div>
     <div class="tiles"><a href="#/dict">${ic("search")}Словарь</a><a href="#/translate">${ic("translate")}Переводчик</a><a href="#/translate/photo">${ic("camera")}Перевод по фото</a></div>
-    <div class="list">${row("#/book", "bookmark", "Мой словарик", "Сохранённые слова")}${row("#/stats", "chart", "Статистика", "Ваш прогресс")}</div>
+    <div class="list">${row("#/ai", "chat", "AI-собеседник", "Разговор по-китайски и объяснения по-русски")}${row("#/book", "bookmark", "Мой словарик", "Сохранённые слова")}${row("#/stats", "chart", "Статистика", "Ваш прогресс")}</div>
     <div class="section"><h2>Понемногу, но регулярно.</h2></div>
     <div class="stats"><div><b>${studyDays()}</b><small>дней учёбы</small></div><div><b>${accuracy()}%</b><small>точность</small></div><div><b>${S.stats.correct}</b><small>верных ответов</small></div></div>
     <div class="section"><h2>Фраза дня</h2><a href="#/dialogues">Все диалоги ›</a></div><div id="pod"></div></section>`;
@@ -267,7 +268,8 @@ function pageLearn() {
     <div class="section"><h2>Слова и экзамен</h2><a href="#/stages">Выбрать этап ›</a></div>
     <div class="list">${row(coursePath("study"), "cards", "Карточки", "Новые слова и интервальное повторение")}${row(coursePath("vocab"), "book", "Все слова этапа", "Пиньинь и русские значения")}${row(coursePath("quiz"), "check", "Тренировка слов", "Китайские слова и русские значения")}${row(coursePath("exam"), "trophy", "Форматы заданий HSK", "Структура экзамена и учебные упражнения")}</div>
     <div class="section"><h2>Переводчик</h2></div><div class="grid2"><a href="#/translate"><span class="ic">${ic("translate")}</span><b>Перевести текст</b><small>Китайский ↔ русский</small></a><a href="#/translate/photo"><span class="ic">${ic("camera")}</span><b>Перевести по фото</b><small>Камера или готовый снимок</small></a></div>
-    <div class="section"><h2>Практика языка</h2></div><p class="hint">Занимайтесь произношением, разбирайте грамматику и используйте слова в разговоре.</p>
+    <div class="section"><h2>AI-собеседник</h2></div><div class="grid2"><a href="#/ai"><span class="ic">${ic("chat")}</span><b>Разговорная практика</b><small>Ситуации из жизни · HSK 1–9</small></a><a href="#/ai/explain"><span class="ic">${ic("book")}</span><b>Понятное объяснение</b><small>По-русски, с китайскими примерами</small></a></div>
+    <div class="list mt">${row("#/assess/writing", "pen", "Проверить письменный ответ", "Критерии, исправления и пример")}${row("#/assess/speaking", "mic", "Устный ответ", "Запись, текст и разбор содержания")}${row("#/pronunciation", "wave", "Мои тоны", "Записать слог и увидеть движение голоса")}</div><div class="section"><h2>Практика языка</h2></div><p class="hint">Занимайтесь произношением, разбирайте грамматику и используйте слова в разговоре.</p>
     <div class="grid2"><a href="#/pinyin"><span class="ic">${ic("wave")}</span><b>Пиньинь и тоны</b></a><a href="#/grammar"><span class="ic">${ic("pen")}</span><b>Грамматика</b></a><a href="#/dialogues"><span class="ic">${ic("chat")}</span><b>Диалоги</b></a><a href="#/reading"><span class="ic">${ic("read")}</span><b>Чтение</b></a><a href="#/shadow"><span class="ic">${ic("mic")}</span><b>Повторение вслух</b></a><a href="#/tones"><span class="ic">${ic("ear")}</span><b>Тренажёр тонов</b></a></div>
     <div class="section"><h2>Закрепить навыки</h2></div><div class="grid2"><a href="#/listen/${S.settings.level}"><span class="ic">${ic("ear")}</span><b>Слушать слова</b></a><a href="#/write/${S.settings.level}"><span class="ic">${ic("read")}</span><b>Написать слово</b></a><a href="#/hanzi/${S.settings.level}"><span class="ic">${ic("pen")}</span><b>Порядок черт</b></a><a href="#/pairs/${S.settings.level}"><span class="ic">${ic("layers")}</span><b>Найди пару</b></a></div>
     <div class="list mt">${row("#/library", "book", "Библиотека «Путь к успеху»", "Учебники и аудио к урокам")}${row("#/shelf", "book", "Мои учебники", "Книги и аудио на устройстве")}${row("#/stages", "layers", "Этапы курса", "HSK 1–6 и общий высший этап 7–9")}</div></section>`;
@@ -293,7 +295,7 @@ function pageMe() {
   app.innerHTML = `<section class="page"><div style="display:flex;align-items:center;gap:16px;margin:4px 0 8px"><span style="width:84px;height:84px;border-radius:50%;background:var(--glaze);display:flex;align-items:center;justify-content:center">${PANDA.replace("<svg", '<svg style="width:64px;height:64px"')}</span>
       <div style="flex:1"><div style="font-size:23px;font-weight:750">${esc(S.profile.nick)}</div><div class="muted">${currentCourseName()}</div><a class="muted" href="#/settings">Настройки ›</a></div></div>
     <div class="box"><h3>Мои данные</h3><div class="stats"><div><b>${days}</b><small>дней учёбы</small></div><div><b>${accuracy()}%</b><small>точность</small></div><div><b>${streak()}</b><small>дней подряд</small></div></div></div>
-    <div class="box list" style="padding:4px 20px">${row("#/stats", "clock", "История занятий", "Последние 14 дней")}${row("#/book", "bookmark", "Мой словарик", `${bk} ${plural(bk, "слово", "слова", "слов")}`)}${row("#/plan", "target", "Учебный план", `Цель: ${S.settings.goal} ответов в день`)}${row("#/stages", "layers", "Этап курса", "Единый курс HSK · уровни 1–6 и 7–9")}${row("#/shelf", "book", "Мои учебники", "Книги и аудио на устройстве")}</div>
+    <div class="box list" style="padding:4px 20px">${row("#/ai-profile", "chart", "Учебный профиль AI", "Изученные слова и частые ошибки")}${row("#/stats", "clock", "История занятий", "Последние 14 дней")}${row("#/book", "bookmark", "Мой словарик", `${bk} ${plural(bk, "слово", "слова", "слов")}`)}${row("#/plan", "target", "Учебный план", `Цель: ${S.settings.goal} ответов в день`)}${row("#/stages", "layers", "Этап курса", "Единый курс HSK · уровни 1–6 и 7–9")}${row("#/shelf", "book", "Мои учебники", "Книги и аудио на устройстве")}</div>
     <div class="box list" style="padding:4px 20px">${row("#/settings", "gear", "Настройки", "Голос, пиньинь, резервная копия")}${row("#/about", "info", "О приложении и данных", "Источники словаря и лицензии")}</div></section>`;
 }
 
@@ -610,11 +612,12 @@ function sheetCode(exp) {
   };
 }
 function pageAbout() {
-  app.innerHTML = `${topbar("О приложении", "#/me")}<div style="width:96px;margin:0 auto">${PANDA}</div><h2 class="center" style="margin:6px 0 0">汉语熊猫 · ХаньюйТун</h2><p class="center muted">Китайский для русскоговорящих · версия 1.1</p>
+  app.innerHTML = `${topbar("О приложении", "#/me")}<div style="width:96px;margin:0 auto">${PANDA}</div><h2 class="center" style="margin:6px 0 0">汉语熊猫 · ХаньюйТун</h2><p class="center muted">Китайский для русскоговорящих · версия 1.5</p>
     <div class="box"><h3>Словарь</h3><p class="hint" style="margin:0">Дополнительные учебные слова, пиньинь и части речи — <a href="https://github.com/drkameleon/complete-hsk-vocabulary" style="text-decoration:underline">complete-hsk-vocabulary</a> (MIT), основан на данных CC-CEDICT (CC BY-SA 4.0). Русские переводы, диалоги, тексты и объяснения грамматики написаны для этого приложения; переводы краткие и не проверены носителем — сообщайте о неточностях.</p></div>
     <div class="box"><h3>Большой словарь и иероглифы</h3><p class="hint">Полные русские толкования и словарные примеры: <a href="https://bkrs.info/p47">大БКРС</a>, снимок 5 ноября 2026 года. Источник разрешает свободное использование баз в любых целях. Сохраняются статьи с китайским написанием и русским толкованием. Это слова, иероглифы, имена, термины и словосочетания, а не исчерпывающий список всех слов китайского языка.</p><p class="hint">Ключи, число черт, чтения и варианты: <a href="https://www.unicode.org/reports/tr38/">Unicode Unihan 17.0.0</a>, <a href="data/UNICODE-LICENSE.txt">Unicode License v3</a>. Распаковка данных: fflate 0.8.2 (<a href="vendor/fflate-LICENSE.txt">MIT</a>). <a href="data/DICTIONARY-SOURCES.txt">Описание источников и преобразований</a>.</p><p class="hint">Пояснения простыми словами и ролевые ситуации написаны для приложения. Они не являются цитатами из словаря.</p></div>
     <div class="box"><h3>Порядок черт</h3><p class="hint" style="margin:0">Анимация и проверка черт — <a href="https://github.com/chanind/hanzi-writer" style="text-decoration:underline">Hanzi Writer</a> (MIT); данные черт — Make Me a Hanzi, Arphic Public License (текст лицензии: strokes/ARPHICPL.TXT).</p></div>
-    <div class="box"><h3>Озвучивание</h3><p class="hint" style="margin:0">Используется встроенный китайский голос вашего устройства (zh-CN). Если звука нет, установите китайский голос в системных настройках речи.</p></div>
+    <div class="box"><h3>Озвучивание</h3><p class="hint">В карточках и учебных упражнениях используется китайский голос устройства (zh-CN). Если звука нет, установите китайский голос в системных настройках речи.</p><p class="hint">У AI-собеседника озвучивание китайских фраз и распознавание записи работают через Qwen, когда эти возможности подключены. Запись ограничена 30 секундами; распознанный текст можно исправить перед отправкой. Звук не отправляется и не воспроизводится автоматически.</p></div>
+    <div class="box"><h3>Учебная оценка</h3><p class="hint">Проверка письма и устного ответа — приблизительная учебная оценка по критериям задания, а не официальный балл HSK. Устный ответ оценивается по тексту. Тренажёр тонов сравнивает движение голоса в одном слоге на устройстве; он не проверяет полное произношение или беглость.</p></div><div class="box"><h3>AI и перевод</h3><p class="hint">Сообщения и предыдущие реплики текущего разговора отправляются в DeepSeek после нажатия «Отправить». Фотографии отправляются в Yandex AI Studio для распознавания после нажатия «Распознать текст»; перевод текста выполняет Yandex Translate. При распознавании записи и озвучивании выбранной фразы звук или текст обрабатывает Qwen в Alibaba Cloud.</p><p class="hint">Разговор доступен только пока открыт его экран; переводы, фотографии и записи не сохраняются. На устройстве остаются выбранные вами новые слова и категории исправлений. До 40 изученных слов и короткие записи об ошибках передаются с новым сообщением, чтобы подобрать сложность. Только с отдельного согласия выбранный фрагмент плохого ответа и вопрос отправляются разработчику в частное хранилище Yandex. Эти функции требуют интернета. Ответы AI могут содержать ошибки — проверяйте важные сведения.</p></div>
     <div class="box"><h3>HSK 3.0</h3><p class="hint" style="margin:0">Новый словарь, структура уровней и форматы заданий доступны в <a href="#/hsk3" style="text-decoration:underline">разделе HSK 3.0</a>. Источники и границы покрытия указаны там. Учебные упражнения не выдают официальный результат экзамена.</p></div>
     <div class="box"><h3>Данные</h3><p class="hint" style="margin:0">Аккаунт не нужен. Прогресс хранится в браузере; для переноса используйте код в настройках. Курс HSK доступен офлайн после первого открытия. Большой словарь загружается по разделам: офлайн доступны уже открытые разделы и сохранённые карточки. Браузер может освободить кеш при нехватке места.</p></div>`;
 }
@@ -623,8 +626,10 @@ function pageAbout() {
 function pandaSheet() {
   const sh = h(`<div class="sheet" role="dialog" aria-modal="true" aria-label="Спросить панду"><div class="in" style="position:relative"><button class="round x" aria-label="Закрыть">${ic("close")}</button>
     <div style="display:flex;gap:12px;align-items:center"><span style="width:48px">${PANDA}</span><div><h2>Спросить панду</h2><div class="muted">Большой китайско-русский словарь</div></div></div>
+    <a class="btn small" id="panda-ai" href="#/ai">${ic("chat")} Поговорить с AI</a><p class="hint">Китайский диалог и объяснения по-русски. Для поиска слова используйте словарь ниже.</p>
     <label class="search mt">${ic("search")}<input id="pq" placeholder="Например: спасибо или xiexie" autocomplete="off"></label><div id="pr" style="max-height:46vh;overflow:auto"></div></div></div>`);
   document.body.append(sh); const close = () => sh.remove(); $(".x", sh).onclick = close; sh.onclick = e => { if (e.target === sh) close(); };
+  $("#panda-ai", sh).onclick = close;
   const q = $("#pq", sh); q.focus(); let t = 0, serial = 0;
   q.oninput = () => { clearTimeout(t); const token = ++serial; t = setTimeout(async () => {
     const value = q.value; $("#pr", sh).textContent = value.trim() ? "Ищем…" : "";
@@ -644,6 +649,7 @@ const charBox = (id, size) => `<div style="position:relative;width:${size}px;hei
 
 async function findWord(key) {
   const id = canonicalKey(key), snapshot = bookmarkRecord(id)?.word || progressRecord(id)?.word;
+  if (snapshot?.source === "ai" && /^ai:/.test(snapshot.id)) return studyWord(snapshot);
   if (snapshot?.curriculum === "hsk3") return studyWord(snapshot);
   if (id !== key || !/^\p{Script=Han}+$/u.test(key)) {
     const modern = await HSK3.find(id).catch(() => null);
@@ -889,12 +895,13 @@ async function pageFile(idArg) {
 const ROUTES = {
   hsk3: (lv, view) => pageHSK3(lv, view), stages: pageStages,
   library: id => pageLibrary(id), libfile: id => pageLibraryFile(id),
+  ai: arg => pageAI(arg), assess: arg => pageAIAssessment(arg), pronunciation: arg => pageAIPronunciation(arg), "ai-profile": () => pageAILearning(),
   translate: arg => pageTranslate(arg), welcome: pageWelcome, home: pageHome, learn: pageLearn, review: pageReview, me: pageMe,
   study: pageStudy, quiz: lv => pageQuiz(lv), listen: lv => pageQuiz(lv, "listen"), exam: lv => pageQuiz(lv, "exam"), write: pageWrite,
   pinyin: pagePinyin, tones: pageTones, grammar: pageGrammar, dialogues: () => pageDialogues(), dialogue: pageDialogues, reading: pageReading, shadow: pageShadow,
   level: pageLevel, levels: pageLevels, word: pageWord, scenario: pageScenario, hanzi: pageHanzi, pairs: pagePairs, cloud: pageCloud, shelf: pageShelf, file: pageFile, dict: pageDict, book: pageBook, stats: pageStats, plan: pagePlan, settings: pageSettings, about: pageAbout,
 };
-const TAB = { translate: "learn", shelf: "learn", file: "learn", pairs: "review", cloud: "review", word: "home", home: "home", learn: "learn", review: "review", me: "me", study: "review", book: "review", quiz: "home", dict: "home", stats: "me", plan: "home", settings: "me", about: "me" };
+const TAB = { ai: "learn", assess: "learn", pronunciation: "learn", "ai-profile": "me", translate: "learn", shelf: "learn", file: "learn", pairs: "review", cloud: "review", word: "home", home: "home", learn: "learn", review: "review", me: "me", study: "review", book: "review", quiz: "home", dict: "home", stats: "me", plan: "home", settings: "me", about: "me" };
 async function route() {
   leaveFns.forEach(f => { try { f(); } catch (_) {} }); leaveFns = []; if ("speechSynthesis" in window) speechSynthesis.cancel();
   $$(".sheet").forEach(s => s.remove());
@@ -905,7 +912,7 @@ async function route() {
   if (S.profile) await ensureUnifiedCourse();
   if (location.hash !== routeHash) return;
   const fn = ROUTES[name] || pageHome; const bare = name === "welcome";
-  $("#appbar").hidden = bare; $("#tabbar").hidden = bare; $("#fab").hidden = bare || ["translate", "study", "quiz", "listen", "exam", "write", "tones", "shadow", "hanzi", "pairs", "file", "libfile"].includes(name) || (name === "hsk3" && ["study", "quiz", "exam"].includes(arg2));
+  $("#appbar").hidden = bare; $("#tabbar").hidden = bare; $("#fab").hidden = bare || ["ai", "assess", "pronunciation", "translate", "study", "quiz", "listen", "exam", "write", "tones", "shadow", "hanzi", "pairs", "file", "libfile"].includes(name) || (name === "hsk3" && ["study", "quiz", "exam"].includes(arg2));
   const tab = TAB[name] || "learn"; $$("#tabbar a").forEach(a => a.toggleAttribute("aria-current", a.dataset.tab === tab));
   window.scrollTo(0, 0);
   try { await fn(arg, arg2); } catch (e) { console.error(e); app.innerHTML = `${topbar("Ошибка")}<div class="empty"><b>Не удалось загрузить</b>Проверьте подключение к интернету и попробуйте снова.<br><button class="btn small" onclick="location.reload()">Обновить</button></div>`; }

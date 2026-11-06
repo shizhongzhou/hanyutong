@@ -1,7 +1,7 @@
 /* 汉语熊猫 offline cache — only this app's scope and its own cache prefix. */
 const PREFIX = "hanyu-panda-";
-const CACHE = PREFIX + "v8";
-const CORE = ["./", "index.html", "css/app.css?v=8", "css/study.css?v=8", "css/translate.css?v=8", "js/translate.js?v=8", "js/wordwall.js?v=8", "js/study.js?v=8", "data/hsk3/legacy-bridge.json", "js/content.js?v=8", "js/app.js?v=8", "js/hsk3.js?v=8", "data/hsk3/manifest.json", "data/hsk3/exams.json", "data/hsk3/vocabulary-1-01.json", "js/dictionary.js?v=8", "js/scenarios.js?v=8", "vendor/fflate.min.js?v=8", "js/library.js?v=8", "data/library-catalog.json", "vendor/pdfjs/legacy/build/pdf.min.mjs", "vendor/pdfjs/legacy/build/pdf.worker.min.mjs", "manifest.webmanifest", "vendor/hanzi-writer.min.js",
+const CACHE = PREFIX + "v9";
+const CORE = ["./", "index.html", "css/app.css?v=9", "css/study.css?v=9", "css/translate.css?v=9", "js/translate.js?v=9", "css/ai.css?v=9", "js/ai.js?v=9", "js/ai-learning.js?v=9", "js/ai-pronunciation.js?v=9", "css/ai-pronunciation.css?v=9", "js/wordwall.js?v=9", "js/study.js?v=9", "data/hsk3/legacy-bridge.json", "js/content.js?v=9", "js/app.js?v=9", "js/hsk3.js?v=9", "data/hsk3/manifest.json", "data/hsk3/exams.json", "data/hsk3/vocabulary-1-01.json", "js/dictionary.js?v=9", "js/scenarios.js?v=9", "vendor/fflate.min.js?v=9", "js/library.js?v=9", "data/library-catalog.json", "vendor/pdfjs/legacy/build/pdf.min.mjs", "vendor/pdfjs/legacy/build/pdf.worker.min.mjs", "manifest.webmanifest", "vendor/hanzi-writer.min.js",
   "icons/panda-180.png", "icons/panda-192.png", "icons/panda-512.png",
   "data/hsk1.json", "data/hsk2.json", "data/hsk3.json", "data/hsk4.json", "data/hsk5.json", "data/hsk6.json"];
 
