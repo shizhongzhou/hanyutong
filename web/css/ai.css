@@ -4,8 +4,25 @@
 .ai-tabs{max-width:380px;margin:0 auto 8px}
 .ai-tabs button{font-size:12px;min-height:44px}
 .ai-settings{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 9px}
-.ai-settings label{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
-.ai-settings select{background:#fff;border:1px solid var(--line);padding:9px 11px;min-height:44px;border-radius:20px;font-size:12px;color:var(--ink)}
+.ai-level-setting{display:flex;align-items:center;gap:8px;min-width:0}
+.ai-settings label{font-size:11px;color:var(--muted)}
+.ai-picker{position:relative;min-width:0;width:100%}
+.ai-level-setting .ai-picker{width:110px;flex:none}
+.ai-picker.is-open{z-index:45}
+.ai-picker-trigger{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:46px;width:100%;padding:12px 14px;border:1px solid #d8dde4;border-radius:14px;background:#fff;color:var(--ink);font-size:13px;text-align:left;line-height:1.5;outline:none}
+.ai-picker-trigger>span:first-child{min-width:0;overflow-wrap:anywhere}
+.ai-level-setting .ai-picker-trigger{font-size:12px;min-height:44px;padding:10px 12px;border-radius:18px}
+.ai-picker-chevron{display:block;flex:none;width:7px;height:7px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-2px) rotate(45deg);color:#707782;margin-right:2px}
+.ai-picker.is-open .ai-picker-chevron{transform:translateY(2px) rotate(225deg)}
+.ai-picker-trigger:disabled{cursor:default;background:#f7f8fa;color:var(--muted)}
+.ai-picker-options{position:absolute;top:calc(100% + 6px);left:0;width:100%;max-height:min(264px,40svh);overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box;padding:5px;border:1px solid #d8dde4;border-radius:15px;background:#fff;box-shadow:0 10px 28px #27313f1a;scrollbar-width:thin;scrollbar-color:#c8cdd5 transparent}
+.ai-picker-option{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;padding:11px 10px;border:1px solid transparent;border-radius:10px;color:var(--ink);font-size:12px;line-height:1.55;cursor:pointer;overflow-wrap:anywhere}
+.ai-picker-option:after{content:'';flex:none;width:14px}
+.ai-picker-option[aria-selected=true]{background:#f0f2f5;font-weight:600}
+.ai-picker-option[aria-selected=true]:after{content:'✓';flex:none;font-size:14px;color:#59616d}
+.ai-picker-option.is-active{border-color:#878e98;background:#f5f6f8}
+.ai-task-panel>.ai-picker{margin:0 0 16px}
+@media(max-width:360px){.ai-level-setting{gap:6px}.ai-level-setting .ai-picker{width:100px}.ai-settings>button{max-width:90px;line-height:1.5;text-align:right}}
 .ai-settings>button{font-size:11px;color:var(--blue);padding:12px 0;min-height:44px}
 .ai-service{font-size:12px;line-height:1.7;color:var(--muted);background:var(--glaze2);padding:14px 16px;border-radius:16px;margin-bottom:12px}
 .ai-reconnect{font-size:12px;color:var(--blue);text-decoration:underline;padding:6px 2px;margin-bottom:18px;min-height:44px}
@@ -68,7 +85,8 @@
 .ai-privacy{font-size:10px;line-height:1.7;margin:16px 3px 0}
 .ai-tutor [hidden]{display:none!important}
 .ai-tutor select,.ai-tutor .ai-feedback-consent{min-height:44px}
-.ai-tutor button:focus-visible,.ai-tutor textarea:focus-visible,.ai-tutor select:focus-visible,.ai-feature-links a:focus-visible{outline:2px solid var(--blue2);outline-offset:3px}
+.ai-tutor button:focus-visible,.ai-tutor textarea:focus-visible,.ai-tutor select:focus-visible,.ai-feature-links a:focus-visible{outline:2px solid #707782;outline-offset:3px}
+.ai-tutor .ai-picker-trigger:focus-visible{outline:none;border-color:#6e7681;box-shadow:0 0 0 1px #6e7681}
 .ai-tutor.is-assessment .ai-feature-links{margin:4px 0 16px}
 .ai-tutor.is-assessment .ai-feature-links a{min-height:110px}
 .ai-tutor.is-assessment .ai-feature-icon{margin-bottom:10px;width:32px;height:32px}
@@ -88,7 +106,7 @@
 .ai-home .home-switch a{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:7px 22px;border-radius:24px;color:#697588;font-size:13px;font-weight:600;text-align:center}
 .ai-home .home-switch a[aria-current]{background:#fff;color:var(--ink);box-shadow:0 2px 7px #253b5610}
 .ai-home .home-switch a span{font-size:17px;color:#7c92b7;line-height:1}
-.ai-home .home-switch a:focus-visible,.ai-home summary:focus-visible{outline:2px solid var(--blue2);outline-offset:3px}
+.ai-home .home-switch a:focus-visible,.ai-home summary:focus-visible{outline:2px solid #707782;outline-offset:3px}
 .ai-home .ai-welcome{padding:clamp(72px,11svh,104px) 0 20px}
 .ai-home .ai-welcome p{display:none}
 .ai-home .ai-welcome-hello{font-size:28px;margin-bottom:9px}

@@ -13,26 +13,33 @@ const sampleBuffer = (duration = 1, channels = 1, rate = 16000) => ({ duration, 
 const wavHeader = Buffer.from('RIFF0000WAVEtest').toString('base64');
 
 function harness({ config = defaults, fetcher, microphone, decode, stopDeferred = false } = {}) {
-  const ids = new Map(), requests = [], leaves = [], urls = [], revoked = [], timers = new Map(), audios = [], tracks = [], recorders = [], decoders = [];
-  let timerId = 0, urlId = 0;
+  const ids = new Map(), requests = [], leaves = [], urls = [], revoked = [], timers = new Map(), audios = [], tracks = [], recorders = [], decoders = [], listeners = new Map();
+  let timerId = 0, urlId = 0, focused = null;
+  const dispatch = (type, target) => { for (const listener of listeners.get(type) || []) listener({ target }); };
   class Element {
     constructor(tag = 'div', attrs = '') {
       this.tagName = tag.toUpperCase(); this.value = ''; this.hidden = /\bhidden\b/.test(attrs); this.disabled = /\bdisabled\b/.test(attrs);
       this.textContent = ''; this.children = []; this.attributes = {}; this.className = ''; this.paused = false;
       for (const [, name, value] of attrs.matchAll(/([\w-]+)="([^"]*)"/g)) this.setAttribute(name, value);
     }
-    setAttribute(name, value) { this.attributes[name] = String(value); if (name === 'id') { this.id = value; ids.set(value, this); } if (name === 'value') this.value = value; }
+    setAttribute(name, value) { this.attributes[name] = String(value); if (name === 'id') { this.id = value; ids.set(value, this); } if (name === 'value') this.value = value; if (name === 'class') this.className = value; }
     getAttribute(name) { return this.attributes[name]; }
     removeAttribute(name) { delete this.attributes[name]; if (name === 'src') this.src = ''; }
     set innerHTML(html) {
       this.html = html; this.children = []; ids.clear();
-      for (const [, tag, attrs] of html.matchAll(/<([a-z][a-z0-9]*)\b([^>]*)>/gi)) if (/\bid="/.test(attrs)) this.children.push(new Element(tag, attrs));
+      const stack = [this], voidTags = new Set(['input', 'img', 'br', 'hr', 'meta', 'link']);
+      for (const [match, closing, tag, attrs] of html.matchAll(/<(\/?)([a-z][a-z0-9]*)\b([^>]*)>/gi)) {
+        if (closing) { if (stack.length > 1) stack.pop(); continue; }
+        const child = new Element(tag, attrs); stack.at(-1).append(child);
+        if (!voidTags.has(tag) && !match.endsWith('/>')) stack.push(child);
+      }
       if (ids.has('ai-level')) ids.get('ai-level').value = '1';
     }
     get innerHTML() { return this.html || ''; }
-    append(...children) { this.children.push(...children); }
-    replaceChildren(...children) { this.children = children; }
-    focus() { this.focused = true; }
+    append(...children) { children.forEach(child => { child.parentElement = this; this.children.push(child); }); }
+    replaceChildren(...children) { this.children.forEach(child => { child.parentElement = null; }); this.children = []; this.append(...children); }
+    contains(other) { return this === other || this.children.some(child => child.contains(other)); }
+    focus() { if (focused) focused.focused = false; focused = this; this.focused = true; dispatch('focusin', this); }
     pause() { this.paused = true; }
     load() {}
   }
@@ -58,7 +65,10 @@ function harness({ config = defaults, fetcher, microphone, decode, stopDeferred 
   const context = vm.createContext({ console, app, window: { AudioContext: Decoder },
     $: selector => ids.get(selector.replace(/^#/, '')), topbar: title => `<h1>${title}</h1>`, ic: name => `<svg data-icon="${name}"></svg>`, onLeave: fn => leaves.push(fn),
     navigator: { mediaDevices: { getUserMedia: microphone || (async () => stream()) } },
-    document: { createElement: name => new Element(name) }, MediaRecorder: Recorder, Audio,
+    document: { createElement: name => new Element(name),
+      addEventListener: (type, listener) => { if (!listeners.has(type)) listeners.set(type, new Set()); listeners.get(type).add(listener); },
+      removeEventListener: (type, listener) => listeners.get(type)?.delete(listener)
+    }, MediaRecorder: Recorder, Audio,
     URL: { createObjectURL: blob => { const url = 'blob:ai-' + ++urlId; urls.push(url); return url; }, revokeObjectURL: url => revoked.push(url) },
     AbortController, Blob, Uint8Array, Float32Array, ArrayBuffer, DataView, btoa, atob, Date,
     setTimeout: (fn, ms) => { const id = ++timerId; timers.set(id, { fn, ms, interval: false }); return id; }, clearTimeout: id => timers.delete(id),
@@ -73,7 +83,8 @@ function harness({ config = defaults, fetcher, microphone, decode, stopDeferred 
   });
   vm.runInContext(source, context); const run = code => vm.runInContext(code, context), one = id => ids.get('ai-' + id);
   const all = (root, predicate) => root.children.flatMap(child => [...(predicate(child) ? [child] : []), ...all(child, predicate)]);
-  return { run, context, one, app, requests, urls, revoked, timers, audios, tracks, recorders, decoders, stream,
+  return { run, context, one, app, requests, urls, revoked, timers, audios, tracks, recorders, decoders, stream, listeners, dispatch,
+    key(id, key, extras = {}) { const event = { key, prevented: false, stopped: false, preventDefault() { this.prevented = true; }, stopPropagation() { this.stopped = true; }, ...extras }; one(id).onkeydown(event); return event; },
     core: run('HanyuAI'), page: mode => run(`pageAI(${JSON.stringify(mode)})`),
     leave() { for (const fn of leaves.splice(0)) fn(); }, input(value) { one('input').value = value; one('input').oninput(); },
     messages() { return one('messages').children.map(article => article.children.find(child => child.className === 'ai-message-text').textContent); },
@@ -234,13 +245,28 @@ test('Chinese speech extracts Chinese lines only, deduplicates and bounds each e
   const h = harness();
   assert.deepEqual(plain(h.core.chineseLines('你好！\nNǐ hǎo!\nПривет!\n你好！\n中文：我喜欢茶。 — Я люблю чай.')), ['你好！', '中文：我喜欢茶。']);
   assert.equal(h.core.chineseLines('汉'.repeat(300)).length, 1);
-  assert.equal(h.core.chineseLines('汉'.repeat(301)).length, 0);
+  assert.deepEqual(plain(h.core.chineseLines('汉'.repeat(301))), ['汉'.repeat(300), '汉']);
   assert.equal(h.core.chineseLines(Array.from({ length: 10 }, (_, i) => '你好' + i).join('\n')).length, 8);
   await assert.rejects(h.core.speech('汉'.repeat(301)), e => e.code === 'text_too_long'); assert.equal(h.requests.length, 0);
   await h.page(); h.input('你好'); await h.one('send').onclick(); const play = h.playButtons()[0];
   assert.equal(h.audios.length, 0); await play.onclick(); assert.equal(h.audios[0].played, 1);
   assert.deepEqual(JSON.parse(h.requests.at(-1).options.body), { text: '你好！' });
   h.input('下一句'); assert.equal(h.audios[0].paused, true); assert.deepEqual(h.revoked, h.urls);
+});
+
+test('long Chinese replies expose bounded sentence clips without auto-playing or charging for other parts', async () => {
+  const chinese = '今天我学习汉语。'.repeat(55) + '𠀀'.repeat(30);
+  const h = harness({ fetcher: url => url.endsWith('/config') ? response(defaults) : url.endsWith('/speech') ? response({ audio: wavHeader, mimeType: 'audio/wav' }) : response({ text: chinese }) });
+  const clips = plain(h.core.chineseLines(chinese));
+  assert.ok(clips.length > 1); assert.ok(clips.every(part => [...part].length <= 300));
+  assert.equal(clips.join(''), chinese); assert.ok(clips[0].endsWith('。'));
+  assert.deepEqual(plain(h.core.chineseLines('𠀀'.repeat(301))), ['𠀀'.repeat(300), '𠀀'], 'limits count full Unicode characters');
+  await h.page('home'); h.input('Расскажи о занятиях.'); await h.one('send').onclick();
+  assert.equal(h.playButtons().length, clips.length); assert.equal(h.audios.length, 0);
+  assert.equal(h.requests.filter(request => request.url.endsWith('/speech')).length, 0);
+  await h.playButtons().at(-1).onclick();
+  const speech = h.requests.filter(request => request.url.endsWith('/speech'));
+  assert.equal(speech.length, 1); assert.equal(JSON.parse(speech[0].options.body).text, clips.at(-1));
 });
 
 test('stale speech never plays after reset, and malformed audio fails safely', async () => {
@@ -432,6 +458,97 @@ test('failed feedback keeps the selected reason and requires another explicit su
 const writingTask = { id: 'writing-1-greeting', mode: 'writing', level: 1, titleRu: 'Знакомство', promptZh: '请介绍你自己。', promptRu: 'Представьтесь в двух предложениях.', maxScore: 10, criteria: [{ id: 'task', labelRu: 'Выполнение задания', maxScore: 5 }, { id: 'language', labelRu: 'Язык', maxScore: 5 }] };
 const speakingTask = { ...writingTask, id: 'speaking-1-greeting', mode: 'speaking', titleRu: 'Устное знакомство' };
 const assessment = (task = writingTask) => ({ taskId: task.id, mode: task.mode, level: task.level, score: 7, maxScore: 10, criteria: task.criteria.map((item, i) => ({ ...item, score: i ? 3 : 4, feedbackRu: i ? 'Проверьте порядок слов.' : 'Основная задача выполнена.' })), feedbackRu: 'Добавьте одну подробность.', rewrite: { zh: '我叫安娜。我学习汉语。', pinyin: 'Wǒ jiào Ānnà. Wǒ xuéxí Hànyǔ.', ru: 'Меня зовут Анна. Я учу китайский.' }, sample: { zh: '我叫安娜。我是学生。', pinyin: 'Wǒ jiào Ānnà. Wǒ shì xuésheng.', ru: 'Меня зовут Анна. Я студентка.' }, noticeRu: 'Учебная оценка.', assessmentScope: task.mode === 'speaking' ? 'text_content_only' : 'written_text' });
+
+const pickerTasks = ['О себе', 'Мой день', 'В кафе', 'Письмо другу'].map((titleRu, index) => ({ ...writingTask, id: `writing-1-${index + 1}`, titleRu, promptRu: `Задание ${index + 1}: ${titleRu}` }));
+const pickerHarness = (tasks = pickerTasks) => harness({ fetcher: url => url.endsWith('/config') ? response({ ...defaults, assessmentEnabled: true }) : response({ tasks }) });
+
+test('custom task menu previews with keyboard and commits only the chosen option', async () => {
+  const h = pickerHarness(); await h.run('pageAIAssessment("writing")'); h.input('Мой ещё не отправленный ответ');
+  assert.equal(h.one('task').tagName, 'BUTTON'); assert.equal(h.one('level').tagName, 'BUTTON');
+  assert.equal(h.one('task').getAttribute('role'), 'combobox'); assert.equal(h.one('task-options').getAttribute('role'), 'listbox');
+  assert.equal(h.one('task-options').children.length, 4); assert.equal(h.one('task-options').hidden, true);
+  assert.equal(h.key('task', 'ArrowDown').prevented, true); assert.equal(h.one('task-options').hidden, false);
+  assert.equal(h.one('task').getAttribute('aria-expanded'), 'true'); assert.equal(h.one('task').getAttribute('aria-activedescendant'), 'ai-task-option-0');
+  h.key('task', 'ArrowDown'); assert.equal(h.one('task').getAttribute('aria-activedescendant'), 'ai-task-option-1');
+  assert.equal(h.one('task').value, pickerTasks[0].id); assert.match(h.text(h.one('task-details')), /Задание 1/);
+  const escape = h.key('task', 'Escape'); assert.equal(escape.prevented, true); assert.equal(escape.stopped, true);
+  assert.equal(h.one('task-options').hidden, true); assert.equal(h.one('task').getAttribute('aria-activedescendant'), undefined);
+  assert.equal(h.one('input').value, 'Мой ещё не отправленный ответ'); assert.equal(h.one('task').focused, true);
+  h.one('task').onclick(); h.one('task-options').children[0].onclick(); assert.equal(h.one('input').value, 'Мой ещё не отправленный ответ', 'reselecting the current task preserves its draft');
+  h.key('task', ' '); h.key('task', 'End'); h.key('task', 'ArrowDown');
+  assert.equal(h.one('task').getAttribute('aria-activedescendant'), 'ai-task-option-3'); h.key('task', 'Home'); h.key('task', 'ArrowUp');
+  assert.equal(h.one('task').getAttribute('aria-activedescendant'), 'ai-task-option-0'); h.key('task', 'ArrowDown'); h.key('task', 'Enter');
+  assert.equal(h.one('task').value, pickerTasks[1].id); assert.equal(h.one('task-value').textContent, 'Мой день');
+  assert.equal(h.one('task-options').children[1].getAttribute('aria-selected'), 'true'); assert.equal(h.one('task-options').children[0].getAttribute('aria-selected'), 'false');
+  assert.match(h.text(h.one('task-details')), /Задание 2/); assert.equal(h.one('input').value, '', 'a confirmed different task cannot receive the previous answer by accident');
+  assert.equal(h.requests.length, 2, 'opening and choosing never submit or fetch a model response');
+});
+
+test('task and level menus close on outside interaction, Tab, mode change and navigation without leaked listeners', async () => {
+  const h = pickerHarness([...pickerTasks, speakingTask]); await h.page('writing'); h.input('Черновик');
+  h.one('task').onclick(); h.dispatch('pointerdown', h.one('task-options').children[1]); assert.equal(h.one('task-options').hidden, false);
+  h.dispatch('pointerdown', h.one('input')); assert.equal(h.one('task-options').hidden, true); assert.equal(h.one('input').value, 'Черновик');
+  h.one('task').onclick(); h.one('input').focus(); assert.equal(h.one('task-options').hidden, true);
+  h.one('task').onclick(); const tab = h.key('task', 'Tab'); assert.equal(tab.prevented, false); assert.equal(h.one('task-options').hidden, true);
+  h.one('task').onclick(); h.one('level').onclick(); assert.equal(h.one('task-options').hidden, true); assert.equal(h.one('level-options').hidden, false);
+  h.one('assess-speaking').onclick(); assert.equal(h.one('level-options').hidden, true); assert.equal(h.one('task').value, speakingTask.id); assert.equal(h.one('input').value, '');
+  h.one('task').onclick(); const oldTrigger = h.one('task'), oldList = h.one('task-options');
+  h.leave(); assert.equal(oldList.hidden, true); assert.ok([...h.listeners.values()].every(set => set.size === 0));
+  oldTrigger.onclick(); assert.equal(oldList.hidden, true); await h.page('writing');
+  assert.equal(h.listeners.get('pointerdown').size, 1); assert.equal(h.listeners.get('focusin').size, 1);
+});
+
+test('Russian typeahead selects matching task labels and task text cannot inject HTML', async () => {
+  const h = pickerHarness([...pickerTasks, { ...writingTask, id: 'writing-1-special', titleRu: '<img src=x onerror=alert(1)>' }]); await h.page('writing');
+  h.key('task', 'П'); assert.equal(h.one('task').getAttribute('aria-activedescendant'), 'ai-task-option-3');
+  h.key('task', 'и'); h.key('task', ' '); assert.equal(h.one('task').value, pickerTasks[3].id);
+  h.one('task').onclick(); h.one('task-options').children[4].onclick();
+  assert.equal(h.one('task-value').textContent, '<img src=x onerror=alert(1)>'); assert.equal(h.one('task-options').children[4].children.length, 0);
+  assert.doesNotMatch(h.app.innerHTML, /onerror=alert/);
+});
+
+test('changing HSK level filters valid tasks and an empty level cannot submit a stale task', async () => {
+  const higher = { ...writingTask, id: 'writing-9-advanced', level: 9, titleRu: 'Обсуждение исследования' };
+  const h = pickerHarness([...pickerTasks, higher, speakingTask]); await h.page('writing'); h.input('Ответ уровня 1');
+  h.key('level', 'End'); assert.equal(h.one('level').value, '1'); assert.equal(h.one('input').value, 'Ответ уровня 1');
+  h.key('level', 'Enter'); assert.equal(h.one('level').value, '9'); assert.equal(h.one('level-value').textContent, 'HSK 9');
+  assert.equal(h.one('task-options').children.length, 1); assert.equal(h.one('task').value, higher.id); assert.equal(h.one('input').value, '');
+  h.one('level').onclick(); h.key('level', 'Home'); h.key('level', 'ArrowDown'); h.key('level', 'Enter');
+  assert.equal(h.one('level').value, '2'); assert.equal(h.one('task').value, ''); assert.equal(h.one('task').disabled, true); assert.match(h.one('task-value').textContent, /заданий пока нет/);
+  h.one('task').onclick(); assert.equal(h.one('task-options').hidden, true); h.input('我想学习。'); assert.equal(h.one('send').disabled, true);
+  await h.one('send').onclick(); assert.equal(h.requests.length, 2);
+  h.one('assess-speaking').onclick(); assert.equal(h.one('level').value, '1'); assert.equal(h.one('level-value').textContent, 'HSK 1');
+  assert.equal(h.one('task').value, speakingTask.id); assert.equal(h.one('task').disabled, false); assert.equal(h.one('input').value, '');
+});
+
+test('choosing another task aborts its pending assessment and a late result cannot replace the new draft', async () => {
+  const gate = deferred(), h = harness({ fetcher: url => url.endsWith('/config') ? response({ ...defaults, assessmentEnabled: true }) : url.endsWith('/tasks') ? response({ tasks: pickerTasks }) : gate.promise });
+  await h.page('writing'); h.input('我叫安娜。'); const pending = h.one('send').onclick();
+  h.one('task').onclick(); h.one('task-options').children[1].onclick();
+  assert.equal(h.requests.at(-1).options.signal.aborted, true); assert.equal(h.one('task').value, pickerTasks[1].id);
+  h.input('这是新题的答案。'); gate.resolve(response(assessment(pickerTasks[0]))); await pending;
+  assert.equal(h.one('input').value, '这是新题的答案。'); assert.equal(h.elements('ai-assessment-score').length, 0);
+  assert.equal(h.one('task-value').textContent, pickerTasks[1].titleRu); assert.equal(h.requests.filter(request => request.url.endsWith('/assess')).length, 1);
+});
+
+test('the full server catalog loads 108 original tasks and exposes four for every mode and HSK level', async () => {
+  const catalog = require('../infra/yandex/function/ai-assessment').publicTasks();
+  assert.equal(catalog.tasks.length, 108);
+  const h = pickerHarness(catalog.tasks); await h.page('writing');
+  for (const mode of ['writing', 'speaking', 'grammar']) {
+    h.one('assess-' + mode).onclick();
+    for (let level = 1; level <= 9; level++) {
+      h.one('level').onclick(); h.one('level-options').children[level - 1].onclick();
+      const expected = catalog.tasks.filter(task => task.mode === mode && task.level === level);
+      assert.equal(h.one('task-options').children.length, 4); assert.equal(expected.length, 4);
+      h.one('task').onclick(); h.one('task-options').children[3].onclick();
+      assert.equal(h.one('task').value, expected[3].id); assert.equal(h.one('task-value').textContent, expected[3].titleRu);
+    }
+  }
+  assert.equal(h.requests.length, 2); assert.doesNotMatch(JSON.stringify(catalog), /descriptorRu|"sample"/);
+  const tooLarge = harness({ fetcher: () => response({ tasks: Array(201).fill(writingTask) }) });
+  await assert.rejects(tooLarge.core.tasks(), error => error.code === 'invalid_response');
+});
 
 test('assessment lists real tasks but cannot submit when assessment service is unconfigured', async () => {
   const h = harness({ fetcher: url => url.endsWith('/config') ? response({ ...defaults, assessmentEnabled: false }) : response({ tasks: [writingTask, speakingTask] }) });

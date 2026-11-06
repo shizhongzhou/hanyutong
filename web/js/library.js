@@ -101,12 +101,16 @@ const CloudLibrary = (() => {
 const LIB_KIND = { pdf: 'Учебники PDF', audio: 'Аудио', slides: 'Презентации' };
 const LIB_ICON = { pdf: 'book', audio: 'speaker', document: 'read', slides: 'layers' };
 const libLink = id => '#/libfile/' + encodeURIComponent(id);
+const libraryListViews = new Map();
+const LIBRARY_TITLE = 'Курс китайского · 汉语课程';
 
 async function pageLibrary(bookId) {
   const current = location.hash;
-  app.innerHTML = `${topbar('Путь к успеху', bookId ? '#/library' : '#/learn')}<p class="empty">Загрузка учебников…</p>`;
+  let active = true;
+  onLeave(() => { active = false; });
+  app.innerHTML = `${topbar(LIBRARY_TITLE, bookId ? '#/library' : '#/learn')}<p class="empty">Загрузка учебников…</p>`;
   const catalog = await CloudLibrary.load();
-  if (location.hash !== current) return;
+  if (!active || location.hash !== current) return;
   const book = bookId && catalog.books.find(b => b.id === bookId);
   if (bookId && !book) { app.innerHTML = `${topbar('Учебники', '#/library')}<p class="empty">Книга не найдена.</p>`; return; }
   const fileRow = f => {
@@ -116,11 +120,17 @@ async function pageLibrary(bookId) {
   if (book) {
     const files = catalog.files.filter(f => f.bookId === book.id).sort((a, b) => natCmp(a.group + '/' + a.name, b.group + '/' + b.name));
     app.innerHTML = `${topbar(esc(book.title), '#/library')}<p class="sub">${esc(book.originalTitle)} · ${book.fileCount} файлов · ${fmtSize(book.bytes)}</p>
-      <label class="field library-search"><span>Найти урок или файл</span><input id="lib-search" type="search" placeholder="Номер урока или название"></label>
+      <label class="field library-search"><span>Найти урок или файл</span><input id="lib-search" type="search" maxlength="200" placeholder="Номер урока или название"></label>
       <div class="seg library-filters"><button data-kind="all" aria-pressed="true">Все</button>${Object.keys(LIB_KIND).filter(k => book.counts[k]).map(k => `<button data-kind="${k}" aria-pressed="false">${LIB_KIND[k]}</button>`).join('')}</div><div id="lib-files"></div>`;
-    let selected = 'all';
+    const previous = libraryListViews.get(book.id);
+    let selected = previous?.kind === 'all' || LIB_KIND[previous?.kind] && book.counts[previous.kind] ? previous.kind : 'all';
+    $('#lib-search').value = previous?.query || '';
+    const updateFilters = () => $$('[data-kind]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.kind === selected)));
     const render = () => {
-      const query = $('#lib-search').value.trim().toLocaleLowerCase();
+      if (!active) return;
+      const input = $('#lib-search').value.slice(0, 200), query = input.trim().toLocaleLowerCase();
+      libraryListViews.set(book.id, { kind: selected, query: input });
+      if (libraryListViews.size > 50) libraryListViews.delete(libraryListViews.keys().next().value);
       const shown = files.filter(f => (selected === 'all' || f.kind === selected) && (f.name + ' ' + f.group).toLocaleLowerCase().includes(query));
       $('#lib-files').innerHTML = shown.length ? Object.keys(LIB_KIND).map(kind => {
         const group = shown.filter(f => f.kind === kind);
@@ -130,14 +140,15 @@ async function pageLibrary(bookId) {
     $('#lib-search').oninput = render;
     $$('[data-kind]').forEach(button => button.onclick = () => {
       selected = button.dataset.kind;
-      $$('[data-kind]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+      updateFilters();
       render();
     });
+    updateFilters();
     render();
     return;
   }
   const recent = catalog.files.filter(f => CloudLibrary.state(f.id).opened).sort((a, b) => CloudLibrary.state(b.id).opened - CloudLibrary.state(a.id).opened)[0];
-  app.innerHTML = `${topbar('Путь к успеху · 成功之路', '#/learn')}
+  app.innerHTML = `${topbar(LIBRARY_TITLE, '#/learn')}
     <div class="card-blue library-intro"><p class="kicker">БИБЛИОТЕКА УЧЕБНИКОВ</p><h2>От первых слов<br>до свободной речи</h2><p class="sub">${catalog.books.length} раздел · ${catalog.files.filter(f => f.kind === 'pdf').length} PDF · ${catalog.files.filter(f => f.kind === 'audio').length} аудиозаписи<br>Учебники, упражнения и материалы к урокам.</p></div>
     <p class="hint">Читайте и слушайте прямо здесь. Аудио находится рядом с соответствующим учебником или уроком. Место остановки запоминается.</p>
     ${recent ? `<div class="section"><h2>Продолжить</h2></div><div class="list library-files">${fileRow(recent)}</div>` : ''}

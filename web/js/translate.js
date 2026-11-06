@@ -158,7 +158,7 @@ async function pageTranslate(initialMode) {
   app.innerHTML = `${topbar('Переводчик', '#/learn')}<section class="translator">
     <p class="sub translate-intro">Понимайте китайский: переводите фразы или текст на фотографии.</p>
     <div class="seg translate-tabs" aria-label="Способ перевода"><button id="tr-tab-text" aria-pressed="${mode === 'text'}">Текст</button><button id="tr-tab-photo" aria-pressed="${mode === 'photo'}">${cameraIcon} Фото</button></div>
-    <div class="translate-language-row"><label><span class="translate-label">С языка</span><select id="tr-source" aria-label="Исходный язык"><option value="auto">Определить язык</option><option value="zh">Китайский</option><option value="ru">Русский</option></select></label><button id="tr-swap" class="translate-swap" aria-label="Поменять языки местами">⇄</button><label><span class="translate-label">На язык</span><select id="tr-target" aria-label="Язык перевода"><option value="ru">Русский</option><option value="zh">Китайский</option></select></label></div>
+    <div class="translate-language-row translate-direction"><input type="hidden" id="tr-source" value="zh"><span id="tr-source-name">中文</span><button id="tr-swap" class="translate-swap" aria-label="Поменять языки местами">⇄</button><span id="tr-target-name">Русский</span><input type="hidden" id="tr-target" value="ru"></div>
     <div id="tr-photo-panel" class="translate-photo-panel" ${mode === 'photo' ? '' : 'hidden'}>
       <div class="translate-photo-pick"><button class="btn" id="tr-camera">${cameraIcon} Сфотографировать</button><button class="btn ghost" id="tr-gallery">${imageIcon} Из галереи</button></div>
       <input id="tr-camera-file" class="translate-file" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="environment" tabindex="-1" aria-label="Сделать фотографию">
@@ -186,6 +186,8 @@ async function pageTranslate(initialMode) {
   function status(text = '', kind = '') { el('status').textContent = text; el('status').className = 'translate-status' + (kind ? ' is-' + kind : ''); }
   function controller() { const c = new AbortController(); controllers.add(c); return c; }
   function refresh() {
+    el('source-name').textContent = source.value === 'zh' ? '中文' : 'Русский';
+    el('target-name').textContent = target.value === 'zh' ? '中文' : 'Русский';
     const length = HanyuTranslate.count(input.value.trim()), valid = length > 0 && length <= settings.maxTextChars;
     el('count').textContent = `${length.toLocaleString('ru-RU')} / ${settings.maxTextChars.toLocaleString('ru-RU')}`;
     el('count').className = length > settings.maxTextChars ? 'is-over-limit' : '';

@@ -21,7 +21,7 @@ const FLAGS = ['enabled', 'visionEnabled', 'ttsEnabled', 'asrEnabled', 'assessme
 const SAFE_ERROR_CODES = new Set(['request_timeout', 'assessment_incomplete', 'assessment_unavailable', 'assessment_disabled',
   'daily_limit', 'monthly_limit', 'rate_limit', 'provider_busy', 'usage_unavailable', 'credentials_unavailable',
   'origin_not_allowed', 'app_origin_required', 'ai_disabled', 'chat_disabled', 'tts_disabled', 'asr_disabled',
-  'not_configured', 'vision_disabled', 'invalid_input', 'invalid_task', 'body_too_large', 'method_not_allowed']);
+  'not_configured', 'vision_disabled', 'recognition_unavailable', 'invalid_input', 'invalid_task', 'body_too_large', 'method_not_allowed']);
 const HAN = /\p{Script=Han}/u, CYRILLIC = /[а-яё]/iu, TONE = /[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]/u;
 const CHAT = Object.freeze({ messages: [{ role: 'user', content: 'Коротко объясни 你好 и дай один пример.' }], mode: 'explain', level: 1 });
 const ASSESSMENT = Object.freeze({ mode: 'writing', taskId: 'writing-hsk1-01', answer: '我叫小安。我来自俄罗斯。我喜欢中文，也喜欢喝茶。' });

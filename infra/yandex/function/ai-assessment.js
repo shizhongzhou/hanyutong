@@ -17,6 +17,9 @@ const exact = (value, keys) => plain(value) && Object.keys(value).length === key
 const text = (value, maximum) => typeof value === 'string' && !!value.trim() && [...value].length <= maximum &&
   !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(value) && !/<\/?(?:think|analysis)>/i.test(value);
 const translation = value => exact(value, ['zh', 'pinyin', 'ru']) && text(value.zh, 2000) && text(value.pinyin, 4000) && text(value.ru, 3000);
+const hasChinese = value => /\p{Script=Han}/u.test(value);
+const hasRussian = value => /[А-Яа-яЁё]/u.test(value);
+const hasPinyin = value => /[a-z]/i.test(value) && /[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]/iu.test(value) && !hasChinese(value);
 // The full submission is graded, but the output demonstrates a concise improved
 // answer or excerpt so pinyin, Russian feedback and thinking fit the token cap.
 const rewrite = value => exact(value, ['zh', 'pinyin', 'ru']) && text(value.zh, 300) &&
@@ -27,21 +30,35 @@ const freeze = value => { if (value && typeof value === 'object') { Object.value
 function validateTaskBank(bank) {
   if (!exact(bank, ['version', 'kind', 'noticeRu', 'tasks']) || bank.version !== 1 || bank.kind !== 'original_practice' ||
       !text(bank.noticeRu, 600) || !Array.isArray(bank.tasks) || !bank.tasks.length || bank.tasks.length > 200) throw Error('invalid_task_bank');
-  const ids = new Set();
+  const ids = new Set(), prompts = new Set(), coverage = new Map();
   for (const task of bank.tasks) {
     if (!exact(task, ['id', 'mode', 'level', 'titleRu', 'promptZh', 'promptRu', 'maxScore', 'criteria', 'sample']) ||
         typeof task.id !== 'string' || !/^[a-z][a-z0-9-]{2,60}$/.test(task.id) || ids.has(task.id) || !MODES.has(task.mode) ||
         !Number.isInteger(task.level) || task.level < 1 || task.level > 9 || !text(task.titleRu, 100) ||
         !text(task.promptZh, 600) || !text(task.promptRu, 900) || !Number.isInteger(task.maxScore) || task.maxScore < 1 || task.maxScore > 100 ||
         !Array.isArray(task.criteria) || task.criteria.length < 1 || task.criteria.length > 5 || !translation(task.sample)) throw Error('invalid_task_bank');
-    ids.add(task.id); const criteriaIds = new Set(); let total = 0;
+    // IDs are persisted by clients: the ID, mode and level must describe the
+    // same task. Reject partial catalog deployments and untranslated drafts.
+    if (!new RegExp(`^${task.mode}-hsk${task.level}-[0-9]{2}$`).test(task.id) ||
+        !hasRussian(task.titleRu) || !hasRussian(task.promptRu) || !hasChinese(task.promptZh) ||
+        !hasChinese(task.sample.zh) || !hasPinyin(task.sample.pinyin) || !hasRussian(task.sample.ru) ||
+        prompts.has(task.mode + ':' + task.promptZh)) throw Error('invalid_task_bank');
+    ids.add(task.id); prompts.add(task.mode + ':' + task.promptZh);
+    const group = `${task.mode}:${task.level}`; coverage.set(group, (coverage.get(group) || 0) + 1);
+    const expectedCriteria = task.mode === 'grammar' ? ['accuracy', 'meaning'] : ['content', 'grammar', 'vocabulary'];
+    if (task.criteria.length !== expectedCriteria.length) throw Error('invalid_task_bank');
+    const criteriaIds = new Set(); let total = 0;
     for (const criterion of task.criteria) {
       if (!exact(criterion, ['id', 'labelRu', 'maxScore', 'descriptorRu']) || typeof criterion.id !== 'string' ||
           !/^[a-z][a-z0-9-]{1,30}$/.test(criterion.id) || criteriaIds.has(criterion.id) || !text(criterion.labelRu, 100) ||
-          !text(criterion.descriptorRu, 500) || !Number.isInteger(criterion.maxScore) || criterion.maxScore < 1 || criterion.maxScore > 100) throw Error('invalid_task_bank');
+          !text(criterion.descriptorRu, 500) || !hasRussian(criterion.labelRu) || !hasRussian(criterion.descriptorRu) ||
+          !expectedCriteria.includes(criterion.id) || !Number.isInteger(criterion.maxScore) || criterion.maxScore < 1 || criterion.maxScore > 100) throw Error('invalid_task_bank');
       criteriaIds.add(criterion.id); total += criterion.maxScore;
     }
     if (total !== task.maxScore) throw Error('invalid_task_bank');
+  }
+  for (const mode of MODES) for (let level = 1; level <= 9; level++) {
+    if ((coverage.get(`${mode}:${level}`) || 0) < 4) throw Error('invalid_task_bank');
   }
   return bank;
 }

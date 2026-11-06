@@ -27,3 +27,6 @@ body.study-immersive{background:#f4f5f7;overflow:hidden;overscroll-behavior:none
 @media(prefers-reduced-motion:reduce){.study-card,.wordwall-token{transition:none}}
 
 .study-answer-definition{margin:14px 0;border-top:1px solid #273b3520;padding-top:12px}.study-answer-definition summary{font-size:12px;cursor:pointer}.study-answer-definition>div{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.7;margin-top:10px}
+/* The search field shares its enclosing pill's subtle focus state. */
+.study-sheet .search:focus-within,.study-meaning .search:focus-within{border-color:#8c949f;box-shadow:none}
+.study-overlay .search input:focus-visible,.study-immersive .search input:focus-visible{outline:none;box-shadow:none}

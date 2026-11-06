@@ -1,8 +1,8 @@
 /* 汉语熊 offline cache — only this app's scope and its own cache prefix. */
 const PREFIX = "hanyu-panda-";
-const CACHE = PREFIX + "v14";
-const CORE = ["./", "index.html", "css/app.css?v=14", "css/home.css?v=14", "css/home-pet.css?v=14", "js/home-pet.js?v=14", "css/navigation.css?v=14", "css/study.css?v=14", "css/translate.css?v=14", "js/translate.js?v=14", "css/ai.css?v=14", "js/ai.js?v=14", "js/ai-learning.js?v=14", "js/ai-pronunciation.js?v=14", "css/ai-pronunciation.css?v=14", "js/wordwall.js?v=14", "js/study.js?v=14", "data/hsk3/legacy-bridge.json", "js/content.js?v=14", "js/app.js?v=14", "js/hsk3.js?v=14", "data/hsk3/manifest.json", "data/hsk3/exams.json", "data/hsk3/vocabulary-1-01.json", "js/dictionary.js?v=14", "js/scenarios.js?v=14", "vendor/fflate.min.js?v=14", "js/library.js?v=14", "data/library-catalog.json", "vendor/pdfjs/legacy/build/pdf.min.mjs", "vendor/pdfjs/legacy/build/pdf.worker.min.mjs", "manifest.webmanifest", "vendor/hanzi-writer.min.js",
-  "icons/panda-180.png", "icons/panda-192.png", "icons/panda-512.png",
+const CACHE = PREFIX + "v17";
+const CORE = ["./", "index.html", "css/app.css?v=17", "css/home.css?v=17", "css/home-pet.css?v=17", "js/home-pet.js?v=17", "css/navigation.css?v=17", "css/study.css?v=17", "css/translate.css?v=17", "js/translate.js?v=17", "css/ai.css?v=17", "js/ai.js?v=17", "js/ai-learning.js?v=17", "js/ai-pronunciation.js?v=17", "css/ai-pronunciation.css?v=17", "js/wordwall.js?v=17", "js/study.js?v=17", "data/hsk3/legacy-bridge.json", "js/content.js?v=17", "js/navigation.js?v=17", "js/app.js?v=17", "js/hsk3.js?v=17", "data/hsk3/manifest.json", "data/hsk3/exams.json", "data/hsk3/vocabulary-1-01.json", "js/dictionary.js?v=17", "js/scenarios.js?v=17", "vendor/fflate.min.js?v=17", "js/library.js?v=17", "data/library-catalog.json", "vendor/pdfjs/legacy/build/pdf.min.mjs", "vendor/pdfjs/legacy/build/pdf.worker.min.mjs", "manifest.webmanifest", "vendor/hanzi-writer.min.js",
+  "icons/red-panda.png",
   "data/hsk1.json", "data/hsk2.json", "data/hsk3.json", "data/hsk4.json", "data/hsk5.json", "data/hsk6.json"];
 
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });

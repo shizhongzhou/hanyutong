@@ -242,7 +242,7 @@
         // Absolute auto-width labels otherwise measure against the space left at their old x position.
         b.element.style.left = '0px';
         b.element.style.fontSize = `${Math.max(12, b.baseSize * clamp(width / 390, 0.65, 1.4) * (staticLayout ? stickerFit : 1))}px`;
-        b.element.style.maxWidth = `${Math.max(1, width - 12)}px`;
+        b.element.style.maxWidth = `${Math.max(1, Math.min(176, width * .46))}px`;
         b.element.style.maxHeight = `${Math.max(1, height - 8)}px`;
       }
       const measure = () => {
@@ -311,8 +311,10 @@
       const text = value == null ? '' : String(value);
       if (!text.trim()) continue;
       const button = doc.createElement('button'); button.type = 'button'; button.className = 'wordwall-token';
-      button.textContent = text; button.setAttribute('aria-label', text); button.draggable = false;
-      Object.assign(button.style, { position: 'absolute', left: '0px', top: '0px', touchAction: 'none', userSelect: 'none', whiteSpace: 'normal', overflowWrap: 'anywhere', overflow: 'hidden', boxSizing: 'border-box', transformOrigin: 'center center' });
+      const characters = [...text];
+      button.textContent = characters.length > 12 ? characters.slice(0, 11).join('').trimEnd() + '…' : text;
+      button.setAttribute('aria-label', text); button.title = text; button.draggable = false;
+      Object.assign(button.style, { position: 'absolute', left: '0px', top: '0px', touchAction: 'none', userSelect: 'none', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', boxSizing: 'border-box', transformOrigin: 'center center' });
       const body = { word, element: button, baseSize: currentMode === 'stickers' ? (i === 2 ? 48 : 23 + i % 4 * 2) : 23 + i % 3 * 2, x: 0, y: 0, width: 1, height: 1, angle: 0, vx: 0, vy: 0, omega: 0, fixed: false, suppressClickUntil: -1 };
       bodies.push(body); container.appendChild(button);
       listen(button, 'pointerdown', e => down(e, body));

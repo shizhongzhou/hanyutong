@@ -70,7 +70,7 @@ test('new task, assessment and feedback routes dispatch without a paid membershi
   try{
     process.env.AI_ASSESSMENT_ENABLED='false';process.env.AI_FEEDBACK_ENABLED='false';
     const tasks=await handler({path:'/ai/tasks',httpMethod:'GET',headers:{origin}});
-    assert.equal(tasks.statusCode,200);assert.equal(JSON.parse(tasks.body).tasks.length,27);assert.doesNotMatch(tasks.body,/"sample"/);
+    assert.equal(tasks.statusCode,200);assert.equal(JSON.parse(tasks.body).tasks.length,108);assert.doesNotMatch(tasks.body,/"sample"/);
     const assess=await handler({path:'/ai/assess',httpMethod:'POST',headers:{origin,'content-type':'application/json'},body:'{}'});
     assert.equal(assess.statusCode,503);assert.equal(JSON.parse(assess.body).error,'assessment_disabled');
     const feedback=await handler({path:'/ai/feedback',httpMethod:'POST',headers:{origin,'content-type':'application/json'},body:'{}'});

@@ -15,6 +15,43 @@ function client(fetch, storage = new Map()) {
   vm.runInContext(source + '\nthis.library = CloudLibrary;', context);
   return context.library;
 }
+
+test('library returns to the previous search/category without renaming source titles or files', async () => {
+  const nodes = new Map(), buttons = ['all', 'pdf', 'audio', 'slides'].map(kind => ({ dataset: { kind }, setAttribute(key, value) { this[key] = value; } }));
+  const node = selector => { if (!nodes.has(selector)) nodes.set(selector, { innerHTML: '', value: '' }); return nodes.get(selector); };
+  let leave = [];
+  const context = vm.createContext({ fetch: async () => ({ ok: true, json: async () => catalog }), AbortSignal, setTimeout,
+    localStorage: { getItem() {}, setItem() {} }, app: node('#app'), location: { hash: '#/library/rts-01' },
+    onLeave: callback => leave.push(callback), topbar: title => `<h1>${title}</h1>`, esc: value => String(value), ic: () => '',
+    fmtSize: value => String(value), row: () => '', natCmp: (a, b) => a.localeCompare(b),
+    $: node, $$: selector => selector === '[data-kind]' ? buttons : [] });
+  vm.runInContext(source, context);
+  await vm.runInContext('pageLibrary("rts-01")', context);
+  node('#lib-search').value = '1'; node('#lib-search').oninput(); buttons.find(b => b.dataset.kind === 'audio').onclick();
+  const filtered = node('#lib-files').innerHTML;
+  assert.ok(filtered.length > 0); leave.forEach(fn => fn()); leave = [];
+  context.location.hash = '#/libfile/example'; context.location.hash = '#/library/rts-01';
+  await vm.runInContext('pageLibrary("rts-01")', context);
+  assert.equal(node('#lib-search').value, '1'); assert.equal(buttons.find(b => b.dataset.kind === 'audio')['aria-pressed'], 'true');
+  assert.equal(node('#lib-files').innerHTML, filtered);
+  const original = catalog.books.find(b => b.id === 'rts-01').originalTitle;
+  assert.ok(node('#app').innerHTML.includes(original));
+  context.location.hash = '#/library'; await vm.runInContext('pageLibrary()', context);
+  assert.match(node('#app').innerHTML, /Курс китайского · 汉语课程/);
+  assert.doesNotMatch(node('#app').innerHTML, /Путь к успеху|成功之路/);
+});
+
+test('a superseded library render stays cancelled even when the user returns to the same hash', async () => {
+  let resolveCatalog; const nodes = new Map(), leave = [];
+  const node = selector => { if (!nodes.has(selector)) nodes.set(selector, { innerHTML: '' }); return nodes.get(selector); };
+  const context = vm.createContext({ fetch: async () => ({ ok: true, json: () => new Promise(resolve => { resolveCatalog = resolve; }) }),
+    AbortSignal, setTimeout, localStorage: { getItem() {}, setItem() {} }, app: node('#app'), location: { hash: '#/library' },
+    onLeave: callback => leave.push(callback), topbar: title => `<h1>${title}</h1>`, $: node, $$: () => [] });
+  vm.runInContext(source, context); const pending = vm.runInContext('pageLibrary()', context);
+  for (let i = 0; i < 5 && !resolveCatalog; i++) await Promise.resolve();
+  leave.forEach(fn => fn()); node('#app').innerHTML = 'new page'; resolveCatalog(catalog); await pending;
+  assert.equal(node('#app').innerHTML, 'new page');
+});
 test('593 source entries and 20 complete reading copies; public catalog omits original locations', () => {
   assert.equal(catalog.books.length, 21); assert.equal(catalog.files.length, 593);
   assert.equal(catalog.totalBytes, 4959124413);

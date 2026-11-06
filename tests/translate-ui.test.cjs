@@ -24,7 +24,7 @@ function harness({ config = defaults, fetcher, canvasSizes = [400000], imageWidt
     set innerHTML(html) {
       ids.clear(); this.html = html;
       for (const [, tag, attrs] of html.matchAll(/<([a-z][a-z0-9]*)\b([^>]*)>/gi)) if (/\bid="/.test(attrs)) this.children.push(new Element(tag, attrs));
-      if (ids.has('tr-source')) ids.get('tr-source').value = 'auto';
+      if (ids.has('tr-source')) ids.get('tr-source').value = 'zh';
       if (ids.has('tr-target')) ids.get('tr-target').value = 'ru';
     }
     get innerHTML() { return this.html || ''; }
@@ -88,7 +88,7 @@ test('text validation counts Unicode characters, enforces limits and never sends
 test('successful text translation sends one explicit request and supports copy, speech and reverse direction', async () => {
   const h=harness();await h.page();h.input('  你好，世界！  ');await h.one('submit').onclick();
   assert.equal(h.requests.length,2);const request=h.requests[1];assert.equal(request.options.method,'POST');
-  assert.deepEqual(JSON.parse(request.options.body),{text:'你好，世界！',source:'auto',target:'ru'});
+  assert.deepEqual(JSON.parse(request.options.body),{text:'你好，世界！',source:'zh',target:'ru'});
   assert.equal(h.one('result-text').textContent,'Привет, мир!');assert.equal(h.one('result-panel').hidden,false);
   await h.one('copy').onclick();assert.deepEqual(h.copied,['Привет, мир!']);h.one('speak').onclick();
   assert.equal(h.spoken[0].lang,'ru-RU');assert.equal(h.spoken[0].voice.name,'Russian');
@@ -139,7 +139,7 @@ test('camera and gallery inputs are separate; selected photo is uploaded only af
   await h.one('gallery-file').onchange({target:{files:[{size:1000,type:'image/png'}]}});
   assert.equal(h.requests.length,1);assert.equal(h.one('photo-preview').hidden,false);assert.equal(h.one('recognize').disabled,false);
   await h.one('recognize').onclick();assert.equal(h.requests.length,2);assert.match(h.requests[1].url,/\/photo$/);
-  const body=JSON.parse(h.requests[1].options.body);assert.equal(body.mimeType,'image/jpeg');assert.equal(body.language,'auto');assert.ok(body.image);assert.equal(h.one('input').value,'你好，世界！');
+  const body=JSON.parse(h.requests[1].options.body);assert.equal(body.mimeType,'image/jpeg');assert.equal(body.language,'zh');assert.ok(body.image);assert.equal(h.one('input').value,'你好，世界！');
   h.input('你好，中国！');await h.one('submit').onclick();assert.equal(JSON.parse(h.requests[2].options.body).text,'你好，中国！');
   h.one('remove-photo').onclick();assert.equal(h.one('photo-preview').hidden,true);assert.equal(h.one('recognize').disabled,true);assert.deepEqual(h.revoked,h.urls);
 });

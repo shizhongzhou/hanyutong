@@ -112,7 +112,7 @@ const HanyuAI = (() => {
   }
   async function tasks(signal) {
     const data = await request('/tasks', undefined, signal);
-    if (!Array.isArray(data.tasks) || data.tasks.length > 100) throw error('invalid_response');
+    if (!Array.isArray(data.tasks) || data.tasks.length > 200) throw error('invalid_response');
     return data.tasks.map(task => {
       if (!task || !['writing', 'speaking', 'grammar'].includes(task.mode) || !boundedText(task.id, 100) || !Number.isInteger(task.level) || task.level < 1 || task.level > 9 || !boundedText(task.titleRu, 300) || !boundedText(task.promptRu, 3000) || !Array.isArray(task.criteria) || !task.criteria.length || task.criteria.length > 10 || !Number.isFinite(task.maxScore) || task.maxScore <= 0) throw error('invalid_response');
       const criteria = task.criteria.map(item => {
@@ -194,9 +194,21 @@ const HanyuAI = (() => {
     for (const raw of String(text || '').split(/\r?\n/)) {
       const line = (raw.match(/[\p{Script=Han}0-9０-９，。！？、；：…“”‘’（）《》「」『』,.!?;:\s]+/gu) || [])
         .map(part => part.trim()).filter(part => /\p{Script=Han}/u.test(part)).join(' ').trim();
-      if (!line || count(line) > MAX_SPEECH_CHARS || seen.has(line)) continue;
-      seen.add(line); lines.push(line);
-      if (lines.length === 8) break;
+      const characters = [...line];
+      for (let offset = 0; offset < characters.length;) {
+        let end = Math.min(offset + MAX_SPEECH_CHARS, characters.length);
+        // Long replies remain playable. Prefer a nearby sentence boundary;
+        // every resulting button still starts only one explicitly chosen clip.
+        if (end < characters.length) {
+          for (let i = end - 1; i >= offset + MAX_SPEECH_CHARS / 2; i--) {
+            if (/[。！？!?；;…]/u.test(characters[i])) { end = i + 1; break; }
+          }
+        }
+        const phrase = characters.slice(offset, end).join('').trim(); offset = end;
+        if (!/\p{Script=Han}/u.test(phrase) || seen.has(phrase)) continue;
+        seen.add(phrase); lines.push(phrase);
+        if (lines.length === 8) return lines;
+      }
     }
     return lines;
   }
@@ -280,14 +292,15 @@ async function pageAI(initialMode) {
       ['Можно сказать 我是学习汉语?', 'Я написал: 我是学习汉语。Объясни по-русски, что здесь исправить и почему. Покажи правильную фразу с пиньинем.']
     ]
   };
+  const pickerMarkup = (id, label, placeholder) => `<div id="ai-${id}-picker" class="ai-picker"><button id="ai-${id}" class="ai-picker-trigger" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="ai-${id}-options" aria-labelledby="ai-${id}-label ai-${id}-value"><span id="ai-${id}-value">${placeholder}</span><span class="ai-picker-chevron" aria-hidden="true"></span></button><div id="ai-${id}-options" class="ai-picker-options" role="listbox" aria-label="${label}" hidden></div></div>`;
   const controlsMarkup = `<div class="seg ai-tabs" aria-label="Режим собеседника" ${assessmentPage ? 'hidden' : ''}><button id="ai-dialogue" aria-pressed="${mode === 'dialogue'}">Диалог</button><button id="ai-explain" aria-pressed="${mode === 'explain'}">Объяснение</button></div>
     <div class="seg ai-tabs" aria-label="Вид задания" ${assessmentPage ? '' : 'hidden'}><button id="ai-assess-writing">Письмо</button><button id="ai-assess-speaking">Устный ответ</button><button id="ai-assess-grammar">Грамматика</button></div>
-    <div class="ai-settings"><label for="ai-level">Мой уровень <select id="ai-level" aria-label="Уровень китайского">${Array.from({ length: 9 }, (_, i) => `<option value="${i + 1}">HSK ${i + 1}</option>`).join('')}</select></label><button id="ai-reset">Новый разговор</button></div>`;
+    <div class="ai-settings"><div class="ai-level-setting"><label id="ai-level-label" for="ai-level">Мой уровень</label>${pickerMarkup('level', 'Уровень китайского', 'HSK 1')}</div><button id="ai-reset">Новый разговор</button></div>`;
   app.innerHTML = `${homePage ? '' : topbar(assessmentPage ? 'Проверка заданий' : '汉语熊 · AI', '#/learn')}<section id="ai-tutor" class="ai-tutor${homePage ? ' ai-home' : ''}${assessmentPage ? ' is-assessment' : ''}">
     ${homePage ? '<nav class="home-switch" aria-label="Режим главной страницы"><a href="#/home">Классический</a><a href="#/home/ai" aria-current="page">С AI <span aria-hidden="true">✦</span></a></nav>' : ''}
     ${assessmentPage ? '<p class="sub ai-intro">Выполните учебное задание и получите разбор по понятным критериям.</p>' : ''}
     ${homePage ? '' : controlsMarkup}
-    <div id="ai-task-panel" class="ai-task-panel" ${assessmentPage ? '' : 'hidden'}><label for="ai-task">Учебное задание</label><select id="ai-task" aria-label="Выберите задание"></select><div id="ai-task-details"></div><p id="ai-assessment-notice" class="hint"></p></div>
+    <div id="ai-task-panel" class="ai-task-panel" ${assessmentPage ? '' : 'hidden'}><label id="ai-task-label" for="ai-task">Учебное задание</label>${pickerMarkup('task', 'Выберите задание', 'Загружаем задания…')}<div id="ai-task-details"></div><p id="ai-assessment-notice" class="hint"></p></div>
     <div id="ai-service" class="ai-service" role="status">Подключаем собеседника…</div><button id="ai-reconnect" class="ai-reconnect" hidden>Попробовать подключиться снова</button>
     <div id="ai-empty" class="ai-welcome"><span class="ai-welcome-hello" lang="zh">你好<span aria-hidden="true">!</span></span><h2 id="ai-welcome-title">Что изучим сегодня?</h2><p id="ai-welcome-note">Поговорим по-китайски, разберём непонятное.</p></div>
     <nav id="ai-features" class="ai-feature-links" aria-label="Практика с AI"><a href="#/assess/writing"><span class="ai-feature-icon" aria-hidden="true">${ic('pen')}</span><span>Письмо</span><small>Проверить текст</small></a><a href="#/assess/speaking"><span class="ai-feature-icon" aria-hidden="true">${ic('mic')}</span><span>Устный ответ</span><small>Разобрать содержание</small></a><a href="#/pronunciation"><span class="ai-feature-icon" aria-hidden="true">${ic('ear')}</span><span>Произношение</span><small>Потренировать тоны</small></a></nav>
@@ -305,6 +318,83 @@ async function pageAI(initialMode) {
     ${homePage ? '</details>' : ''}
   </section>`;
   const el = id => $('#ai-' + id), input = el('input'), level = el('level'), log = el('messages');
+  const pickers = [];
+  function createPicker(id, options, emptyLabel) {
+    const root = el(id + '-picker'), trigger = el(id), label = el(id + '-value'), list = el(id + '-options');
+    let items = [], optionNodes = [], opened = false, highlighted = -1, search = '', lastTyped = 0;
+    function sync() {
+      const selected = items.find(item => item.value === trigger.value);
+      label.textContent = selected?.label || emptyLabel;
+      optionNodes.forEach((option, index) => {
+        option.setAttribute('aria-selected', String(items[index].value === trigger.value));
+        option.className = 'ai-picker-option' + (opened && index === highlighted ? ' is-active' : '');
+      });
+      if (opened && optionNodes[highlighted]) trigger.setAttribute('aria-activedescendant', optionNodes[highlighted].id);
+      else trigger.removeAttribute('aria-activedescendant');
+    }
+    function close(focus = false) {
+      opened = false; list.hidden = true; root.className = 'ai-picker'; trigger.setAttribute('aria-expanded', 'false');
+      search = ''; sync(); if (focus && active && !trigger.disabled) trigger.focus({ preventScroll: true });
+    }
+    function highlight(index) {
+      highlighted = Math.max(0, Math.min(index, items.length - 1)); sync();
+      optionNodes[highlighted]?.scrollIntoView?.({ block: 'nearest' });
+    }
+    function open(index) {
+      if (!active || trigger.disabled || !items.length) return;
+      pickers.forEach(picker => { if (picker.root !== root) picker.close(); });
+      opened = true; list.hidden = false; root.className = 'ai-picker is-open'; trigger.setAttribute('aria-expanded', 'true');
+      highlight(index ?? Math.max(0, items.findIndex(item => item.value === trigger.value))); trigger.focus({ preventScroll: true });
+    }
+    function choose(index) {
+      if (!active || trigger.disabled || !items[index]) return;
+      const changed = trigger.value !== items[index].value;
+      trigger.value = items[index].value; close(true);
+      if (changed) trigger.onchange?.();
+    }
+    function setOptions(next, value = trigger.value) {
+      close(); items = next; optionNodes = []; list.replaceChildren();
+      trigger.value = items.some(item => item.value === value) ? value : items[0]?.value || ''; trigger.disabled = !items.length;
+      items.forEach((item, index) => {
+        const option = node('div', 'ai-picker-option', item.label); option.setAttribute('id', `ai-${id}-option-${index}`); option.setAttribute('role', 'option');
+        // Keep DOM focus on the combobox; active-descendant announces the highlighted option.
+        option.onmousedown = event => event.preventDefault(); option.onclick = () => choose(index);
+        option.onpointermove = event => { if (opened && event.pointerType === 'mouse') { highlighted = index; sync(); } };
+        optionNodes.push(option); list.append(option);
+      });
+      sync();
+    }
+    trigger.onclick = () => { if (opened) close(); else open(); };
+    trigger.onkeydown = event => {
+      if (!active || trigger.disabled) return;
+      const key = event.key;
+      if (key === 'Tab') { close(); return; }
+      if (key === 'Escape') { if (opened) { event.preventDefault(); event.stopPropagation(); close(true); } return; }
+      if (key === 'Enter' || key === ' ') { event.preventDefault(); if (opened) choose(highlighted); else open(); return; }
+      if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(key)) {
+        event.preventDefault(); search = '';
+        if (event.altKey && key === 'ArrowUp') { close(); return; }
+        if (key === 'Home' || key === 'End') { const index = key === 'Home' ? 0 : items.length - 1; if (opened) highlight(index); else open(index); }
+        else if (!opened) open(); else highlight(highlighted + (key === 'ArrowDown' ? 1 : -1));
+        return;
+      }
+      if (key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault(); if (!opened) open();
+        const now = Date.now(), letter = key.toLocaleLowerCase('ru'); search = now - lastTyped > 700 ? letter : search + letter; lastTyped = now;
+        if ([...search].every(character => character === letter)) search = letter;
+        const start = search.length === 1 ? highlighted + 1 : highlighted;
+        for (let offset = 0; offset < items.length; offset++) {
+          const index = (start + offset + items.length) % items.length;
+          if (items[index].label.toLocaleLowerCase('ru').startsWith(search)) { highlight(index); break; }
+        }
+      }
+    };
+    const picker = { root, close, sync, setOptions }; pickers.push(picker); setOptions(options); return picker;
+  }
+  const levelPicker = createPicker('level', Array.from({ length: 9 }, (_, index) => ({ value: String(index + 1), label: `HSK ${index + 1}` })), 'Выберите уровень');
+  const taskPicker = createPicker('task', [], 'На этом уровне заданий пока нет');
+  const dismissPickers = event => { pickers.forEach(picker => { if (!picker.root.contains(event.target)) picker.close(); }); };
+  document.addEventListener('pointerdown', dismissPickers, true); document.addEventListener('focusin', dismissPickers, true);
   const status = (text = '', failed = false) => { el('status').textContent = text; el('status').className = 'ai-status' + (failed ? ' is-error' : ''); };
   const controller = () => { const c = new AbortController(); controllers.add(c); return c; };
   const micSupported = () => !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined' && !!(window.AudioContext || window.webkitAudioContext);
@@ -327,6 +417,7 @@ async function pageAI(initialMode) {
     if (clipUrl) URL.revokeObjectURL(clipUrl); clipUrl = ''; el('recording').hidden = true;
   }
   function refresh() {
+    levelPicker.sync(); taskPicker.sync();
     const capturing = !!recording || ['record', 'microphone', 'prepare', 'asr'].includes(busy);
     const length = HanyuAI.count(input.value.trim()), valid = length > 0 && length <= settings.maxInputChars;
     el('count').textContent = `${length.toLocaleString('ru-RU')} / ${settings.maxInputChars.toLocaleString('ru-RU')}`;
@@ -396,12 +487,9 @@ async function pageAI(initialMode) {
     if (!assessmentPage) return;
     const kindTasks = assessmentTasks.filter(task => task.mode === mode);
     if (chooseAvailable && !kindTasks.some(task => task.level === Number(level.value)) && kindTasks.length) level.value = String(kindTasks[0].level);
-    const available = kindTasks.filter(task => task.level === Number(level.value)), select = el('task'), previous = selectedTask?.id;
-    select.replaceChildren();
-    for (const task of available) { const option = node('option', '', task.titleRu); option.value = task.id; select.append(option); }
+    const available = kindTasks.filter(task => task.level === Number(level.value)), previous = selectedTask?.id;
     selectedTask = available.find(task => task.id === previous) || available[0] || null;
-    select.disabled = !selectedTask; select.value = selectedTask?.id || '';
-    if (!available.length) { const option = node('option', '', 'На этом уровне заданий пока нет'); option.value = ''; select.append(option); }
+    levelPicker.sync(); taskPicker.setOptions(available.map(task => ({ value: task.id, label: task.titleRu })), selectedTask?.id || '');
     renderTaskDetails();
   }
   function renderTaskDetails() {
@@ -513,6 +601,7 @@ async function pageAI(initialMode) {
     el('empty').hidden = assessmentPage || visible.length > 0; el('starters').hidden = assessmentPage || visible.length > 0;
   }
   function newConversation(nextMode = mode) {
+    pickers.forEach(picker => picker.close());
     cancel(); stopMicrophone(true); discardRecording(); mode = nextMode; history = []; input.value = ''; el('record-time').textContent = ''; modeLabels(); renderHistory(); status(); refresh();
   }
   el('dialogue').onclick = () => { if (!assessmentPage && mode !== 'dialogue') newConversation('dialogue'); };
@@ -607,7 +696,7 @@ async function pageAI(initialMode) {
     });
     dockObserver.observe(el('compose-dock'));
   }
-  onLeave(() => { active = false; dockObserver?.disconnect(); configRevision++; configController?.abort(); cancel(); stopMicrophone(true); discardRecording(); history = []; chineseReplies.length = 0; });
+  onLeave(() => { active = false; pickers.forEach(picker => picker.close()); document.removeEventListener('pointerdown', dismissPickers, true); document.removeEventListener('focusin', dismissPickers, true); dockObserver?.disconnect(); configRevision++; configController?.abort(); cancel(); stopMicrophone(true); discardRecording(); history = []; chineseReplies.length = 0; });
   if (draft) { input.value = draft.text; status('Текст перенесён. Проверьте его и нажмите «Отправить» для объяснения.'); }
   modeLabels(); refresh(); await loadConfig();
 }

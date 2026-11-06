@@ -199,7 +199,13 @@ document.addEventListener("click", e => { const b = e.target.closest("[data-say]
 
 /* ---------- общие элементы ---------- */
 function toast(msg) { $$(".toast").forEach(t => t.remove()); const t = h(`<div class="toast" role="status">${esc(msg)}</div>`); document.body.append(t); setTimeout(() => t.remove(), 2800); }
-const topbar = (title, back = "#/home") => `<div class="topbar"><a class="round" href="${back}" aria-label="Назад">${ic("back")}</a><h1>${title}</h1></div>`;
+const topbar = (title, back = "#/home") => `<div class="topbar"><a class="round" href="${esc(typeof HanyuNavigation === "undefined" ? back : HanyuNavigation.backHref(back))}" data-nav-back="${esc(back)}" aria-label="Назад">${ic("back")}</a><h1>${title}</h1></div>`;
+const replaceRoute = hash => typeof HanyuNavigation === "undefined" ? location.replace(hash) : HanyuNavigation.replace(hash);
+document.addEventListener("click", event => {
+  const link = event.target.closest("[data-nav-back]");
+  if (!link || event.defaultPrevented || event.button > 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || typeof HanyuNavigation === "undefined") return;
+  event.preventDefault(); HanyuNavigation.back(link.dataset.navBack);
+});
 const row = (href, icon, title, small) => `<a href="${href}"><span class="ic">${ic(icon)}</span><span class="t"><b>${title}</b>${small ? `<small>${small}</small>` : ""}</span>${ic("go", "i go")}</a>`;
 const starBtn = w => `<button class="star" data-star="${esc(wordKey(w))}" data-lv="${esc(w.lv)}" aria-pressed="${!!bookmarkRecord(wordKey(w))}" aria-label="В мой словарик">${ic("star")}</button>`;
 document.addEventListener("click", async e => {
@@ -221,6 +227,11 @@ const greeting = () => { const hr = new Date().getHours(); return hr < 5 ? "До
 const lvName = lv => `HSK 2.0 · ${lv} · ${LEVELS[lv].title}`;
 let leaveFns = [];
 const onLeave = fn => leaveFns.push(fn);
+const activeView = () => {
+  let active = true; const hash = location.hash;
+  onLeave(() => { active = false; });
+  return () => active && location.hash === hash;
+};
 
 /* ========== страницы ========== */
 function pageWelcome() {
@@ -245,11 +256,8 @@ const HOME_FEATURES = [
   { id: "translate", group: "translate", label: "Перевод", detail: "Китайский ↔ русский", icon: "translate", tone: "blue", href: "#/translate" },
   { id: "photo", group: "translate", label: "По фото", detail: "Распознать и перевести", icon: "camera", tone: "violet", href: "#/translate/photo" },
   { id: "dict", group: "translate", label: "Словарь", detail: "Слова и значения", icon: "search", tone: "mint", href: "#/dict" },
-  { id: "ai-chat", group: "ai", label: "AI-диалог", detail: "Поговорить по-китайски", icon: "chat", tone: "blue", href: "#/ai" },
-  { id: "ai-explain", group: "ai", label: "Разбор с AI", detail: "Объяснения по-русски", icon: "book", tone: "violet", href: "#/ai/explain" },
-  { id: "writing", group: "ai", label: "Письмо", detail: "Разбор письменного ответа", icon: "pen", tone: "peach", href: "#/assess/writing" },
-  { id: "speaking", group: "ai", label: "Устный ответ", detail: "Разбор содержания ответа", icon: "mic", tone: "mint", href: "#/assess/speaking" },
-  { id: "grammar-check", group: "ai", label: "Проверка грамматики", detail: "Задание и исправления", icon: "check", tone: "blue", href: "#/assess/grammar" },
+  { id: "ai-chat", group: "ai", label: "AI-диалог и разбор", detail: "Разговор и объяснения по-русски", icon: "chat", tone: "blue", href: "#/ai" },
+  { id: "assessment", group: "ai", label: "Проверка заданий", detail: "Письмо, устный ответ и грамматика", icon: "check", tone: "peach", href: "#/assess/writing" },
   { id: "pronunciation", group: "ai", label: "Мои тоны", detail: "Мелодика отдельного слога", icon: "wave", tone: "rose", href: "#/pronunciation" },
   { id: "study", group: "words", label: "Карточки", detail: "Учить слова своего этапа", icon: "cards", tone: "peach", href: () => coursePath("study") },
   { id: "vocab", group: "words", label: "Слова HSK", detail: "Словарь выбранного этапа", icon: "book", tone: "blue", href: () => coursePath("vocab") },
@@ -268,16 +276,19 @@ const HOME_FEATURES = [
   { id: "write", group: "practice", label: "Написать слово", detail: "Тренировка по памяти", icon: "read", tone: "mint", href: () => `#/write/${S.settings.level}` },
   { id: "hanzi", group: "practice", label: "Порядок черт", detail: "Как пишутся иероглифы", icon: "pen", tone: "rose", href: () => `#/hanzi/${S.settings.level}` },
   { id: "pairs", group: "practice", label: "Найди пару", detail: "Слова и их значения", icon: "layers", tone: "blue", href: () => `#/pairs/${S.settings.level}` },
-  { id: "library", group: "personal", label: "Учебники", detail: "«Путь к успеху» и аудио", icon: "book", tone: "mint", href: "#/library" },
+  { id: "library", group: "personal", label: "Курс китайского · 汉语课程", detail: "Учебники и аудио к урокам", icon: "book", tone: "mint", href: "#/library" },
   { id: "shelf", group: "personal", label: "Моя полка", detail: "Книги на устройстве", icon: "read", tone: "peach", href: "#/shelf" },
   { id: "ai-profile", group: "personal", label: "Мои подсказки", detail: "Что повторить с AI", icon: "target", tone: "violet", href: "#/ai-profile" },
   { id: "stats", group: "personal", label: "Прогресс", detail: "Мои занятия и результаты", icon: "chart", tone: "blue", href: "#/stats" },
   { id: "plan", group: "personal", label: "План занятий", detail: "Выбрать цель на день", icon: "clock", tone: "rose", href: "#/plan" }
 ];
-const HOME_DEFAULT_FEATURES = ["translate", "photo", "dict", "study", "ai-chat", "ai-explain", "pronunciation", "writing", "library"];
+const HOME_DEFAULT_FEATURES = ["translate", "photo", "dict", "study", "ai-chat", "pronunciation", "assessment", "stages", "library"];
 const HOME_FEATURE_INDEX = new Map(HOME_FEATURES.map(feature => [feature.id, feature]));
+const HOME_FEATURE_ALIASES = Object.freeze({ "ai-explain": "ai-chat", writing: "assessment", speaking: "assessment", "grammar-check": "assessment" });
+const canonicalHomeFeatureID = id => typeof id === "string" && Object.hasOwn(HOME_FEATURE_ALIASES, id) ? HOME_FEATURE_ALIASES[id] : id;
+for (const [oldID, id] of Object.entries(HOME_FEATURE_ALIASES)) HOME_FEATURE_INDEX.set(oldID, HOME_FEATURE_INDEX.get(id));
 function normalizeHomeFeatures(ids) {
-  return [...new Set(Array.isArray(ids) ? ids : HOME_DEFAULT_FEATURES)].filter(id => typeof id === "string" && HOME_FEATURE_INDEX.has(id)).slice(0, 9);
+  return [...new Set((Array.isArray(ids) ? ids : HOME_DEFAULT_FEATURES).map(canonicalHomeFeatureID))].filter(id => typeof id === "string" && HOME_FEATURE_INDEX.has(id)).slice(0, 9);
 }
 const homeFeatureIDs = () => normalizeHomeFeatures(S.settings.homeFeatures);
 const homeFeatureHref = feature => typeof feature.href === "function" ? feature.href() : feature.href;
@@ -338,16 +349,19 @@ function pageFeatures(mode) {
         ${selected.length ? editing ? `<ol class="feature-favorites-list">${favoriteMarkup}</ol>` : `<nav class="features-grid features-favorite-grid" aria-label="На главной">${selected.map(id => homeShortcut(HOME_FEATURE_INDEX.get(id))).join("")}</nav>` : '<p class="features-empty">Пока нет ярлыков. Добавьте нужные функции из списка ниже.</p>'}
         ${editing ? '<div class="features-edit-actions"><a href="#/features" class="features-cancel">Отмена</a><button type="button" id="features-done">Готово</button></div>' : ""}
       </section><p class="feature-edit-message" role="status" id="feature-edit-message" ${message ? "" : "hidden"}>${esc(message)}</p>
-      ${HOME_FEATURE_GROUPS.map(([group, title]) => `<section class="feature-group"><h2>${title}</h2><div class="features-grid">${HOME_FEATURES.filter(feature => feature.group === group).map(feature => {
+      ${HOME_FEATURE_GROUPS.map(([group, title]) => {
+        const available = HOME_FEATURES.filter(feature => feature.group === group && !selected.includes(feature.id));
+        return available.length ? `<section class="feature-group"><h2>${title}</h2><div class="features-grid">${available.map(feature => {
         const content = `${homeFeatureIcon(feature)}<b>${esc(feature.label)}</b><small>${esc(feature.detail)}</small>`;
         return editing ? `<button type="button" class="feature-catalog-card" data-feature-toggle="${feature.id}" aria-pressed="${selected.includes(feature.id)}" aria-label="${selected.includes(feature.id) ? "Убрать" : "Добавить"} ${esc(feature.label)} ${selected.includes(feature.id) ? "с главной" : "на главную"}"><span class="feature-selection" aria-hidden="true">${selected.includes(feature.id) ? ic("check") : "+"}</span>${content}</button>` : `<a class="feature-catalog-card" href="${esc(homeFeatureHref(feature))}">${content}</a>`;
-      }).join("")}</div></section>`).join("")}</section>`;
+      }).join("")}</div></section>` : "";
+      }).join("")}</section>`;
     if (!editing) return;
     $("#features-done").onclick = () => { S.settings.homeFeatures = normalizeHomeFeatures(selected); save(); location.hash = "#/features"; };
     $("#features-page").onclick = event => {
       const toggle = event.target.closest("[data-feature-toggle]"), move = event.target.closest("[data-feature-move]");
       if (toggle) {
-        const id = toggle.dataset.featureToggle;
+        const id = canonicalHomeFeatureID(toggle.dataset.featureToggle);
         if (!HOME_FEATURE_INDEX.has(id)) return;
         const fromFavorites = !!event.target.closest(".feature-favorites-list"), previousIndex = selected.indexOf(id);
         if (selected.includes(id)) selected = selected.filter(value => value !== id);
@@ -357,7 +371,7 @@ function pageFeatures(mode) {
         if (fromFavorites) {
           const nextID = selected[Math.min(Math.max(previousIndex, 0), selected.length - 1)];
           (nextID ? $(`#feature-favorite-${nextID} [data-feature-toggle]`) : $("#features-done"))?.focus();
-        } else $(`.feature-catalog-card[data-feature-toggle="${id}"]`)?.focus();
+        } else (selected.includes(id) ? $(`#feature-favorite-${id} [data-feature-toggle]`) : $(`.feature-catalog-card[data-feature-toggle="${id}"]`))?.focus();
       } else if (move && !move.disabled) {
         const index = selected.indexOf(move.dataset.featureMove), next = index + (move.dataset.direction === "up" ? -1 : 1);
         if (index < 0 || next < 0 || next >= selected.length) return;
@@ -376,13 +390,12 @@ function pageLearn() {
   app.innerHTML = `<section class="page"><div class="intro"><p class="kicker">Ваш учебный маршрут</p><h1>Китайский шаг за шагом</h1><p class="sub">Единый курс: слова, грамматика, диалоги, чтение и практика экзамена.</p></div>
     <a class="card-blue" href="${coursePath("study")}" style="display:block"><h2>${currentCourseName()}</h2><p class="sub">Выучено карточек: ${count}</p><span>Продолжить учиться ${ic("go")}</span></a>
     <div class="section"><h2>Слова и экзамен</h2><a href="#/stages">Выбрать этап ›</a></div>
-    <div class="list">${row(coursePath("study"), "cards", "Карточки", "Новые слова и интервальное повторение")}${row(coursePath("vocab"), "book", "Все слова этапа", "Пиньинь и русские значения")}${row(coursePath("quiz"), "check", "Тренировка слов", "Китайские слова и русские значения")}${row(coursePath("exam"), "trophy", "Форматы заданий HSK", "Структура экзамена и учебные упражнения")}</div>
-    <div class="section"><h2>Переводчик</h2></div><div class="grid2"><a href="#/translate"><span class="ic">${ic("translate")}</span><b>Перевести текст</b><small>Китайский ↔ русский</small></a><a href="#/translate/photo"><span class="ic">${ic("camera")}</span><b>Перевести по фото</b><small>Камера или готовый снимок</small></a></div>
-    <div class="section"><h2>AI-собеседник</h2></div><div class="grid2"><a href="#/ai"><span class="ic">${ic("chat")}</span><b>Разговорная практика</b><small>Ситуации из жизни · HSK 1–9</small></a><a href="#/ai/explain"><span class="ic">${ic("book")}</span><b>Понятное объяснение</b><small>По-русски, с китайскими примерами</small></a></div>
-    <div class="list mt">${row("#/assess/writing", "pen", "Проверить письменный ответ", "Критерии, исправления и пример")}${row("#/assess/speaking", "mic", "Устный ответ", "Запись, текст и разбор содержания")}${row("#/pronunciation", "wave", "Мои тоны", "Записать слог и увидеть движение голоса")}</div><div class="section"><h2>Практика языка</h2></div><p class="hint">Занимайтесь произношением, разбирайте грамматику и используйте слова в разговоре.</p>
+    <div class="list">${row(coursePath("vocab"), "book", "Все слова этапа", "Пиньинь и русские значения")}${row(coursePath("quiz"), "check", "Тренировка слов", "Китайские слова и русские значения")}${row(coursePath("exam"), "trophy", "Форматы заданий HSK", "Структура экзамена и учебные упражнения")}</div>
+    <div class="section"><h2>Практика с AI</h2></div>
+    <div class="list mt">${row("#/ai", "chat", "AI-диалог и разбор", "Разговор по-китайски и объяснения по-русски")}${row("#/assess/writing", "check", "Проверка заданий", "Письмо, устный ответ и грамматика — выберите внутри")}${row("#/pronunciation", "wave", "Мои тоны", "Записать слог и увидеть движение голоса")}</div><div class="section"><h2>Практика языка</h2></div><p class="hint">Занимайтесь произношением, разбирайте грамматику и используйте слова в разговоре.</p>
     <div class="grid2"><a href="#/pinyin"><span class="ic">${ic("wave")}</span><b>Пиньинь и тоны</b></a><a href="#/grammar"><span class="ic">${ic("pen")}</span><b>Грамматика</b></a><a href="#/dialogues"><span class="ic">${ic("chat")}</span><b>Диалоги</b></a><a href="#/reading"><span class="ic">${ic("read")}</span><b>Чтение</b></a><a href="#/shadow"><span class="ic">${ic("mic")}</span><b>Повторение вслух</b></a><a href="#/tones"><span class="ic">${ic("ear")}</span><b>Тренажёр тонов</b></a></div>
     <div class="section"><h2>Закрепить навыки</h2></div><div class="grid2"><a href="#/listen/${S.settings.level}"><span class="ic">${ic("ear")}</span><b>Слушать слова</b></a><a href="#/write/${S.settings.level}"><span class="ic">${ic("read")}</span><b>Написать слово</b></a><a href="#/hanzi/${S.settings.level}"><span class="ic">${ic("pen")}</span><b>Порядок черт</b></a><a href="#/pairs/${S.settings.level}"><span class="ic">${ic("layers")}</span><b>Найди пару</b></a></div>
-    <div class="list mt">${row("#/library", "book", "Библиотека «Путь к успеху»", "Учебники и аудио к урокам")}${row("#/shelf", "book", "Мои учебники", "Книги и аудио на устройстве")}${row("#/stages", "layers", "Этапы курса", "HSK 1–6 и общий высший этап 7–9")}</div></section>`;
+    <div class="list mt">${row("#/library", "book", "Курс китайского · 汉语课程", "Учебники и аудио к урокам")}${row("#/shelf", "book", "Мои учебники", "Книги и аудио на устройстве")}</div></section>`;
 }
 
 function pageReview() {
@@ -438,8 +451,10 @@ async function pageStudy(arg) {
 
 /* ---------- тесты: обычный, аудирование, экзамен ---------- */
 async function pageQuiz(lv, mode = "mix") {
+  const isActive = activeView();
   lv = +lv || S.settings.level; app.innerHTML = `<p class="empty">Загрузка…</p>`;
   const words = await level(lv); const exam = mode === "exam", N = exam ? 20 : 10;
+  if (!isActive()) return;
   const seen = words.filter(w => wordProgress(w)); const base = seen.length >= 8 ? shuffle(seen.concat(shuffle(words).slice(0, 6))) : shuffle(words.slice(0, Math.min(words.length, 120)));
   const qs = [...new Set(base)].slice(0, N).map((w, i) => {
     const types = mode === "listen" ? ["listen"] : exam ? ["zh2ru", "ru2zh", "listen", "py"] : ["zh2ru", "ru2zh", "listen", "py", "zh2ru"];
@@ -451,6 +466,7 @@ async function pageQuiz(lv, mode = "mix") {
   const ttl = exam ? `Слова на время · блок ${lv}` : mode === "listen" ? `Аудирование · блок ${lv}` : `Тест слов · блок ${lv}`;
   if (exam) { timer = setInterval(() => { const s = Math.max(0, 600 - (Date.now() - t0) / 1e3 | 0); const el = $("#tm"); if (el) el.textContent = `${s / 60 | 0}:${String(s % 60).padStart(2, "0")}`; if (!s) { clearInterval(timer); finish(); } }, 500); onLeave(() => clearInterval(timer)); }
   function draw() {
+    if (!isActive()) return;
     const q = qs[k]; if (!q) return finish(); const w = q.w;
     const prompt = { zh2ru: ["Что означает это слово?", `<div class="big zh">${esc(w.hz)}</div>`], ru2zh: ["Как это по-китайски?", `<div class="mid">${esc(short(w.ru))}</div>`],
       listen: ["Послушайте и выберите слово", `<button class="rec" style="margin:4px auto" data-say="${esc(w.hz)}" aria-label="Прослушать">${ic("speaker")}</button>`], py: ["Выберите правильный пиньинь", `<div class="big zh">${esc(w.hz)}</div>`] }[q.type];
@@ -469,6 +485,7 @@ async function pageQuiz(lv, mode = "mix") {
     });
   }
   function finish() {
+    if (!isActive()) return;
     clearInterval(timer); const pct = Math.round(right / qs.length * 100);
     S.history.unshift({ t: Date.now(), kind: ttl, score: `${right}/${qs.length}` }); S.history = S.history.slice(0, 50); save();
     app.innerHTML = `${topbar(ttl, back)}<div class="result"><div class="score">${pct}%</div><p>Верно ${right} из ${qs.length}${exam ? ` · время ${Math.round((Date.now() - t0) / 1e3 / 60 * 10) / 10} мин` : ""}</p>
@@ -481,7 +498,9 @@ async function pageQuiz(lv, mode = "mix") {
 
 /* ---------- письмо ---------- */
 async function pageWrite(lv) {
+  const isActive = activeView();
   lv = +lv || S.settings.level; const words = shuffle(await level(lv)).slice(0, 10); let k = 0, right = 0;
+  if (!isActive()) return;
   function draw() {
     const w = words[k]; if (!w) { app.innerHTML = `${topbar("Письмо", "#/learn")}<div class="result"><div class="score">${right}/${words.length}</div><p>Отличная практика!</p><button class="btn" id="again">Ещё раз</button></div>`; $("#again").onclick = () => pageWrite(lv); return; }
     app.innerHTML = `${topbar(`Письмо · блок ${lv}`, "#/learn")}<div class="qhead"><div class="bar"><i style="width:${k / words.length * 100}%"></i></div><span class="muted">${k + 1}/${words.length}</span></div>
@@ -501,26 +520,67 @@ async function pageWrite(lv) {
 
 /* ---------- пиньинь и тоны ---------- */
 function pagePinyin() {
+  const spellingExamples = examples => `<div class="chips">${examples.map(([hz, py, ru]) => `<button type="button" class="chip" data-say="${esc(hz)}" aria-label="Прослушать ${esc(hz)}, ${esc(py)} — ${esc(ru)}"><b class="zh">${esc(hz)}</b><small lang="zh-Latn">${esc(py)}</small><br><small>${esc(ru)}</small></button>`).join("")}</div>`;
   app.innerHTML = `${topbar("Звуки и тоны", "#/learn")}<p class="sub" style="margin-top:-6px">Пиньинь — запись китайского произношения латиницей. Каждый слог имеет тон, и тон меняет смысл слова.</p>
     <div class="section"><h2>Четыре тона</h2><a href="#/tones">Тренажёр ›</a></div><div class="tones">${TONES.map(t => `<button class="tone" data-say="${t.ex[0]}"><span class="mk">${t.mark}</span><span><b>${t.name}</b><small>${t.desc}</small><small><span class="zh">${t.ex[0]}</span> ${t.ex[1]} — ${t.ex[2]}</small></span></button>`).join("")}</div>
     <div class="section"><h2>Инициали (согласные)</h2></div><div class="chips">${INITIALS.map(([p, z, d]) => `<button class="chip" data-say="${z}" title="${esc(d)}"><b>${p}</b><small class="zh">${z}</small></button>`).join("")}</div>
     <p class="hint">Нажмите на звук, чтобы услышать пример. Подсказки: ${INITIALS.slice(11, 18).map(([p, , d]) => `<b>${p}</b> — ${d}`).join("; ")}.</p>
-    <div class="section"><h2>Финали (гласные)</h2></div><div class="chips">${FINALS.map(([p, z, d]) => `<button class="chip" data-say="${z}" title="${esc(d)}"><b>${p}</b><small class="zh">${z}</small></button>`).join("")}</div>
-    <div class="box"><h3>Изменение тонов</h3><p class="hint" style="margin:0">Два третьих тона подряд: первый читается как второй — <span class="zh">你好</span> nǐ hǎo звучит «ní hǎo».<br><span class="zh">不</span> перед четвёртым тоном становится вторым: <span class="zh">不是</span> bú shì.<br><span class="zh">一</span> перед четвёртым — второй тон (<span class="zh">一个</span> yí ge), перед остальными — четвёртый (<span class="zh">一天</span> yì tiān).</p></div>
+    <div class="section"><h2>Финали — окончания слога</h2><span class="muted">${FINALS.length} примеров</span></div>
+    <p class="hint">Финаль — часть слога после начальной согласной: гласный или сочетание звуков, иногда с носовым окончанием. Нажмите, чтобы услышать целый китайский слог-пример. Под каждым сочетанием указаны иероглиф и пиньинь с тоном.</p>
+    <div class="chips">${FINALS.map(([p, z, d, py, ru]) => `<button type="button" class="chip" data-final="${esc(p)}" data-say="${esc(z)}" title="${esc(d)} ${esc(ru)}" aria-label="Финаль ${esc(p)}. ${esc(d)} Пример ${esc(z)}, ${esc(py)} — ${esc(ru)}"><b>${esc(p)}</b><small class="zh">${esc(z)}</small> <small lang="zh-Latn">${esc(py)}</small></button>`).join("")}</div>
+    <p class="hint">В -n кончик языка касается верхних дёсен. В -ng работает задняя часть языка; отдельное «г» не произносится. После zh, ch, sh, r, z, c, s буква i обозначает иной звук, чем в yī: слушайте, например, 是 shì и 四 sì в разделе инициалей.</p>
+    <div class="box"><h3>Почему ju, qu, xu читаются с ü?</h3><p>Для ü удерживайте язык как при «и», а губы округлите как при «у». Это один гласный, не русское сочетание «йу».</p>
+      <p>После <b>j, q, x</b> две точки над ü опускаются только на письме: <b>j + ü → ju, q + ü → qu, x + ü → xu</b>. Звук остаётся ü, а не u. То же правило действует в <b>jue / que / xue, juan / quan / xuan, jun / qun / xun</b>.</p>
+      ${spellingExamples(UMLAUT_EXAMPLES.slice(0, 6))}
+      <p>После <b>n и l</b> точки сохраняются: <b>nǚ</b>, <b>lǜ</b>. Сравните <b>lǜ</b> и <b>lù</b>: это разные гласные и разные слова.</p>${spellingExamples(UMLAUT_EXAMPLES.slice(6, 9))}
+      <p>Без начальной согласной ü оформляется через <b>y</b>, без точек: <b>ü → yu, üe → yue, üan → yuan, ün → yun</b>. Это правило написания; yu не превращается в русское «йу».</p>${spellingExamples(UMLAUT_EXAMPLES.slice(9))}</div>
+    <div class="box"><h3>Короткие написания iu, ui, un</h3><p>После начальной согласной <b>iou → iu</b> (牛 niú), <b>uei → ui</b> (水 shuǐ), <b>uen → un</b> (春 chūn). Сочетание остаётся одним слогом.</p><p class="hint" style="margin-bottom:0">Не путайте: в <b>jun, qun, xun</b> написание un передаёт финаль <b>ün</b>, поскольку после j/q/x точки ü не пишутся.</p></div>
+    <div class="box"><h3>Изменение тонов</h3><p class="hint" style="margin:0">Два третьих тона подряд: первый читается как второй — <span class="zh">你好</span> nǐ hǎo звучит «ní hǎo».<br><span class="zh">不</span> перед четвёртым тоном становится вторым: <span class="zh">不是</span> bú shì.<br><span class="zh">一</span> перед четвёртым тоном обычно становится вторым (<span class="zh">一半</span> yí bàn), перед первым, вторым и третьим — четвёртым (<span class="zh">一天</span> yì tiān). В порядковых числительных сохраняется yī: <span class="zh">第一</span> dì yī.</p></div>
     <a class="btn" href="#/tones">Потренировать тоны ${ic("go")}</a></section>`;
 }
+const PINYIN_TONE_MARKS = ["\u0304", "\u0301", "\u030c", "\u0300"];
+function toneSyllableBase(value) {
+  if (typeof value !== "string" || value.length > 32) throw Error("invalid_tone_syllable");
+  // Remove only tone accents: the diaeresis in ü is part of the vowel.
+  const base = value.trim().normalize("NFD").replace(/[\u0304\u0301\u030c\u0300]/g, "").normalize("NFC")
+    .replace(/u:/gi, match => match[0] === "U" ? "Ü" : "ü").replace(/v/gi, letter => letter === "V" ? "Ü" : "ü").replace(/[0-5]$/, "");
+  if (!/^[a-züê]+$/i.test(base)) throw Error("invalid_tone_syllable");
+  return base;
+}
+function toneSyllable(value, tone) {
+  if (!Number.isInteger(tone) || tone < 1 || tone > 4) throw Error("invalid_tone_number");
+  const base = toneSyllableBase(value), lower = base.toLowerCase();
+  let at = lower.indexOf("a");
+  if (at < 0) at = lower.search(/[eê]/);
+  if (at < 0 && lower.includes("ou")) at = lower.indexOf("o");
+  // With no a/e or ou, mark the last vowel: liu → liú, gui → guǐ.
+  if (at < 0) for (let i = base.length - 1; i >= 0; i--) if (/[iouü]/.test(lower[i])) { at = i; break; }
+  // Syllabic interjections (not currently in TONE_DRILL) use m/n as nucleus.
+  if (at < 0 && /^(?:m|hm)$/.test(lower)) at = lower.indexOf("m");
+  if (at < 0 && /^(?:n|ng|hng)$/.test(lower)) at = lower.indexOf("n");
+  if (at < 0) throw Error("invalid_tone_syllable");
+  return (base.slice(0, at + 1) + PINYIN_TONE_MARKS[tone - 1] + base.slice(at + 1)).normalize("NFC");
+}
+function toneDrillQuestion(entry) {
+  if (!Array.isArray(entry) || entry.length !== 2 || typeof entry[0] !== "string" || !/^\p{Script=Han}$/u.test(entry[1])) throw Error("invalid_tone_question");
+  const accents = entry[0].normalize("NFD").match(/[\u0304\u0301\u030c\u0300]/g) || [];
+  const digit = entry[0].trim().match(/([0-5])$/), markedTone = accents.length === 1 ? PINYIN_TONE_MARKS.indexOf(accents[0]) + 1 : 0;
+  const tone = digit ? +digit[1] : markedTone;
+  if (accents.length > 1 || tone < 1 || tone > 4 || markedTone && markedTone !== tone) throw Error("invalid_tone_question");
+  const base = toneSyllableBase(entry[0]), options = [1, 2, 3, 4].map(n => toneSyllable(base, n));
+  return { base, tone, options, pinyin: options[tone - 1], hanzi: entry[1] };
+}
 function pageTones() {
-  const qs = shuffle(TONE_DRILL).slice(0, 12); let k = 0, right = 0;
-  const toneOf = s => { const m = s.normalize("NFD").match(/[̄́̌̀]/); return m ? { "̄": 1, "́": 2, "̌": 3, "̀": 4 }[m[0]] : 0; };
+  const qs = shuffle(TONE_DRILL.map(toneDrillQuestion)).slice(0, 12); let k = 0, right = 0;
   function draw() {
     const q = qs[k]; if (!q) { app.innerHTML = `${topbar("Тренажёр тонов", "#/pinyin")}<div class="result"><div class="score">${right}/${qs.length}</div><p>${right >= 10 ? "Прекрасный слух!" : "Тоны приходят с практикой — повторите ещё раз."}</p><button class="btn" id="again">Ещё раз</button></div>`; $("#again").onclick = pageTones; return; }
-    const t = toneOf(q[0]); const base = q[0].normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const t = q.tone, base = q.base;
     app.innerHTML = `${topbar("Тренажёр тонов", "#/pinyin")}<div class="qhead"><div class="bar"><i style="width:${k / qs.length * 100}%"></i></div><span class="muted">${k + 1}/${qs.length}</span></div>
-      <div class="qcard"><div class="q">Какой тон у слога «${base}»?</div><button class="rec" data-say="${q[1]}">${ic("speaker")}</button></div>
-      <div class="opts" style="grid-template-columns:1fr 1fr">${[1, 2, 3, 4].map(n => `<button class="opt" data-t="${n}" style="text-align:center"><b style="font-size:22px">${["ā", "á", "ǎ", "à"][n - 1]}</b><br><small>${TONES[n - 1].name}</small></button>`).join("")}</div><div id="fb"></div>`;
-    speak(q[1], $(".rec"));
+      <div class="qcard"><div class="q">Какой тон у слога «${esc(base)}»?</div><button class="rec" data-say="${esc(q.hanzi)}" aria-label="Прослушать слог ${esc(base)}">${ic("speaker")}</button></div>
+      <div class="opts" style="grid-template-columns:1fr 1fr">${q.options.map((pinyin, i) => `<button class="opt" data-t="${i + 1}" aria-label="${esc(pinyin)} — ${TONES[i].name}" style="text-align:center"><b lang="zh-Latn" style="font-size:22px">${esc(pinyin)}</b><br><small>${TONES[i].name}</small></button>`).join("")}</div><div id="fb"></div>`;
+    speak(q.hanzi, $(".rec"));
     $$(".opt").forEach(b => b.onclick = () => { if ($(".opt.right")) return; const ok = +b.dataset.t === t; if (ok) right++; else b.classList.add("wrong"); $(`.opt[data-t="${t}"]`).classList.add("right"); record(ok);
-      $("#fb").innerHTML = `<div class="fb ${ok ? "ok" : "no"}">${ok ? "Верно!" : "Это был другой тон."} <b class="zh">${q[1]}</b> ${q[0]}</div><button class="btn" id="next">Дальше ${ic("go")}</button>`; $("#next").onclick = () => { k++; draw(); }; });
+      $("#fb").innerHTML = `<div class="fb ${ok ? "ok" : "no"}">${ok ? "Верно!" : "Это был другой тон."} <b class="zh">${esc(q.hanzi)}</b> ${esc(q.pinyin)}</div><button class="btn" id="next">Дальше ${ic("go")}</button>`; $("#next").onclick = () => { k++; draw(); }; });
   }
   draw();
 }
@@ -598,7 +658,7 @@ function pageShadow(id) {
 /* ---------- списки, словарь, словарик ---------- */
 function pageLevel(lv) {
   const stage = ["1", "2", "3", "4", "5", "6", "7-9"].includes(String(lv)) ? String(lv) : hsk3Level();
-  location.replace(`#/hsk3/${stage}/vocab`);
+  replaceRoute(`#/hsk3/${stage}/vocab`);
 }
 
 async function searchHskWords(q) {
@@ -822,16 +882,20 @@ function pageScenario(arg) {
 
 /* тренировка письма иероглифов */
 async function pageHanzi(arg, hzArg) {
+  const isActive = activeView();
   let list;
   if (arg === "w") { const hz = decodeURIComponent(hzArg || ""); const w = await findWord(hz) || ([...hz].every(isHan) && hz ? { hz, py: "", ru: hz, lv: 0 } : null); list = w ? [w] : []; }
   else { const lv = +arg || S.settings.level; const words = await level(lv); const learned = words.filter(w => wordProgress(w));
     list = shuffle(learned.length >= 6 ? learned : words.slice(0, 40)).slice(0, 6); }
   const back = arg === "w" ? `#/word/${encodeURIComponent(hzArg)}` : "#/learn";
+  if (!isActive()) return;
   if (!list.length) { app.innerHTML = `${topbar("Иероглифы", back)}<div class="empty"><b>Нечего писать</b></div>`; return; }
-  try { await loadHW(); } catch (_) { app.innerHTML = `${topbar("Иероглифы", back)}<div class="empty"><b>Не удалось загрузить</b>Проверьте подключение.</div>`; return; }
+  try { await loadHW(); } catch (_) { if (isActive()) app.innerHTML = `${topbar("Иероглифы", back)}<div class="empty"><b>Не удалось загрузить</b>Проверьте подключение.</div>`; return; }
+  if (!isActive()) return;
   let k = 0, ci = 0, total = 0, mistakes = 0, hint = false, writer = null;
   const size = Math.min(300, window.innerWidth - 60);
   function draw() {
+    if (!isActive()) return;
     const w = list[k]; if (!w) return finish(); const chars = [...w.hz].filter(isHan); const c = chars[ci];
     app.innerHTML = `${topbar("Пишем иероглифы", back)}<div class="qhead"><div class="bar"><i style="width:${k / list.length * 100}%"></i></div><span class="muted">${k + 1}/${list.length}</span></div>
       <div class="center"><div style="font-size:16px;font-weight:600">${esc(short(w.ru))}</div><div class="py" style="font-size:18px">${esc(w.py)}</div>
@@ -843,10 +907,10 @@ async function pageHanzi(arg, hzArg) {
       onMistake: () => { mistakes++; $("#st").textContent = "Не та черта — попробуйте ещё раз"; },
       onCorrectStroke: d => { $("#st").textContent = `Черта ${d.strokeNum + 1} из ${d.strokeNum + 1 + d.strokesRemaining}`; },
       onComplete: d => { total++; $("#st").textContent = d.totalMistakes ? `Готово, ошибок: ${d.totalMistakes}` : "Отлично, без ошибок!"; speak(c); markStudy(); save();
-        setTimeout(() => { ci++; if (ci >= chars.length) { ci = 0; k++; record(true); } draw(); }, 900); } });
+        setTimeout(() => { if (!isActive()) return; ci++; if (ci >= chars.length) { ci = 0; k++; record(true); } draw(); }, 900); } });
     start();
     $("#hint").onclick = () => { hint = !hint; hint ? writer.showOutline() : writer.hideOutline(); $("#hint").textContent = hint ? "Скрыть контур" : "Показать контур"; };
-    $("#demo").onclick = async () => { writer.cancelQuiz(); await writer.animateCharacter(); writer.hideCharacter(); start(); };
+    $("#demo").onclick = async () => { writer.cancelQuiz(); await writer.animateCharacter(); if (!isActive()) return; writer.hideCharacter(); start(); };
   }
   function finish() { app.innerHTML = `${topbar("Пишем иероглифы", back)}<div class="result"><div class="score">${total}</div><p>${plural(total, "иероглиф написан", "иероглифа написано", "иероглифов написано")} · ошибок в чертах: ${mistakes}</p>
       ${arg === "w" ? `<a class="btn" href="${back}">К слову</a>` : `<button class="btn" id="again">Ещё 6 слов</button>`}<a class="btn ghost" href="#/learn">Готово</a></div>`; const a = $("#again"); if (a) a.onclick = () => pageHanzi(arg); }
@@ -856,7 +920,9 @@ async function pageHanzi(arg, hzArg) {
 
 /* ---------- игры: «Найди пару» и облако слов ---------- */
 async function pagePairs(lv) {
+  const isActive = activeView();
   lv = +lv || S.settings.level; const words = await level(lv); const pool = words.filter(w => wordProgress(w)); const src = shuffle(pool.length >= 6 ? pool : words.slice(0, 60)).slice(0, 6);
+  if (!isActive()) return;
   let sel = null, left = src.length, miss = 0; const t0 = Date.now();
   const cards = shuffle([...src.map(w => ({ k: w.hz, t: w.hz, zh: true })), ...src.map(w => ({ k: w.hz, t: short(w.ru) }))]);
   app.innerHTML = `${topbar(`Найди пару · блок ${lv}`, "#/review")}<p class="sub" style="margin-top:-6px">Соедините иероглиф с переводом.</p>
@@ -874,7 +940,9 @@ async function pagePairs(lv) {
   });
 }
 async function pageCloud(lv) {
+  const isActive = activeView();
   lv = +lv || S.settings.level; const words = (await level(lv)).slice(0, 60);
+  if (!isActive()) return;
   app.innerHTML = `${topbar(`Облако слов · блок ${lv}`, "#/review")}<p class="sub" style="margin-top:-6px">Чем чаще слово встречается, тем оно крупнее. Нажмите — услышите и увидите перевод. Выученные слова светлее.</p>
     <div id="cl" style="display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;align-items:center;padding:18px 4px;border:1px solid var(--line);border-radius:24px;margin-top:14px;background:var(--glaze2)">${shuffle(words.map((w, i) => ({ w, i }))).map(({ w, i }) => `<button class="zh" data-hz="${esc(w.hz)}" style="font-size:${Math.round(34 - i * 0.33)}px;line-height:1.3;color:${wordProgress(w)?.b >= 2 ? "#9ab6dd" : "#18191a"};transform:rotate(${(Math.random() * 10 - 5).toFixed(1)}deg)">${esc(w.hz)}</button>`).join("")}</div>
     <div id="cw" class="mt"></div>`;
@@ -918,9 +986,11 @@ async function importFiles(fileList, onProgress) {
 }
 
 async function pageShelf(bookArg) {
+  const isActive = activeView();
   const book = bookArg ? decodeURIComponent(bookArg) : null;
   app.innerHTML = `${topbar(book || "Мои учебники", book ? "#/shelf" : "#/learn")}<p class="empty">Загрузка…</p>`;
-  let items = []; try { items = await Shelf.list(); } catch (_) { app.innerHTML = `${topbar("Мои учебники", "#/learn")}<div class="empty"><b>Хранилище недоступно</b>Браузер запретил локальное хранение (например, приватный режим).</div>`; return; }
+  let items = []; try { items = await Shelf.list(); } catch (_) { if (isActive()) app.innerHTML = `${topbar("Мои учебники", "#/learn")}<div class="empty"><b>Хранилище недоступно</b>Браузер запретил локальное хранение (например, приватный режим).</div>`; return; }
+  if (!isActive()) return;
   if (book) {
     const files = items.filter(x => x.book === book).sort((a, b) => natCmp(a.sub + "/" + a.name, b.sub + "/" + b.name));
     const groups = {}; files.forEach(f => (groups[f.sub || ""] ||= []).push(f));
@@ -933,11 +1003,12 @@ async function pageShelf(bookArg) {
   const books = {}; items.forEach(f => { const b = books[f.book] ||= { n: 0, size: 0, pdf: 0, audio: 0, last: 0 }; b.n++; b.size += f.size; b[f.kind] = (b[f.kind] || 0) + 1; b.last = Math.max(b.last, f.opened || 0); });
   const names = Object.keys(books).sort(natCmp); const total = items.reduce((s, f) => s + f.size, 0);
   let est = ""; try { const e = await navigator.storage?.estimate?.(); if (e?.quota) est = ` · доступно ещё ≈ ${fmtSize(Math.max(0, e.quota - e.usage))}`; } catch (_) {}
+  if (!isActive()) return;
   const recent = items.filter(f => f.opened).sort((a, b) => b.opened - a.opened)[0];
-  app.innerHTML = `${topbar("Мои учебники", "#/learn")}<div class="list">${row("#/library", "book", "Путь к успеху · 成功之路", "Готовая библиотека: учебники и аудио")}</div><p class="sub">Добавьте свои учебники — PDF, аудио, картинки. Добавленные здесь файлы хранятся только на этом устройстве и никуда не загружаются.</p>
+  app.innerHTML = `${topbar("Мои учебники", "#/learn")}<div class="list">${row("#/library", "book", "Курс китайского · 汉语课程", "Готовая библиотека: учебники и аудио")}</div><p class="sub">Добавьте свои учебники — PDF, аудио, картинки. Добавленные здесь файлы хранятся только на этом устройстве и никуда не загружаются.</p>
     ${recent ? `<a class="card-blue" href="#/file/${encodeURIComponent(recent.id)}" style="display:block;margin-top:16px"><p class="kicker">Продолжить</p><b style="font-size:17px;word-break:break-word">${esc(recent.name.replace(/\.[^.]+$/, ""))}</b><p class="sub" style="max-width:none">${esc(recent.book)}</p></a>` : ""}
     <div class="two"><label class="btn" style="cursor:pointer">${ic("download")} Папку<input type="file" id="fdir" webkitdirectory directory multiple hidden></label><label class="btn ghost" style="cursor:pointer">Файлы<input type="file" id="ffiles" multiple accept=".pdf,audio/*,image/*,video/*,.txt,.md,.mp3,.m4a,.wav" hidden></label></div>
-    <p class="hint">Совет: распакуйте скачанный архив и выберите общую папку (например, «Road to Success») — каждая вложенная папка станет отдельной книгой. На iPhone выбирайте файлы через «Файлы».</p><div id="imp"></div>
+    <p class="hint">Совет: распакуйте скачанный архив и выберите общую папку с учебниками — каждая вложенная папка станет отдельной книгой. На iPhone выбирайте файлы через «Файлы».</p><div id="imp"></div>
     ${names.length ? `<div class="section"><h2>Книги</h2><span class="muted">${names.length} · ${fmtSize(total)}${est}</span></div><div class="list">${names.map(n => { const b = books[n]; return `<a href="#/shelf/${encodeURIComponent(n)}"><span class="ic">${ic("book")}</span><span class="t"><b style="word-break:break-word">${esc(n)}</b><small>${[b.pdf ? `PDF: ${b.pdf}` : "", b.audio ? `аудио: ${b.audio}` : "", b.image ? `картинок: ${b.image}` : "", b.video ? `видео: ${b.video}` : ""].filter(Boolean).join(" · ")} · ${fmtSize(b.size)}</small></span>${ic("go", "i go")}</a>`; }).join("")}</div>`
       : `<div class="empty"><b>Полка пока пуста</b>Нажмите «Папку», чтобы добавить учебники.</div>`}`;
   const onPick = async e => {
@@ -951,11 +1022,14 @@ async function pageShelf(bookArg) {
 }
 
 async function pageFile(idArg) {
+  const isActive = activeView();
   const id = decodeURIComponent(idArg || ""); const meta = await Shelf.get(id); const blob = meta && await Shelf.blob(id);
+  if (!isActive()) return;
   if (!meta || !blob) { app.innerHTML = `${topbar("Файл", "#/shelf")}<div class="empty"><b>Файл не найден</b>Возможно, он был удалён с устройства.</div>`; return; }
   meta.opened = Date.now(); Shelf.update(meta);
   const back = `#/shelf/${encodeURIComponent(meta.book)}`; const url = URL.createObjectURL(blob); onLeave(() => setTimeout(() => URL.revokeObjectURL(url), 60e3));
   const siblings = (await Shelf.list()).filter(f => f.book === meta.book && f.kind === meta.kind).sort((a, b) => natCmp(a.sub + "/" + a.name, b.sub + "/" + b.name));
+  if (!isActive()) return;
   const i = siblings.findIndex(f => f.id === id), prev = siblings[i - 1], next = siblings[i + 1];
   const nav = `<div class="two">${prev ? `<a class="btn ghost" href="#/file/${encodeURIComponent(prev.id)}">‹ Назад</a>` : "<span></span>"}${next ? `<a class="btn ghost" href="#/file/${encodeURIComponent(next.id)}">Дальше ›</a>` : "<span></span>"}</div>`;
   const title = esc(meta.name.replace(/\.[^.]+$/, ""));
@@ -981,7 +1055,8 @@ async function pageFile(idArg) {
     app.innerHTML = `${topbar(title, back)}<img src="${url}" alt="${title}" style="width:100%;border-radius:18px;border:1px solid var(--line)" draggable="false">${nav}`;
     $("#app img").oncontextmenu = e => e.preventDefault();
   } else {
-    const txt = await blob.text(); app.innerHTML = `${topbar(title, back)}<div class="box zh" style="white-space:pre-wrap;line-height:1.9;font-size:17px">${esc(txt)}</div>${nav}`;
+    const txt = await blob.text(); if (!isActive()) return;
+    app.innerHTML = `${topbar(title, back)}<div class="box zh" style="white-space:pre-wrap;line-height:1.9;font-size:17px">${esc(txt)}</div>${nav}`;
   }
 }
 
@@ -996,16 +1071,20 @@ const ROUTES = {
   level: pageLevel, levels: pageLevels, word: pageWord, scenario: pageScenario, hanzi: pageHanzi, pairs: pagePairs, cloud: pageCloud, shelf: pageShelf, file: pageFile, dict: pageDict, book: pageBook, stats: pageStats, plan: pagePlan, settings: pageSettings, about: pageAbout,
 };
 const TAB = { ai: "learn", assess: "learn", pronunciation: "learn", "ai-profile": "me", translate: "translate", shelf: "learn", file: "learn", pairs: "learn", cloud: "learn", word: "home", home: "home", features: "home", learn: "learn", review: "learn", me: "me", study: "learn", book: "learn", quiz: "home", dict: "search", stats: "me", plan: "home", settings: "me", about: "me" };
+let routeRevision = 0;
 async function route() {
+  const revision = ++routeRevision, routeHash = location.hash;
+  const navigation = typeof HanyuNavigation === "undefined" ? null : HanyuNavigation;
+  const visit = navigation?.begin(routeHash);
+  const isCurrentRoute = () => revision === routeRevision && location.hash === routeHash;
   if (typeof HomePet !== "undefined" && typeof HomePet.unmount === "function") { try { HomePet.unmount(); } catch (_) {} }
   leaveFns.forEach(f => { try { f(); } catch (_) {} }); leaveFns = []; if ("speechSynthesis" in window) speechSynthesis.cancel();
   $$(".sheet").forEach(s => s.remove());
   let [name, arg, arg2] = (location.hash.replace(/^#\/?/, "") || "home").split("/");
-  if (!S.profile && name !== "welcome") { location.replace("#/welcome"); return; }
+  if (!S.profile && name !== "welcome") { replaceRoute("#/welcome"); return; }
   if (S.profile && name === "welcome") name = "home";
-  const routeHash = location.hash;
   if (S.profile) await ensureUnifiedCourse();
-  if (location.hash !== routeHash) return;
+  if (!isCurrentRoute()) return;
   const fn = ROUTES[name] || pageHome; const bare = name === "welcome";
   $("#appbar").hidden = bare || name === "home"; $("#tabbar").hidden = bare;
   const legacyFab = $("#fab"); if (legacyFab) legacyFab.hidden = true;
@@ -1013,11 +1092,17 @@ async function route() {
     if (a.dataset.tab === tab) a.setAttribute("aria-current", "page");
     else a.removeAttribute("aria-current");
   });
-  window.scrollTo(0, 0);
-  try { await fn(arg, arg2); } catch (e) { console.error(e); app.innerHTML = `${topbar("Ошибка")}<div class="empty"><b>Не удалось загрузить</b>Проверьте подключение к интернету и попробуйте снова.<br><button class="btn small" onclick="location.reload()">Обновить</button></div>`; }
+  if (!navigation) window.scrollTo(0, 0);
+  try { await fn(arg, arg2); } catch (e) {
+    if (!isCurrentRoute()) return;
+    console.error(e); app.innerHTML = `${topbar("Ошибка")}<div class="empty"><b>Не удалось загрузить</b>Проверьте подключение к интернету и попробуйте снова.<br><button class="btn small" onclick="location.reload()">Обновить</button></div>`;
+  }
+  if (!isCurrentRoute()) return;
+  navigation?.finish(visit, app);
   document.title = name === "home" ? "汉语熊 · Китайский каждый день" : `${$("h1")?.textContent || "汉语熊"} · 汉语熊`;
 }
 window.addEventListener("hashchange", route);
+window.addEventListener("popstate", () => { if (typeof HanyuNavigation !== "undefined" && HanyuNavigation.isSameRouteTraversal()) route(); });
 const legacyFab = $("#fab"); if (legacyFab) { legacyFab.hidden = true; legacyFab.innerHTML = ""; }
 route();
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});

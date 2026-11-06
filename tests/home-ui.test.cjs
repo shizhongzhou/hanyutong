@@ -53,7 +53,7 @@ test('home keeps the selected unified HSK stage and exposes only working shortcu
   assert.equal((html.match(/class="home-shortcut(?: home-all-features)?"/g) || []).length, 10);
   assert.match(html, /#\/features/); assert.match(html, /#\/home\/ai/);
   const routeChecks = clone(h.run('HOME_FEATURES.map(feature => ({ href: homeFeatureHref(feature), exists: !!ROUTES[homeFeatureHref(feature).split("/")[1]] }))'));
-  assert.ok(routeChecks.length >= 30); assert.ok(routeChecks.every(route => route.exists && route.href.startsWith('#/')));
+  assert.ok(routeChecks.length >= 27); assert.ok(routeChecks.every(route => route.exists && route.href.startsWith('#/')));
   assert.equal(h.requests(), 0);
 });
 
@@ -71,12 +71,69 @@ test('classic home keeps only brand, pet slot, composer and shortcuts; catalog r
 
 test('saved favorites reject unknown IDs, deduplicate, cap at nine, and preserve intentionally empty lists', () => {
   const h = harness({ homeFeatures: ['photo', 'photo', 'javascript:alert(1)', '<img src=x>', 'dict', 'study', 'stages', 'ai-chat', 'writing', 'speaking', 'library', 'stats', 'plan'] });
-  assert.deepEqual(clone(h.run('homeFeatureIDs()')), ['photo', 'dict', 'study', 'stages', 'ai-chat', 'writing', 'speaking', 'library', 'stats']);
+  assert.deepEqual(clone(h.run('homeFeatureIDs()')), ['photo', 'dict', 'study', 'stages', 'ai-chat', 'assessment', 'library', 'stats', 'plan']);
   h.run('pageHome()'); assert.doesNotMatch(h.node('#app').innerHTML, /javascript:|<img src=x>/);
   h.run('S.settings.homeFeatures = []; pageHome()');
   assert.deepEqual(clone(h.run('homeFeatureIDs()')), []);
   assert.equal((h.node('#app').innerHTML.match(/class="home-shortcut(?: home-all-features)?"/g) || []).length, 1, 'the all-functions link remains reachable');
   assert.match(h.node('#app').innerHTML, /home-all-features/);
+});
+
+test('legacy AI favorites collapse to one conversation and one assessment without deleting saved IDs or routes', () => {
+  const ids = ['ai-explain', 'ai-chat', 'speaking', 'writing', 'grammar-check', 'library'];
+  const h = harness({ homeFeatures: ids });
+  assert.deepEqual(clone(h.run('homeFeatureIDs()')), ['ai-chat', 'assessment', 'library']);
+  assert.deepEqual(clone(h.run('S.settings.homeFeatures')), ids, 'display normalization does not erase the saved settings');
+  assert.equal(h.run('HOME_FEATURE_INDEX.get("ai-explain").id'), 'ai-chat');
+  for (const id of ['writing', 'speaking', 'grammar-check']) assert.equal(h.run(`HOME_FEATURE_INDEX.get("${id}").id`), 'assessment');
+  assert.equal(h.run('typeof ROUTES.ai'), 'function'); assert.equal(h.run('typeof ROUTES.assess'), 'function');
+  h.run('pageHome()'); const html = h.node('#app').innerHTML;
+  assert.equal((html.match(/class="home-shortcut" href="#\/ai"/g) || []).length, 1);
+  assert.equal((html.match(/href="#\/assess\/writing"/g) || []).length, 1);
+});
+
+test('learning and all-features screens show each destination only once', () => {
+  const h = harness(); h.run('pageLearn()'); let html = h.node('#app').innerHTML;
+  for (const href of ['#/hsk3/7-9/study', '#/stages', '#/ai', '#/assess/writing']) {
+    assert.equal(html.split(`href="${href}"`).length - 1, 1, href);
+  }
+  assert.doesNotMatch(html, /href="#\/translate(?:\/photo)?"|href="#\/ai\/explain"|href="#\/assess\/(speaking|grammar)"/);
+  assert.match(html, /Курс китайского · 汉语课程/);
+  h.run('pageFeatures()'); html = h.node('#app').innerHTML;
+  const hrefs = [...html.matchAll(/class="(?:home-shortcut|feature-catalog-card)" href="([^"]+)"/g)].map(match => match[1]);
+  assert.equal(hrefs.length, h.run('HOME_FEATURES.length')); assert.equal(new Set(hrefs).size, hrefs.length);
+  h.run('pageFeatures("edit")'); html = h.node('#app').innerHTML;
+  const toggles = [...html.matchAll(/data-feature-toggle="([^"]+)"/g)].map(match => match[1]);
+  assert.equal(new Set(toggles).size, toggles.length, 'selected entries appear only in the removable favorites list');
+});
+
+test('topbars use the actual entry source and stale route failures cannot replace a newer page or restore its scroll', async () => {
+  const h = harness(), finishes = []; let revision = 0;
+  h.context.HanyuNavigation = { begin: hash => ({ hash, serial: ++revision }),
+    backHref: () => '#/home', finish: token => finishes.push(token.hash) };
+  assert.match(h.run('topbar("Переводчик", "#/learn")'), /href="#\/home" data-nav-back="#\/learn"/);
+  h.run('ensureUnifiedCourse = async () => {}; ROUTES.grammar = () => new Promise((resolve, reject) => { this.rejectOldRoute = reject; });');
+  h.context.location.hash = '#/grammar'; const old = h.run('route()');
+  for (let i = 0; i < 5 && !h.context.rejectOldRoute; i++) await Promise.resolve();
+  assert.equal(typeof h.context.rejectOldRoute, 'function');
+  h.context.location.hash = '#/learn'; await h.run('route()');
+  const current = h.node('#app').innerHTML; h.context.rejectOldRoute(Error('old request failed')); await old;
+  assert.equal(h.node('#app').innerHTML, current); assert.deepEqual(finishes, ['#/learn']);
+});
+
+test('late local-library success/failure and handwriting loader failures cannot replace the returned home page', async () => {
+  for (const scenario of ['shelf-resolve', 'shelf-reject', 'hanzi-reject']) {
+    const h = harness(); h.run('ensureUnifiedCourse = async () => {};');
+    if (scenario.startsWith('shelf')) h.run('Shelf.list = () => new Promise((resolve, reject) => { this.resolveOld = resolve; this.rejectOld = reject; });');
+    else h.run('level = async () => [{hz:"你",py:"nǐ",ru:"ты",lv:1}]; hwP = new Promise((resolve, reject) => { this.rejectOld = reject; });');
+    h.context.location.hash = scenario.startsWith('shelf') ? '#/shelf' : '#/hanzi/1'; const pending = h.run('route()');
+    for (let i = 0; i < 10 && !h.context.rejectOld; i++) await Promise.resolve();
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+    h.context.location.hash = '#/home'; await h.run('route()');
+    const html = h.node('#app').innerHTML;
+    if (scenario === 'shelf-resolve') h.context.resolveOld([]); else h.context.rejectOld(Error('old loading failed'));
+    await pending; assert.equal(h.node('#app').innerHTML, html, scenario); assert.match(html, /home-composer-shell/);
+  }
 });
 
 test('classic composer transfers an editable draft without a provider call or persistent conversation', () => {
@@ -196,5 +253,5 @@ test('removing a top favorite keeps focus nearby and removing the final one focu
   const h = harness({ homeFeatures: ['photo', 'dict'] }); h.run('pageFeatures("edit")');
   h.toggle('photo', true); assert.equal(h.focused(), '#feature-favorite-dict [data-feature-toggle]');
   h.toggle('dict', true); assert.equal(h.focused(), '#features-done');
-  h.toggle('photo'); assert.equal(h.focused(), '.feature-catalog-card[data-feature-toggle="photo"]');
+  h.toggle('photo'); assert.equal(h.focused(), '#feature-favorite-photo [data-feature-toggle]');
 });

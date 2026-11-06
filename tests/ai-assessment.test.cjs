@@ -1,5 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+const { createHash } = require('node:crypto');
 const { createAIAssessmentHandler, validateTaskBank, validateAssessment, validateAssessmentResult, assessmentPrompt,
   publicTasks, DEFAULT_ASSESSMENT_MODEL, MAX_ASSESSMENT_TOKENS } = require('../infra/yandex/function/ai-assessment.js');
 const { quoteAICost } = require('../infra/yandex/function/ai-budget.js');
@@ -23,17 +24,30 @@ function fixture(options = {}) {
 }
 const json = result => JSON.parse(result.body);
 
-test('the original practice bank covers all nine levels and three modes with consistent internal rubrics', () => {
-  assert.equal(bank.tasks.length, 27);
+test('the original practice bank provides four distinct tasks per mode and HSK level with consistent internal rubrics', () => {
+  assert.equal(bank.tasks.length, 108);
   assert.equal(validateTaskBank(bank), bank);
   for (const mode of ['writing', 'speaking', 'grammar']) {
-    assert.deepEqual(bank.tasks.filter(item => item.mode === mode).map(item => item.level), [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    for (let level = 1; level <= 9; level++) {
+      const tasks = bank.tasks.filter(item => item.mode === mode && item.level === level);
+      assert.deepEqual(tasks.map(item => item.id), [1, 2, 3, 4].map(number => `${mode}-hsk${level}-0${number}`));
+      assert.equal(new Set(tasks.map(item => item.titleRu)).size, 4);
+      assert.equal(new Set(tasks.map(item => item.promptZh)).size, 4);
+      assert.equal(new Set(tasks.map(item => item.sample.zh)).size, 4);
+    }
   }
   assert.match(bank.noticeRu, /не являются результатом официального экзамена/);
   for (const item of bank.tasks) {
     assert.equal(item.criteria.reduce((sum, criterion) => sum + criterion.maxScore, 0), item.maxScore);
     assert.ok(item.sample.zh && item.sample.pinyin && item.sample.ru);
   }
+});
+
+test('the expanded catalog preserves all 27 original IDs, instructions, rubrics and samples byte-for-byte as JSON', () => {
+  const originals = bank.tasks.filter(item => item.id.endsWith('-01'));
+  assert.equal(originals.length, 27);
+  assert.equal(createHash('sha256').update(JSON.stringify(originals)).digest('hex'),
+    '372885f206c0f199e32b51ba1e0cc67ff739aa60a341b0572ac673809b7b99b1');
 });
 
 test('invalid task banks fail instead of silently changing answer keys or rubric totals', () => {
@@ -43,13 +57,55 @@ test('invalid task banks fail instead of silently changing answer keys or rubric
   for (const mutate of mutations) { const value = JSON.parse(JSON.stringify(bank)); mutate(value); assert.throws(() => validateTaskBank(value), /invalid_task_bank/); }
 });
 
+test('catalog validation rejects missing variants, mismatched IDs, repeated prompts and untranslated authoring drafts', () => {
+  const mutations = [value => { value.tasks.pop(); }, value => { value.tasks[0].id = 'speaking-hsk1-99'; },
+    value => { value.tasks[0].level = 2; }, value => { value.tasks[27].promptZh = value.tasks[0].promptZh; },
+    value => { value.tasks[0].promptZh = 'Write an answer'; }, value => { value.tasks[0].promptRu = 'Write an answer'; },
+    value => { value.tasks[0].sample.zh = 'TODO'; }, value => { value.tasks[0].sample.ru = 'TODO'; },
+    value => { value.tasks[0].sample.pinyin = 'wo xi huan'; }, value => { value.tasks[0].sample.pinyin = 'Wǒ 喜欢'; },
+    value => { value.tasks[0].criteria[0].id = 'pronunciation'; }, value => { value.tasks[0].criteria[0].descriptorRu = 'TODO'; }];
+  for (const mutate of mutations) {
+    const value = JSON.parse(JSON.stringify(bank)); mutate(value);
+    assert.throws(() => validateTaskBank(value), /invalid_task_bank/);
+  }
+});
+
+test('all task variants stay inside the existing per-person reservation cap even with the longest Chinese answer', () => {
+  for (const selected of bank.tasks) {
+    const messages = [{ role: 'system', content: assessmentPrompt(selected) }, { role: 'user', content: '字'.repeat(2000) }];
+    const cost = quoteAICost('assessment', { inputBytes: Buffer.byteLength(JSON.stringify(messages)), outputTokens: MAX_ASSESSMENT_TOKENS });
+    assert.ok(cost > 0 && cost <= 6000000, `${selected.id} should fit the unchanged 6 RUB daily identity cap`);
+  }
+});
+
 test('public task discovery works while assessments are disabled and does not disclose answer samples', async () => {
   const { handler, calls, reservations } = fixture({ enabled: false });
   const response = await handler(event(undefined, { path: '/ai/tasks', httpMethod: 'GET', headers: {} }));
   assert.equal(response.statusCode, 200); assert.deepEqual(json(response), publicTasks());
-  assert.equal(json(response).tasks.length, 27);
+  assert.equal(json(response).tasks.length, 108);
   assert.doesNotMatch(response.body, /"sample"|"descriptorRu"|test-only/);
   assert.equal(calls.length, 0); assert.equal(reservations.length, 0);
+});
+
+test('every added task is assessable by its stable ID and returns its own server sample and rubric after one reservation', async () => {
+  for (const selected of bank.tasks.filter(item => !item.id.endsWith('-01'))) {
+    const order = [];
+    const { handler } = fixture({
+      reserveUsage: async usage => { order.push('reserve'); assert.equal(usage.operation, 'assessment'); return { allowed: true }; },
+      fetcher: async (_url, options) => {
+        order.push('provider');
+        const payload = JSON.parse(options.body);
+        assert.ok(payload.messages[0].content.includes(JSON.stringify(selected)));
+        return Response.json(provider(assessment(selected.id)));
+      }
+    });
+    const result = await handler(event({ mode: selected.mode, taskId: selected.id, answer: selected.sample.zh }));
+    assert.equal(result.statusCode, 200, selected.id); assert.deepEqual(order, ['reserve', 'provider']);
+    const data = json(result);
+    assert.equal(data.taskId, selected.id); assert.equal(data.level, selected.level);
+    assert.deepEqual(data.sample, selected.sample); assert.deepEqual(data.criteria.map(item => item.id), selected.criteria.map(item => item.id));
+    assert.equal(data.assessmentScope, selected.mode === 'speaking' ? 'text_content_only' : 'written_text');
+  }
 });
 
 test('enabled assessments require durable reservation before one Pro thinking call without a membership gate', async () => {

@@ -44,7 +44,7 @@ test('verification reports only allowlisted failure codes and never retries unce
   const { main } = await verifier;
   for (const [body, expected] of [[{ error: 'request_timeout', detail: 'secret-provider-body' }, 'request_timeout'],
     [{ error: 'daily_limit', credential: 'secret-provider-body' }, 'daily_limit'],
-    [{ error: 'assessment_incomplete' }, 'assessment_incomplete'], [{ error: 'secret-provider-body' }, undefined],
+    [{ error: 'assessment_incomplete' }, 'assessment_incomplete'], [{ error: 'recognition_unavailable' }, 'recognition_unavailable'], [{ error: 'secret-provider-body' }, undefined],
     [{ error: { message: 'secret-provider-body' } }, undefined]]) {
     let calls = 0; const output = [];
     await assert.rejects(main(['--run', '--only', 'assessment'], { emit: value => output.push(value), fetcher: async url => {
